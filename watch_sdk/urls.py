@@ -15,7 +15,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('watch_sdk/make_connection', views.make_connection),
+    path('watch_sdk/generate_key', views.generate_key),
+    path('watch_sdk/check_connection', views.check_connection),
+    path('watch_sdk/upload_health_data', views.upload_health_data),
 ]
