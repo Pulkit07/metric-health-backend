@@ -1,13 +1,18 @@
 import uuid
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from watch_sdk.models import UserApp, WatchConnection
+from rest_framework import viewsets
+from watch_sdk.models import User, UserApp, WatchConnection
+from watch_sdk.serializers import UserAppSerializer, UserSerializer
 
 
 @api_view(['POST'])
 def generate_key(request):
-    app_id = request.data.get('app_id')
-    app = UserApp.objects.get(id=app_id)
+    app_id = request.query_params.get('app_id')
+    try:
+        app = UserApp.objects.get(id=app_id)
+    except:
+        return Response({'error': 'Invalid app id'}, status=400)
     key = str(uuid.uuid4())
     app.key = key
     app.save()
@@ -15,9 +20,9 @@ def generate_key(request):
 
 @api_view(['POST'])
 def make_connection(request):
-    key = request.data.get('key')
-    user_uuid = request.data.get('user_uuid')
-    platform = request.data.get('platform')
+    key = request.query_params.get('key')
+    user_uuid = request.query_params.get('user_uuid')
+    platform = request.query_params.get('platform')
     google_fit_refresh_token = None
     if platform == 'android':
         google_fit_refresh_token = request.data.get('google_fit_refresh_token')
@@ -48,7 +53,7 @@ def check_connection(request):
 @api_view(['POST'])
 def upload_health_data(request):
     key = request.data.get('key')
-    user_uuid = request.data.get('user_uuid')
+    user_uuid = request.query_params.get('user_uuid')
     try:
         app = UserApp.objects.get(key=key)
     except:
@@ -60,3 +65,14 @@ def upload_health_data(request):
     data = request.data.get('data')
     print(f'Health data received for {user_uuid}: {data}')
     return Response({'success': True}, status=200)
+
+
+# CRUD view for User model
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+# CRUD view for UserApp model
+class UserAppViewSet(viewsets.ModelViewSet):
+    queryset = UserApp.objects.all()
+    serializer_class = UserAppSerializer
