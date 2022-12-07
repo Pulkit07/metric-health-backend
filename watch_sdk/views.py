@@ -23,9 +23,16 @@ def make_connection(request):
     key = request.query_params.get('key')
     user_uuid = request.query_params.get('user_uuid')
     platform = request.query_params.get('platform')
+
+    if not platform in ['android', 'ios']:
+        return Response({'error': 'Invalid platform'}, status=400)
+
     google_fit_refresh_token = None
     if platform == 'android':
         google_fit_refresh_token = request.data.get('google_fit_refresh_token')
+        if not google_fit_refresh_token:
+            return Response({'error': 'google_fit_refresh_token required for android platform'}, status=400)
+
     try:
         app = UserApp.objects.get(key=key)
     except:
