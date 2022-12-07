@@ -78,9 +78,6 @@ WSGI_APPLICATION = 'watch_sdk.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-if os.getenv("DATABASE_URL", None) is None:
-    raise Exception("DATABASE_URL environment variable not defined")
-
 DATABASES = {
     "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
 }
