@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'watch_sdk.wsgi.application'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-    "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
+    "default": dj_database_url.parse(os.environ.get(b"app-34153d88-8b4d-459b-9646-30531f6d236b-do-user-13045542-0.b.db.ondigitalocean.com")),
 }
 
 
