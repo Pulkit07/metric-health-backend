@@ -79,7 +79,14 @@ WSGI_APPLICATION = 'watch_sdk.wsgi.application'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-    "default": dj_database_url.parse(b"app-34153d88-8b4d-459b-9646-30531f6d236b-do-user-13045542-0.b.db.ondigitalocean.com"),
+    'default': {
+       'ENGINE': 'django.db.backends.postgresql',
+       'NAME': 'db',
+       'USER': 'db',
+       'PASSWORD': 'AVNS_4k2XAG4HfCYUtBfesk2',
+       'HOST': 'app-34153d88-8b4d-459b-9646-30531f6d236b-do-user-13045542-0.b.db.ondigitalocean.com',
+       'PORT': '25060',
+   }
 }
 
 
