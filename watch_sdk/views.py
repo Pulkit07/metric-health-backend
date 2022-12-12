@@ -59,7 +59,7 @@ def check_connection(request):
 
 @api_view(['POST'])
 def upload_health_data(request):
-    key = request.data.get('key')
+    key = request.query_params.get('key')
     user_uuid = request.query_params.get('user_uuid')
     try:
         app = UserApp.objects.get(key=key)
@@ -69,7 +69,7 @@ def upload_health_data(request):
     if not WatchConnection.objects.filter(app=app, user_uuid=user_uuid).exists():
         return Response({'error': 'No connection exists for this user'}, status=400)
 
-    data = request.data.get('data')
+    data = request.data
     print(f'Health data received for {user_uuid}: {data}')
     return Response({'success': True}, status=200)
 
