@@ -18,7 +18,7 @@ class UserApp(models.Model):
     website = models.CharField(max_length=100, blank=True, null=True)
     webhook_url = models.CharField(max_length=600, blank=True, null=True)
     key = models.CharField(max_length=100, blank=True, null=True)
-    google_auth_client_id = models.CharField(max_length=100, blank=True, null=True)
+    google_auth_client_id = models.CharField(max_length=200, blank=True, null=True)
 
 class WatchConnection(models.Model):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
