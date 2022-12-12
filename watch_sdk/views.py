@@ -75,11 +75,13 @@ def upload_health_data(request):
     except:
         return Response({'error': 'Invalid key'}, status=400)
 
-    if not WatchConnection.objects.filter(app=app, user_uuid=user_uuid).exists():
+    try:
+        connection = WatchConnection.objects.get(app=app, user_uuid=user_uuid)
+    except:
         return Response({'error': 'No connection exists for this user'}, status=400)
 
     data = request.data
-    FitnessData.objects.create(app=app, data=data)
+    FitnessData.objects.create(app=app, data=data, connection=connection)
     print(f'Health data received for {user_uuid}: {data}')
     return Response({'success': True}, status=200)
 

@@ -38,4 +38,5 @@ class WatchConnection(BaseModel):
 
 class FitnessData(BaseModel):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
+    connection = models.ForeignKey(WatchConnection, on_delete=models.CASCADE, null=True)
     data = models.JSONField()
