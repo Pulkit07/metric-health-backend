@@ -6,6 +6,15 @@ from watch_sdk.models import FitnessData, User, UserApp, WatchConnection
 from watch_sdk.serializers import FitnessDataSerializer, UserAppSerializer, UserSerializer
 
 
+@api_view(['GET'])
+def check_user_exists(request):
+    email = request.query_params.get('email')
+    if not email:
+        return Response({'error': 'email required'}, status=400)
+    if User.objects.filter(email=email).exists():
+        return Response({'success': True}, status=200)
+    return Response({'success': False}, status=200)
+
 @api_view(['POST'])
 def generate_key(request):
     app_id = request.query_params.get('app_id')

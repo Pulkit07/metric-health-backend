@@ -27,7 +27,7 @@ class WatchConnection(models.Model):
     platform = models.CharField(max_length=100, choices=(('android', 'android'), ('ios', 'ios')))
 
     # only when platform is android
-    google_fit_refresh_token = models.CharField(max_length=100, blank=True, null=True)
+    google_fit_refresh_token = models.CharField(max_length=200, blank=True, null=True)
 
 class FitnessData(models.Model):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
