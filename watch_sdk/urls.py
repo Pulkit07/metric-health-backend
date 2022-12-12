@@ -43,11 +43,16 @@ urlpatterns = [
     path('watch_sdk/user', views.UserViewSet.as_view({
     'get': 'list',
     'post': 'create'
-})),
-path('watch_sdk/user_app', views.UserAppViewSet.as_view({
-    'get': 'list',
-    'post': 'create'
-})),
+    })),
+    path('watch_sdk/user_app', views.UserAppViewSet.as_view({
+        'get': 'list',
+        'post': 'create'
+    })),
+    path('watch_sdk/fitness_data', views.FitnessDataViewSet.as_view({
+        'get': 'list',
+        'post': 'create'
+    })),
+
 
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

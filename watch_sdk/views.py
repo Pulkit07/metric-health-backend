@@ -2,8 +2,8 @@ import uuid
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import viewsets
-from watch_sdk.models import User, UserApp, WatchConnection
-from watch_sdk.serializers import UserAppSerializer, UserSerializer
+from watch_sdk.models import FitnessData, User, UserApp, WatchConnection
+from watch_sdk.serializers import FitnessDataSerializer, UserAppSerializer, UserSerializer
 
 
 @api_view(['POST'])
@@ -70,6 +70,7 @@ def upload_health_data(request):
         return Response({'error': 'No connection exists for this user'}, status=400)
 
     data = request.data
+    FitnessData.objects.create(app=app, data=data)
     print(f'Health data received for {user_uuid}: {data}')
     return Response({'success': True}, status=200)
 
@@ -83,3 +84,8 @@ class UserViewSet(viewsets.ModelViewSet):
 class UserAppViewSet(viewsets.ModelViewSet):
     queryset = UserApp.objects.all()
     serializer_class = UserAppSerializer
+
+#CRUD view for fitness data (for testing purpose only)
+class FitnessDataViewSet(viewsets.ModelViewSet):
+    queryset = FitnessData.objects.all()
+    serializer_class = FitnessDataSerializer

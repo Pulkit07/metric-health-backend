@@ -15,3 +15,8 @@ class WatchConnectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = WatchConnection
         fields = '__all__'
+
+class FitnessDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FitnessData
+        fields = '__all__'
