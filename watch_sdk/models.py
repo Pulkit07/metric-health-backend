@@ -1,8 +1,15 @@
 
 from django.db import models
 
+class BaseModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
 # a basic user model
-class User(models.Model):
+class User(BaseModel):
     name = models.CharField(max_length=100)
     email = models.EmailField(max_length=100, unique=True)
     phone = models.CharField(max_length=100, blank=True, null=True, unique=True)
@@ -10,7 +17,7 @@ class User(models.Model):
     country = models.CharField(max_length=100, blank=True, null=True)
 
 # a basic model for apps that user will create
-class UserApp(models.Model):
+class UserApp(BaseModel):
     name = models.CharField(max_length=100)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     play_store_url = models.CharField(max_length=100, blank=True, null=True, unique=True)
@@ -20,7 +27,7 @@ class UserApp(models.Model):
     key = models.CharField(max_length=100, blank=True, null=True)
     google_auth_client_id = models.CharField(max_length=200, blank=True, null=True)
 
-class WatchConnection(models.Model):
+class WatchConnection(BaseModel):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
     user_uuid = models.CharField(max_length=200)
     # TODO: this in future should be google fit, apple health, strava, fitbit, oura, etc
@@ -29,6 +36,6 @@ class WatchConnection(models.Model):
     # only when platform is android
     google_fit_refresh_token = models.CharField(max_length=200, blank=True, null=True)
 
-class FitnessData(models.Model):
+class FitnessData(BaseModel):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
     data = models.JSONField()
