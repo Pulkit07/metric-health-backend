@@ -61,7 +61,6 @@ urlpatterns = [
         'get': 'list',
         'post': 'create',
     })),
-    path('watch_sdk/check_user_exists', views.check_user_exists),
     path('watch_sdk/sync_google_fit_data', views.SyncGoogleFitApi.as_view()),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

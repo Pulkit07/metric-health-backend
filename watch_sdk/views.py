@@ -7,16 +7,6 @@ from watch_sdk.serializers import FitnessDataSerializer, UserAppSerializer, User
 from watch_sdk.utils import google_fit_cron
 
 
-@api_view(['GET'])
-def check_user_exists(request):
-    email = request.query_params.get('email')
-    if not email:
-        return Response({'error': 'email required'}, status=400)
-    if User.objects.filter(email=email).exists():
-        user = User.objects.filter(email=email).first()
-        return Response({'success': True, 'data': UserSerializer(user).data}, status=200)
-    return Response({'success': False}, status=404)
-
 @api_view(['POST'])
 def generate_key(request):
     app_id = request.query_params.get('app_id')
@@ -92,11 +82,13 @@ def upload_health_data(request):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    filterset_fields = ['email']
 
 # CRUD view for UserApp model
 class UserAppViewSet(viewsets.ModelViewSet):
     queryset = UserApp.objects.all()
     serializer_class = UserAppSerializer
+    filterset_fields = ['user']
 
 #CRUD view for fitness data (for testing purpose only)
 class FitnessDataViewSet(viewsets.ModelViewSet):
