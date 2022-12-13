@@ -1,9 +1,10 @@
 import uuid
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from rest_framework import viewsets
+from rest_framework import viewsets, views
 from watch_sdk.models import FitnessData, User, UserApp, WatchConnection
 from watch_sdk.serializers import FitnessDataSerializer, UserAppSerializer, UserSerializer
+from watch_sdk.utils import google_fit_cron
 
 
 @api_view(['GET'])
@@ -100,3 +101,9 @@ class UserAppViewSet(viewsets.ModelViewSet):
 class FitnessDataViewSet(viewsets.ModelViewSet):
     queryset = FitnessData.objects.all()
     serializer_class = FitnessDataSerializer
+
+class SyncGoogleFitApi(views.APIView):
+
+    def get(self, request):
+        google_fit_cron()
+        return Response({'success': True}, status=200)

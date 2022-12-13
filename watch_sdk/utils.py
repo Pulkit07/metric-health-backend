@@ -1,7 +1,8 @@
-from watch_sdk.models import WatchConnection
+from watch_sdk.models import UserApp, WatchConnection
 
 def google_fit_cron():
     apps = WatchConnection.objects.filter(platform='android').values_list('app', flat=True).distinct()
+    apps = UserApp.objects.filter(id__in=apps)
     for app in apps:
         _sync_app_from_google_fit(app)
 
