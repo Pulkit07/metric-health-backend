@@ -14,7 +14,7 @@ def check_user_exists(request):
         return Response({'error': 'email required'}, status=400)
     if User.objects.filter(email=email).exists():
         user = User.objects.filter(email=email).first()
-        return Response({'success': True, 'data': UserSerializer(user)}, status=200)
+        return Response({'success': True, 'data': UserSerializer(user).data}, status=200)
     return Response({'success': False}, status=404)
 
 @api_view(['POST'])
@@ -65,7 +65,7 @@ def check_connection(request):
         return Response({'error': 'Invalid key'}, status=400)
     connection = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
     if connection.exists():
-        return Response({'success': True, 'data': WatchConnectionSerializer(connection)}, status=200)
+        return Response({'success': True, 'data': WatchConnectionSerializer(connection).data}, status=200)
     return Response({'success': False}, status=404)
 
 @api_view(['POST'])
