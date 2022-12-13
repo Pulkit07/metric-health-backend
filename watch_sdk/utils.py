@@ -1,5 +1,5 @@
-
 from watch_sdk.models import WatchConnection
+from background_task import background
 
 def google_fit_cron():
     apps = WatchConnection.objects.filter(platform='android').values_list('app', flat=True).distinct()
