@@ -41,16 +41,25 @@ urlpatterns = [
     path('watch_sdk/check_connection', views.check_connection),
     path('watch_sdk/upload_health_data', views.upload_health_data),
     path('watch_sdk/user', views.UserViewSet.as_view({
-    'get': 'list',
-    'post': 'create'
+        'get': 'list',
+        'post': 'create',
     })),
+    path('watch_sdk/user/<int:pk>', views.UserViewSet.as_view({
+        'get': 'retrieve',
+        'put': 'update',
+    })),
+
     path('watch_sdk/user_app', views.UserAppViewSet.as_view({
         'get': 'list',
-        'post': 'create'
+        'post': 'create',
+    })),
+    path('watch_sdk/user_app/<int:pk>', views.UserAppViewSet.as_view({
+        'get': 'retrieve',
+        'put': 'update',
     })),
     path('watch_sdk/fitness_data', views.FitnessDataViewSet.as_view({
         'get': 'list',
-        'post': 'create'
+        'post': 'create',
     })),
     path('watch_sdk/check_user_exists', views.check_user_exists),
     path('watch_sdk/sync_google_fit_data', views.SyncGoogleFitApi.as_view()),
