@@ -1,4 +1,14 @@
+import json
 from watch_sdk.models import UserApp, WatchConnection
+import requests
+import os.path
+
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+
 
 def google_fit_cron():
     apps = WatchConnection.objects.filter(platform='android').values_list('app', flat=True).distinct()
@@ -21,5 +31,28 @@ def _sync_app_from_google_fit(user_app):
 
 
 def _sync_google_fit_for_connection(user_app, connection):
+    print('refresh token is {}'.format(connection.google_fit_refresh_token))
     print('Syncing data for app {} and user {}'.format(user_app.name, connection.user_uuid))
+    print('client id is {}'.format(user_app.google_auth_client_id))
+    data = requests.post('https://www.googleapis.com/oauth2/v4/token', params={
+        'client_id': user_app.google_auth_client_id,
+        'refresh_token': connection.google_fit_refresh_token,
+        'grant_type': 'refresh_token',
+    },
+        headers={'Content-Type': 'application/json'}
+    )
+    print(data.text)
+    access_token = data.json()['access_token']
+    r = requests.post('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate', headers={'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json',},
+        data=json.dumps({
+            'aggregateBy': [{
+                "dataTypeName": "com.google.step_count.delta",
+                'dataSourceId': 'derived:com.google.step_count.delta:com.google.android.gms:estimated_steps'
+            }],
+            'bucketByTime': {'durationMillis': 86400000},
+            'startTimeMillis': 1670919476000,
+            'endTimeMillis': 1670919576000
+        }),
+    )
+    print(r.text)
     pass

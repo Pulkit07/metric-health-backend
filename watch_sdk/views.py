@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import viewsets, views
 from watch_sdk.models import FitnessData, User, UserApp, WatchConnection
-from watch_sdk.serializers import FitnessDataSerializer, UserAppSerializer, UserSerializer
+from watch_sdk.serializers import FitnessDataSerializer, UserAppSerializer, UserSerializer, WatchConnectionSerializer
 from watch_sdk.utils import google_fit_cron
 
 
@@ -13,8 +13,9 @@ def check_user_exists(request):
     if not email:
         return Response({'error': 'email required'}, status=400)
     if User.objects.filter(email=email).exists():
-        return Response({'success': True}, status=200)
-    return Response({'success': False}, status=200)
+        user = User.objects.filter(email=email).first()
+        return Response({'success': True, 'data': UserSerializer(user)}, status=200)
+    return Response({'success': False}, status=404)
 
 @api_view(['POST'])
 def generate_key(request):
@@ -62,10 +63,10 @@ def check_connection(request):
         app = UserApp.objects.get(key=key)
     except:
         return Response({'error': 'Invalid key'}, status=400)
-
-    if WatchConnection.objects.filter(app=app, user_uuid=user_uuid).exists():
-        return Response({'success': True}, status=200)
-    return Response({'success': False}, status=200)
+    connection = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
+    if connection.exists():
+        return Response({'success': True, 'data': WatchConnectionSerializer(connection)}, status=200)
+    return Response({'success': False}, status=404)
 
 @api_view(['POST'])
 def upload_health_data(request):
