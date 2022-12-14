@@ -42,8 +42,8 @@ def make_connection(request):
     if WatchConnection.objects.filter(app=app, user_uuid=user_uuid).exists():
         return Response({'error': 'A connection with this user already exists'}, status=400)
 
-    WatchConnection.objects.create(app=app, user_uuid=user_uuid, platform=platform, google_fit_refresh_token=google_fit_refresh_token)
-    return Response({'success': True}, status=200)
+    obj = WatchConnection.objects.create(app=app, user_uuid=user_uuid, platform=platform, google_fit_refresh_token=google_fit_refresh_token)
+    return Response({'success': True, 'data': WatchConnectionSerializer(obj)}, status=200)
 
 @api_view(['GET'])
 def check_connection(request):
