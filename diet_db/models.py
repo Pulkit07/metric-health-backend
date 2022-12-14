@@ -7,6 +7,8 @@ class DishQuantitativeNutrition(models.Model):
     protein = models.FloatField(blank=True, null=True)
     fat = models.FloatField(null=True, blank=True)
     carbs = models.FloatField(null=True, blank=True)
+    fiber = models.FloatField(null=True, blank=True)
+    sugars = models.FloatField(null=True, blank=True)
     calcium = models.FloatField(null=True, blank=True)
     iron = models.FloatField(null=True, blank=True)
     sodium = models.FloatField(null=True, blank=True)
