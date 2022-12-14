@@ -24,18 +24,11 @@ def _sync_app_from_google_fit(user_app):
 
 
 def _sync_google_fit_for_connection(user_app, connection):
-    print('refresh token is {}'.format(connection.google_fit_refresh_token))
     print('Syncing data for app {} and user {}'.format(user_app.name, connection.user_uuid))
-    print('client id is {}'.format(user_app.google_auth_client_id))
-    data = requests.post('https://www.googleapis.com/oauth2/v4/token', params={
-        'client_id': user_app.google_auth_client_id,
-        'refresh_token': connection.google_fit_refresh_token,
-        'grant_type': 'refresh_token',
-    },
-        headers={'Content-Type': 'application/json'}
-    )
-    print(data.text)
-    access_token = data.json()['access_token']
+    access_token = _get_access_token(user_app.google_auth_client_id, connection.google_fit_refresh_token)
+    if not access_token:
+        print('Error while getting access token for app {} and user {}'.format(user_app.name, connection.user_uuid))
+        return
     r = requests.post('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate', headers={'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json',},
         data=json.dumps({
             'aggregateBy': [{
@@ -48,4 +41,21 @@ def _sync_google_fit_for_connection(user_app, connection):
         }),
     )
     print(r.text)
-    pass
+
+
+def _get_access_token(google_auth_client_id, google_fit_refresh_token):
+    response = requests.post('https://www.googleapis.com/oauth2/v4/token', params={
+        'client_id': google_auth_client_id,
+        'refresh_token': google_fit_refresh_token,
+        'grant_type': 'refresh_token',
+    },
+        headers={'Content-Type': 'application/json'}
+    )
+    try:
+        access_token = response.json()['access_token']
+    except KeyError:
+        print('No access token found')
+        print(response.text)
+        return
+
+    return access_token
