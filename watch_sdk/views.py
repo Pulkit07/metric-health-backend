@@ -55,7 +55,7 @@ def check_connection(request):
         return Response({'error': 'Invalid key'}, status=400)
     connection = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
     if connection.exists():
-        return Response({'success': True, 'data': WatchConnectionSerializer(connection).data}, status=200)
+        return Response({'success': True, 'data': WatchConnectionSerializer(connection.first()).data}, status=200)
     return Response({'success': False}, status=404)
 
 @api_view(['POST'])
