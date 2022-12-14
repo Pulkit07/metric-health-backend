@@ -1,14 +1,7 @@
-
 from django.db import models
 
-class BaseModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+from core.models import BaseModel
 
-    class Meta:
-        abstract = True
-
-# a basic user model
 class User(BaseModel):
     name = models.CharField(max_length=100)
     email = models.EmailField(max_length=100, unique=True)
