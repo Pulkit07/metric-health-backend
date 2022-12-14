@@ -1,5 +1,5 @@
 import json
-from watch_sdk.models import UserApp, WatchConnection
+from .models import UserApp, WatchConnection
 import requests
 
 

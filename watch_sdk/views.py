@@ -2,9 +2,9 @@ import uuid
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import viewsets, views
-from watch_sdk.models import FitnessData, User, UserApp, WatchConnection
-from watch_sdk.serializers import FitnessDataSerializer, UserAppSerializer, UserSerializer, WatchConnectionSerializer
-from watch_sdk.utils import google_fit_cron
+from .models import FitnessData, User, UserApp, WatchConnection
+from .serializers import FitnessDataSerializer, UserAppSerializer, UserSerializer, WatchConnectionSerializer
+from .utils import google_fit_cron
 
 
 @api_view(['POST'])
