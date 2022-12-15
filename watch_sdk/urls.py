@@ -16,33 +16,57 @@ Including another URLconf
 from django.urls import path, re_path
 from . import views
 
-app_name = 'watch_sdk'
+app_name = "watch_sdk"
 
 urlpatterns = [
-    path('make_connection', views.make_connection),
-    path('generate_key', views.generate_key),
-    path('check_connection', views.check_connection),
-    path('upload_health_data', views.upload_health_data),
-    path('user', views.UserViewSet.as_view({
-        'get': 'list',
-        'post': 'create',
-    })),
-    path('user/<int:pk>', views.UserViewSet.as_view({
-        'get': 'retrieve',
-        'put': 'update',
-    })),
-
-    path('user_app', views.UserAppViewSet.as_view({
-        'get': 'list',
-        'post': 'create',
-    })),
-    path('user_app/<int:pk>', views.UserAppViewSet.as_view({
-        'get': 'retrieve',
-        'put': 'update',
-    })),
-    path('fitness_data', views.FitnessDataViewSet.as_view({
-        'get': 'list',
-        'post': 'create',
-    })),
-    path('sync_google_fit_data', views.SyncGoogleFitApi.as_view()),
+    path("make_connection", views.make_connection),
+    path("generate_key", views.generate_key),
+    path("check_connection", views.check_connection),
+    path("upload_health_data", views.upload_health_data),
+    path(
+        "user",
+        views.UserViewSet.as_view(
+            {
+                "get": "list",
+                "post": "create",
+            }
+        ),
+    ),
+    path(
+        "user/<int:pk>",
+        views.UserViewSet.as_view(
+            {
+                "get": "retrieve",
+                "put": "update",
+            }
+        ),
+    ),
+    path(
+        "user_app",
+        views.UserAppViewSet.as_view(
+            {
+                "get": "list",
+                "post": "create",
+            }
+        ),
+    ),
+    path(
+        "user_app/<int:pk>",
+        views.UserAppViewSet.as_view(
+            {
+                "get": "retrieve",
+                "put": "update",
+            }
+        ),
+    ),
+    path(
+        "fitness_data",
+        views.FitnessDataViewSet.as_view(
+            {
+                "get": "list",
+                "post": "create",
+            }
+        ),
+    ),
+    path("sync_google_fit_data", views.SyncGoogleFitApi.as_view()),
 ]

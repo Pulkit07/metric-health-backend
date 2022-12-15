@@ -60,8 +60,12 @@ class Dish(BaseModel):
     name = models.CharField(max_length=400)
     description = models.CharField(max_length=1000, blank=True, null=True)
     images = models.JSONField(blank=True, null=True)
-    quantitative_nutrition = models.ForeignKey(DishQuantitativeNutrition, on_delete=models.CASCADE, null=True)
-    qualitative_nutrition = models.ForeignKey(DishQualitativeNutrition, on_delete=models.CASCADE, null=True)
+    quantitative_nutrition = models.ForeignKey(
+        DishQuantitativeNutrition, on_delete=models.CASCADE, null=True
+    )
+    qualitative_nutrition = models.ForeignKey(
+        DishQualitativeNutrition, on_delete=models.CASCADE, null=True
+    )
     tags = models.ManyToManyField(DishTag, blank=True)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, null=True)
     ingredients = models.ManyToManyField(Ingredient, blank=True)
