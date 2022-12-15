@@ -39,6 +39,10 @@ class WatchConnection(BaseModel):
     # last sync time
     last_sync = models.DateTimeField(blank=True, null=True)
 
+    def mark_logout(self):
+        self.google_fit_refresh_token = None
+        self.save()
+
 
 class FitnessData(BaseModel):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)

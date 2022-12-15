@@ -3,8 +3,6 @@ import json
 from zoneinfo import ZoneInfo
 import requests
 
-from watch_sdk.models import FitnessData
-
 
 class GoogleFitConnection(object):
     """
@@ -102,25 +100,21 @@ class GoogleFitConnection(object):
         if response.status_code >= 400:
             raise Exception("Error while getting steps since last sync")
 
+        result = []
         for entries in json.loads(response.text)["bucket"]:
             for entry in entries["dataset"]:
-                if entry["point"]:
-                    start_time = datetime.datetime.fromtimestamp(
-                        int(entry["point"][0]["startTimeNanos"]) / 1000000000
-                    ).astimezone(ZoneInfo("Asia/Kolkata"))
-                    end_time = datetime.datetime.fromtimestamp(
-                        int(entry["point"][0]["endTimeNanos"]) / 1000000000
-                    ).astimezone(ZoneInfo("Asia/Kolkata"))
-                    print(
-                        f'today steps by {self.connection.user_uuid} from {start_time} to {end_time} are: {entry["point"][0]["value"][0]["intVal"]}'
-                    )
-                    FitnessData.objects.create(
-                        app=self.user_app,
-                        connection=self.connection,
-                        start_time=start_time,
-                        end_time=end_time,
-                        data={"steps": entry["point"][0]["value"][0]["intVal"]},
-                    )
+                if not entry.get("point"):
+                    continue
+                start_time = datetime.datetime.fromtimestamp(
+                    int(entry["point"][0]["startTimeNanos"]) / 1000000000
+                ).astimezone(ZoneInfo("Asia/Kolkata"))
+                end_time = datetime.datetime.fromtimestamp(
+                    int(entry["point"][0]["endTimeNanos"]) / 1000000000
+                ).astimezone(ZoneInfo("Asia/Kolkata"))
+                result.append(
+                    (start_time, end_time, entry["point"][0]["value"][0]["intVal"])
+                )
+        return result
 
     def get_distance_since_last_sync(self):
         pass
