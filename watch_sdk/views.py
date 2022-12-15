@@ -1,3 +1,4 @@
+import datetime
 import uuid
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -99,7 +100,13 @@ def upload_health_data(request):
         return Response({"error": "No connection exists for this user"}, status=400)
 
     data = request.data
-    FitnessData.objects.create(app=app, data=data, connection=connection)
+    FitnessData.objects.create(
+        app=app,
+        data=data,
+        connection=connection,
+        record_start_time=datetime.datetime.now(),
+        record_end_time=datetime.datetime.now(),
+    )
     print(f"Health data received for {user_uuid}: {data}")
     return Response({"success": True}, status=200)
 
