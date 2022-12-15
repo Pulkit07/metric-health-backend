@@ -50,3 +50,9 @@ class FitnessData(BaseModel):
     data = models.JSONField()
     record_start_time = models.DateTimeField()
     record_end_time = models.DateTimeField()
+    data_source = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        choices=(("google_fit", "google_fit"), ("api", "api")),
+    )

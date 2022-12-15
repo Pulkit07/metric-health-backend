@@ -68,5 +68,5 @@ urlpatterns = [
             }
         ),
     ),
-    path("sync_google_fit_data", views.SyncGoogleFitApi.as_view()),
+    path("sync_google_fit_data", views.sync_from_google_fit),
 ]

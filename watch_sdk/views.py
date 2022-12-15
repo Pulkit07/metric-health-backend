@@ -1,4 +1,5 @@
 import datetime
+from email import utils
 import uuid
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -111,6 +112,18 @@ def upload_health_data(request):
     return Response({"success": True}, status=200)
 
 
+# To be called from firebase function for now, should be removed in future
+@api_view(["POST"])
+def sync_from_google_fit(request):
+    """
+    Helper function to sync data from google fit
+
+    The API will be hit by a cron job
+    """
+    utils.google_fit_cron()
+    return Response({"success": True}, status=200)
+
+
 # CRUD view for User model
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -129,9 +142,4 @@ class UserAppViewSet(viewsets.ModelViewSet):
 class FitnessDataViewSet(viewsets.ModelViewSet):
     queryset = FitnessData.objects.all()
     serializer_class = FitnessDataSerializer
-
-
-class SyncGoogleFitApi(views.APIView):
-    def get(self, request):
-        google_fit_cron()
-        return Response({"success": True}, status=200)
+    filterset_fields = ["app", "connection", "data_source"]
