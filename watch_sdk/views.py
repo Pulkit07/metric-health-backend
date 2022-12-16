@@ -3,7 +3,7 @@ from email import utils
 import uuid
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from rest_framework import viewsets, views
+from rest_framework import viewsets, views, generics
 from .models import FitnessData, User, UserApp, WatchConnection
 from .serializers import (
     FitnessDataSerializer,
@@ -25,65 +25,6 @@ def generate_key(request):
     app.key = key
     app.save()
     return Response({"key": key}, status=200)
-
-
-@api_view(["POST"])
-def make_connection(request):
-    key = request.query_params.get("key")
-    user_uuid = request.query_params.get("user_uuid")
-    platform = request.query_params.get("platform")
-
-    if not platform in ["android", "ios"]:
-        return Response({"error": "Invalid platform"}, status=400)
-
-    google_fit_refresh_token = None
-    if platform == "android":
-        google_fit_refresh_token = request.data.get("google_fit_refresh_token")
-        if not google_fit_refresh_token:
-            return Response(
-                {"error": "google_fit_refresh_token required for android platform"},
-                status=400,
-            )
-
-    try:
-        app = UserApp.objects.get(key=key)
-    except Exception:
-        return Response({"error": "Invalid key"}, status=400)
-
-    if WatchConnection.objects.filter(app=app, user_uuid=user_uuid).exists():
-        return Response(
-            {"error": "A connection with this user already exists"}, status=400
-        )
-
-    obj = WatchConnection.objects.create(
-        app=app,
-        user_uuid=user_uuid,
-        platform=platform,
-        google_fit_refresh_token=google_fit_refresh_token,
-    )
-    return Response(
-        {"success": True, "data": WatchConnectionSerializer(obj).data}, status=200
-    )
-
-
-@api_view(["GET"])
-def check_connection(request):
-    key = request.query_params.get("key")
-    user_uuid = request.query_params.get("user_uuid")
-    try:
-        app = UserApp.objects.get(key=key)
-    except Exception:
-        return Response({"error": "Invalid key"}, status=400)
-    connection = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
-    if connection.exists():
-        return Response(
-            {
-                "success": True,
-                "data": WatchConnectionSerializer(connection.first()).data,
-            },
-            status=200,
-        )
-    return Response({"success": False}, status=404)
 
 
 @api_view(["POST"])
@@ -122,6 +63,66 @@ def sync_from_google_fit(request):
     """
     utils.google_fit_cron()
     return Response({"success": True}, status=200)
+
+
+class WatchConnectionListCreateView(generics.ListCreateAPIView):
+    queryset = WatchConnection.objects.all()
+    serializer_class = WatchConnectionSerializer
+
+    def get(self, request, format=None):
+        key = request.query_params.get("key")
+        user_uuid = request.query_params.get("user_uuid")
+        try:
+            app = UserApp.objects.get(key=key)
+        except Exception:
+            return Response({"error": "Invalid key"}, status=400)
+        connection = self.queryset.filter(app=app, user_uuid=user_uuid)
+        if connection.exists():
+            return Response(
+                {
+                    "success": True,
+                    "data": WatchConnectionSerializer(connection.first()).data,
+                },
+                status=200,
+            )
+        return Response({"success": False}, status=404)
+
+    def post(self, request, *args, **kwargs):
+        key = request.query_params.get("key")
+        user_uuid = request.query_params.get("user_uuid")
+        platform = request.query_params.get("platform")
+
+        if not platform in ["android", "ios"]:
+            return Response({"error": "Invalid platform"}, status=400)
+
+        google_fit_refresh_token = None
+        if platform == "android":
+            google_fit_refresh_token = request.data.get("google_fit_refresh_token")
+            if not google_fit_refresh_token:
+                return Response(
+                    {"error": "google_fit_refresh_token required for android platform"},
+                    status=400,
+                )
+
+        try:
+            app = UserApp.objects.get(key=key)
+        except Exception:
+            return Response({"error": "Invalid key"}, status=400)
+
+        if WatchConnection.objects.filter(app=app, user_uuid=user_uuid).exists():
+            return Response(
+                {"error": "A connection with this user already exists"}, status=400
+            )
+
+        obj = WatchConnection.objects.create(
+            app=app,
+            user_uuid=user_uuid,
+            platform=platform,
+            google_fit_refresh_token=google_fit_refresh_token,
+        )
+        return Response(
+            {"success": True, "data": WatchConnectionSerializer(obj).data}, status=200
+        )
 
 
 # CRUD view for User model

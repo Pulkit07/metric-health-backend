@@ -19,9 +19,7 @@ from . import views
 app_name = "watch_sdk"
 
 urlpatterns = [
-    path("make_connection", views.make_connection),
     path("generate_key", views.generate_key),
-    path("check_connection", views.check_connection),
     path("upload_health_data", views.upload_health_data),
     path(
         "user",
@@ -68,5 +66,6 @@ urlpatterns = [
             }
         ),
     ),
+    path("watch_connection", views.WatchConnectionListCreateView.as_view()),
     path("sync_google_fit_data", views.sync_from_google_fit),
 ]
