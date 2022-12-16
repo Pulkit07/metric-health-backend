@@ -3,6 +3,8 @@ import uuid
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import viewsets, views, generics
+
+from watch_sdk.google_fit import GoogleFitConnection
 from .models import FitnessData, User, UserApp, WatchConnection
 from .serializers import (
     FitnessDataSerializer,
@@ -149,3 +151,12 @@ class FitnessDataViewSet(viewsets.ModelViewSet):
     queryset = FitnessData.objects.all()
     serializer_class = FitnessDataSerializer
     filterset_fields = ["app", "connection", "data_source"]
+
+
+@api_view(["GET"])
+def test_google_sync(request):
+    connection = WatchConnection.objects.get(user_uuid="7895pulkit@gmail.com")
+    with GoogleFitConnection(connection.app, connection) as gfc:
+        gfc.test_sync()
+
+    return Response({"success": True}, status=200)

@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path, re_path
-from . import views, utils
+from . import views
 
 app_name = "watch_sdk"
 
@@ -69,4 +69,5 @@ urlpatterns = [
     path("watch_connection", views.WatchConnectionListCreateView.as_view()),
     path("watch_connection/<int:pk>", views.WatchConnectionUpdateView.as_view()),
     path("sync_google_fit_data", views.sync_from_google_fit),
+    path("test_sync", views.test_google_sync),
 ]
