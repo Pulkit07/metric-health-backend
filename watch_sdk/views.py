@@ -155,8 +155,14 @@ class FitnessDataViewSet(viewsets.ModelViewSet):
 
 @api_view(["GET"])
 def test_google_sync(request):
-    connection = WatchConnection.objects.get(user_uuid="7895pulkit@gmail.com")
-    with GoogleFitConnection(connection.app, connection) as gfc:
-        gfc.test_sync()
+    connections = WatchConnection.objects.filter(
+        platform="android",
+        logged_in=True,
+        google_fit_refresh_token__isnull=False,
+    )
+    for connection in connections:
+        print(f"\n\nSyncing for {connection.user_uuid}")
+        with GoogleFitConnection(connection.app, connection) as gfc:
+            gfc.test_sync()
 
     return Response({"success": True}, status=200)
