@@ -32,6 +32,9 @@ class WatchConnection(BaseModel):
     platform = models.CharField(
         max_length=100, choices=(("android", "android"), ("ios", "ios"))
     )
+    # only used for cases where we get a token from the sdk and then talks directly
+    # with the server to get the data. For example Google Fit
+    logged_in = models.BooleanField(default=False)
 
     # only when platform is android
     google_fit_refresh_token = models.CharField(max_length=200, blank=True, null=True)
@@ -40,7 +43,7 @@ class WatchConnection(BaseModel):
     last_sync = models.DateTimeField(blank=True, null=True)
 
     def mark_logout(self):
-        self.google_fit_refresh_token = None
+        self.logged_in = False
         self.save()
 
 
