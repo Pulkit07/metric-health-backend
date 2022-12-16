@@ -13,6 +13,7 @@ def _sync_app_from_google_fit(user_app):
         app=user_app,
         platform="android",
         google_fit_refresh_token__isnull=False,
+        logged_in=True,
     )
     for connection in connections:
         with GoogleFitConnection(user_app, connection) as fit_connection:
