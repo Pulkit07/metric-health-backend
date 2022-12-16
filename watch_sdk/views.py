@@ -125,6 +125,11 @@ class WatchConnectionListCreateView(generics.ListCreateAPIView):
         )
 
 
+class WatchConnectionUpdateView(generics.UpdateAPIView):
+    queryset = WatchConnection.objects.all()
+    serializer_class = WatchConnectionSerializer
+
+
 # CRUD view for User model
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()

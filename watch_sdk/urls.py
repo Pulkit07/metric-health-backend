@@ -67,5 +67,6 @@ urlpatterns = [
         ),
     ),
     path("watch_connection", views.WatchConnectionListCreateView.as_view()),
+    path("watch_connection/<int:pk>", views.WatchConnectionUpdateView.as_view()),
     path("sync_google_fit_data", views.sync_from_google_fit),
 ]
