@@ -66,8 +66,7 @@ class GoogleFitConnection(object):
             # set last sync time as start of today in local timezone
             last_sync_time = int(
                 datetime.datetime.now()
-                .astimezone(ZoneInfo("Asia/Kolkata"))
-                .date()
+                .replace(hour=0, minute=0, second=0, microsecond=0)
                 .timestamp()
                 * 1000
             )
@@ -98,6 +97,7 @@ class GoogleFitConnection(object):
         )
 
         if response.status_code >= 400:
+            print(response.text)
             raise Exception("Error while getting steps since last sync")
 
         result = []

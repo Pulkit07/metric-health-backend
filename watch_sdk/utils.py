@@ -21,7 +21,14 @@ def _sync_app_from_google_fit(user_app):
                 print("Unable to get access token")
                 connection.mark_logout()
                 continue
-            data = fit_connection.get_steps_since_last_sync()
+            try:
+                data = fit_connection.get_steps_since_last_sync()
+            except Exception as e:
+                print(
+                    "Unable to get steps since last sync for user %s"
+                    % connection.user_uuid
+                )
+                continue
             print(data)
             for entry in data:
                 FitnessData.objects.create(

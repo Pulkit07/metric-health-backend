@@ -1,5 +1,4 @@
 import datetime
-from email import utils
 import uuid
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -11,7 +10,7 @@ from .serializers import (
     UserSerializer,
     WatchConnectionSerializer,
 )
-from .utils import google_fit_cron
+from . import utils
 
 
 @api_view(["POST"])
