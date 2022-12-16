@@ -119,6 +119,7 @@ class WatchConnectionListCreateView(generics.ListCreateAPIView):
             user_uuid=user_uuid,
             platform=platform,
             google_fit_refresh_token=google_fit_refresh_token,
+            logged_in=True,
         )
         return Response(
             {"success": True, "data": WatchConnectionSerializer(obj).data}, status=200
