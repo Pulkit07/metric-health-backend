@@ -114,20 +114,20 @@ class GoogleFitConnection(object):
 
         return total_steps
 
-    def get_distance_since_last_sync(self):
-        pass
-        # r = requests.post('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate', headers={'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json',},
-        #     data=json.dumps({
-        #         'aggregateBy': [{
-        #             "dataTypeName": "com.google.distance.delta",
-        #             'dataSourceId': 'derived:com.google.distance.delta:com.google.android.gms:merge_distance_delta'
-        #         }],
-        #         'bucketByTime': {'durationMillis': 86400000},
-        #         'startTimeMillis': today_start_in_millis,
-        #         'endTimeMillis': current_time_in_millis
-        #     }),
-        # )
-        # print(r.text)
+    def get_move_minutes_since_last_sync(self):
+        """
+        Returns the number of move minutes since the last sync
+        """
+        sources = self._get_specific_data_sources(
+            "com.google.active_minutes",
+            ["merge_active_minutes", "user_input"],
+        )
+        total_minutes = 0
+        for name, streamId in sources.items():
+            val = self._get_dataset_sum_for_data_source(streamId)
+            total_minutes += val * SOURCE_MULTIPLIER.get(name, 1)
+
+        return total_minutes
 
     def _get_dataset_sum_for_data_source(self, dataStreamId):
         response = requests.get(
@@ -165,4 +165,7 @@ class GoogleFitConnection(object):
             * 1000
         )
         self._update_last_sync = False
-        print(self.get_steps_since_last_sync())
+        print(f"Steps since last sync are {self.get_steps_since_last_sync()}")
+        print(
+            f"Move minutes since last sync are {self.get_move_minutes_since_last_sync()}"
+        )
