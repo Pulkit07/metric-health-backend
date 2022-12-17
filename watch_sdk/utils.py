@@ -30,6 +30,15 @@ def _sync_app_from_google_fit(user_app):
                     % connection.user_uuid
                 )
                 continue
+
+            try:
+                total_move_minutes = fit_connection.get_move_minutes_since_last_sync()
+            except Exception as e:
+                print(
+                    "Unable to get move minutes since last sync for user %s"
+                    % connection.user_uuid
+                )
+                continue
             FitnessData.objects.create(
                 app=user_app,
                 connection=connection,
@@ -39,5 +48,8 @@ def _sync_app_from_google_fit(user_app):
                 record_end_time=datetime.datetime.fromtimestamp(
                     fit_connection.end_time_in_millis / 1000
                 ),
-                data={"steps": total_steps},
+                data={
+                    "steps": total_steps,
+                    "move_minutes": total_move_minutes,
+                },
             )
