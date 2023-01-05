@@ -49,6 +49,7 @@ def upload_health_data(request):
         connection=connection,
         record_start_time=datetime.datetime.now(),
         record_end_time=datetime.datetime.now(),
+        source="api",
     )
     print(f"Health data received for {user_uuid}: {data}")
     return Response({"success": True}, status=200)
