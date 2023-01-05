@@ -52,4 +52,5 @@ def _sync_app_from_google_fit(user_app):
                     "steps": total_steps,
                     "move_minutes": total_move_minutes,
                 },
+                data_source="google_fit",
             )
