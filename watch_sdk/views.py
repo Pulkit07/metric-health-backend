@@ -143,7 +143,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class UserAppViewSet(viewsets.ModelViewSet):
     queryset = UserApp.objects.all()
     serializer_class = UserAppSerializer
-    filterset_fields = ["user"]
+    filterset_fields = ["user", "key"]
 
 
 # CRUD view for fitness data (for testing purpose only)
