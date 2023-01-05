@@ -1,8 +1,11 @@
 import datetime
 import json
-from zoneinfo import ZoneInfo
 import requests
 
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 SOURCE_MULTIPLIER = {
     "user_input": -1,

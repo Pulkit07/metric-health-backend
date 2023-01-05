@@ -57,5 +57,5 @@ class FitnessData(BaseModel):
         max_length=100,
         blank=True,
         null=True,
-        choices=(("google_fit", "google_fit"), ("api", "api")),
+        choices=(("google_fit", "google_fit"), ("api", "api"), ("sdk_healthkit", "sdk_healthkit")),
     )
