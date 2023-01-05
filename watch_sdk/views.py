@@ -1,4 +1,5 @@
 import datetime
+import json
 import uuid
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -42,7 +43,7 @@ def upload_health_data(request):
     except:
         return Response({"error": "No connection exists for this user"}, status=400)
 
-    data = request.data
+    data = json.loads(request.data)
     FitnessData.objects.create(
         app=app,
         data=data,
