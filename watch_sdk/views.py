@@ -2,10 +2,11 @@ import datetime
 import json
 import uuid
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework import viewsets, views, generics
 
 from watch_sdk.google_fit import GoogleFitConnection
+from watch_sdk.permissions import ValidKeyPermission
 from .models import FitnessData, User, UserApp, WatchConnection
 from .serializers import (
     FitnessDataSerializer,
@@ -30,13 +31,11 @@ def generate_key(request):
 
 
 @api_view(["POST"])
+@permission_classes([ValidKeyPermission])
 def upload_health_data(request):
     key = request.query_params.get("key")
     user_uuid = request.query_params.get("user_uuid")
-    try:
-        app = UserApp.objects.get(key=key)
-    except Exception:
-        return Response({"error": "Invalid key"}, status=400)
+    app = UserApp.objects.get(key=key)
 
     try:
         connection = WatchConnection.objects.get(app=app, user_uuid=user_uuid)
@@ -71,14 +70,12 @@ def sync_from_google_fit(request):
 class WatchConnectionListCreateView(generics.ListCreateAPIView):
     queryset = WatchConnection.objects.all()
     serializer_class = WatchConnectionSerializer
+    permission_classes = [ValidKeyPermission]
 
     def get(self, request, format=None):
         key = request.query_params.get("key")
         user_uuid = request.query_params.get("user_uuid")
-        try:
-            app = UserApp.objects.get(key=key)
-        except Exception:
-            return Response({"error": "Invalid key"}, status=400)
+        app = UserApp.objects.get(key=key)
         connection = self.queryset.filter(app=app, user_uuid=user_uuid)
         if connection.exists():
             return Response(
@@ -107,10 +104,7 @@ class WatchConnectionListCreateView(generics.ListCreateAPIView):
                     status=400,
                 )
 
-        try:
-            app = UserApp.objects.get(key=key)
-        except Exception:
-            return Response({"error": "Invalid key"}, status=400)
+        app = UserApp.objects.get(key=key)
 
         if WatchConnection.objects.filter(app=app, user_uuid=user_uuid).exists():
             return Response(
