@@ -40,6 +40,10 @@ urlpatterns = [
         ),
     ),
     path(
+        "user_app_from_key",
+        views.UserAppFromKeyViewSet.as_view(),
+    ),
+    path(
         "user_app",
         views.UserAppViewSet.as_view(
             {

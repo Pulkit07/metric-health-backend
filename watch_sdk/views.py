@@ -136,11 +136,22 @@ class UserViewSet(viewsets.ModelViewSet):
     filterset_fields = ["email"]
 
 
+class UserAppFromKeyViewSet(generics.RetrieveAPIView):
+    queryset = UserApp.objects.all()
+    serializer_class = UserAppSerializer
+    permission_classes = [ValidKeyPermission]
+
+    def get(self, request, format=None):
+        key = request.query_params.get("key")
+        app = self.queryset.get(key=key)
+        return Response({"success": True, "data": UserAppSerializer(app).data})
+
 # CRUD view for UserApp model
 class UserAppViewSet(viewsets.ModelViewSet):
     queryset = UserApp.objects.all()
     serializer_class = UserAppSerializer
-    filterset_fields = ["user", "key"]
+    filterset_fields = ["user"]
+    permission_classes = [FirebaseAuthPermission]
 
 
 # CRUD view for fitness data (for testing purpose only)
