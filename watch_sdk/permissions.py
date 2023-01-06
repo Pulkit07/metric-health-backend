@@ -30,6 +30,6 @@ class AdminPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         # TODO: Change this to a more secure method
-        if request.META.get("admin_password") == "admin":
+        if request.META.get("HTTP_ADMIN_PASSWORD") == "admin":
             return True
         return False
