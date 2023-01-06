@@ -34,7 +34,7 @@ ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "core",
-    "diet_db",
+    # "diet_db",
     "watch_sdk",
     "django.contrib.admin",
     "django.contrib.auth",
