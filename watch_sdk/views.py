@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework import viewsets, views, generics
 
 from watch_sdk.google_fit import GoogleFitConnection
-from watch_sdk.permissions import FirebaseAuthPermission, ValidKeyPermission
+from watch_sdk.permissions import AdminPermission, FirebaseAuthPermission, ValidKeyPermission
 from .models import FitnessData, User, UserApp, WatchConnection
 from .serializers import (
     FitnessDataSerializer,
@@ -58,6 +58,7 @@ def upload_health_data(request):
 
 # To be called from firebase function for now, should be removed in future
 @api_view(["POST"])
+@permission_classes([AdminPermission])
 def sync_from_google_fit(request):
     """
     Helper function to sync data from google fit
@@ -127,6 +128,7 @@ class WatchConnectionListCreateView(generics.ListCreateAPIView):
 class WatchConnectionUpdateView(generics.UpdateAPIView):
     queryset = WatchConnection.objects.all()
     serializer_class = WatchConnectionSerializer
+    permission_classes = [ValidKeyPermission]
 
 
 # CRUD view for User model
@@ -134,6 +136,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     filterset_fields = ["email"]
+    permission_classes = [FirebaseAuthPermission or AdminPermission]
 
 
 class UserAppFromKeyViewSet(generics.RetrieveAPIView):
@@ -159,9 +162,11 @@ class FitnessDataViewSet(viewsets.ModelViewSet):
     queryset = FitnessData.objects.all()
     serializer_class = FitnessDataSerializer
     filterset_fields = ["app", "connection", "data_source"]
+    permission_classes = [AdminPermission]
 
 
 @api_view(["GET"])
+@permission_classes([AdminPermission])
 def test_google_sync(request):
     connections = WatchConnection.objects.filter(
         platform="android",

@@ -24,3 +24,12 @@ class FirebaseAuthPermission(permissions.BasePermission):
         if not auth_token:
             return False
         return utils.verify_firebase_token(auth_token)
+
+
+class AdminPermission(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        # TODO: Change this to a more secure method
+        if request.META.get("admin_password") == "admin":
+            return True
+        return False
