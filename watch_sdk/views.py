@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework import viewsets, views, generics
 
 from watch_sdk.google_fit import GoogleFitConnection
-from watch_sdk.permissions import ValidKeyPermission
+from watch_sdk.permissions import FirebaseAuthPermission, ValidKeyPermission
 from .models import FitnessData, User, UserApp, WatchConnection
 from .serializers import (
     FitnessDataSerializer,
@@ -18,6 +18,7 @@ from . import utils
 
 
 @api_view(["POST"])
+@permission_classes([FirebaseAuthPermission])
 def generate_key(request):
     app_id = request.query_params.get("app_id")
     try:

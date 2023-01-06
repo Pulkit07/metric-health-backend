@@ -1,5 +1,6 @@
 # permission classes for various views
 from rest_framework import permissions
+from watch_sdk import utils
 
 from watch_sdk.models import UserApp
 
@@ -14,3 +15,12 @@ class ValidKeyPermission(permissions.BasePermission):
         except Exception:
             return False
         return True
+
+
+class FirebaseAuthPermission(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        auth_token = request.META.get("HTTP_AUTHORIZATION")
+        if not auth_token:
+            return False
+        return utils.verify_firebase_token(auth_token)
