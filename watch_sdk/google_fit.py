@@ -118,7 +118,7 @@ class GoogleFitConnection(object):
             val = self._get_dataset_sum_for_data_source(streamId)
             total_steps += val * SOURCE_MULTIPLIER.get(name, 1)
 
-        return (total_steps, self.start_time_in_millis, self.end_time_in_millis)
+        return ((total_steps, self.start_time_in_millis, self.end_time_in_millis),)
 
     def get_move_minutes_since_last_sync(self):
         """
@@ -133,7 +133,7 @@ class GoogleFitConnection(object):
             val = self._get_dataset_sum_for_data_source(streamId)
             total_minutes += val * SOURCE_MULTIPLIER.get(name, 1)
 
-        return (total_minutes, self.start_time_in_millis, self.end_time_in_millis)
+        return ((total_minutes, self.start_time_in_millis, self.end_time_in_millis),)
 
     def _get_dataset_sum_for_data_source(self, dataStreamId):
         response = requests.get(

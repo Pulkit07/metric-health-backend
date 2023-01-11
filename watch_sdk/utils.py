@@ -27,21 +27,23 @@ def _sync_app_from_google_fit(user_app):
                 connection.mark_logout()
                 continue
             try:
-                (
+                for (
                     total_steps,
                     start_time,
                     end_time,
-                ) = fit_connection.get_steps_since_last_sync()
-                FitnessData.objects.create(
-                    app=user_app,
-                    connection=connection,
-                    record_start_time=datetime.datetime.fromtimestamp(
-                        start_time / 1000
-                    ),
-                    record_end_time=datetime.datetime.fromtimestamp(end_time / 1000),
-                    data={"steps": total_steps},
-                    data_source="google_fit",
-                )
+                ) in fit_connection.get_steps_since_last_sync():
+                    FitnessData.objects.create(
+                        app=user_app,
+                        connection=connection,
+                        record_start_time=datetime.datetime.fromtimestamp(
+                            start_time / 1000
+                        ),
+                        record_end_time=datetime.datetime.fromtimestamp(
+                            end_time / 1000
+                        ),
+                        data={"steps": total_steps},
+                        data_source="google_fit",
+                    )
             except Exception as e:
                 print(
                     "Unable to get steps since last sync for user %s"
@@ -50,21 +52,25 @@ def _sync_app_from_google_fit(user_app):
                 continue
 
             try:
-                (
-                    total_move_minutes,
+                for (
+                    move_minutes,
                     start_time,
                     end_time,
-                ) = fit_connection.get_move_minutes_since_last_sync()
-                FitnessData.objects.create(
-                    app=user_app,
-                    connection=connection,
-                    record_start_time=datetime.datetime.fromtimestamp(
-                        start_time / 1000
-                    ),
-                    record_end_time=datetime.datetime.fromtimestamp(end_time / 1000),
-                    data={"move_minutes": total_move_minutes},
-                    data_source="google_fit",
-                )
+                ) in fit_connection.get_move_minutes_since_last_sync():
+                    if move_minutes is 0:
+                        continue
+                    FitnessData.objects.create(
+                        app=user_app,
+                        connection=connection,
+                        record_start_time=datetime.datetime.fromtimestamp(
+                            start_time / 1000
+                        ),
+                        record_end_time=datetime.datetime.fromtimestamp(
+                            end_time / 1000
+                        ),
+                        data={"move_minutes": move_minutes},
+                        data_source="google_fit",
+                    )
             except Exception as e:
                 print(
                     "Unable to get move minutes since last sync for user %s"
