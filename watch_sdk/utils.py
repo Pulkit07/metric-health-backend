@@ -32,6 +32,8 @@ def _sync_app_from_google_fit(user_app):
                     start_time,
                     end_time,
                 ) in fit_connection.get_steps_since_last_sync():
+                    if total_steps is 0:
+                        continue
                     FitnessData.objects.create(
                         app=user_app,
                         connection=connection,
