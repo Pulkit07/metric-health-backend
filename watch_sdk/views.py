@@ -73,25 +73,29 @@ def sync_from_google_fit(request):
     return Response({"success": True}, status=200)
 
 
+@api_view(["GET"])
+@permission_classes([ValidKeyPermission])
+def watch_connection_exists(request):
+    key = request.query_params.get("key")
+    user_uuid = request.query_params.get("user_uuid")
+    app = UserApp.objects.get(key=key)
+    connection = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
+    if connection.exists():
+        return Response(
+            {
+                "success": True,
+                "data": WatchConnectionSerializer(connection.first()).data,
+            },
+            status=200,
+        )
+    return Response({"success": False}, status=404)
+
+
 class WatchConnectionListCreateView(generics.ListCreateAPIView):
     queryset = WatchConnection.objects.all()
+    filterset_fields = ["app", "user_uuid", "platform", "logged_in"]
     serializer_class = WatchConnectionSerializer
-    permission_classes = [ValidKeyPermission]
-
-    def get(self, request, format=None):
-        key = request.query_params.get("key")
-        user_uuid = request.query_params.get("user_uuid")
-        app = UserApp.objects.get(key=key)
-        connection = self.queryset.filter(app=app, user_uuid=user_uuid)
-        if connection.exists():
-            return Response(
-                {
-                    "success": True,
-                    "data": WatchConnectionSerializer(connection.first()).data,
-                },
-                status=200,
-            )
-        return Response({"success": False}, status=404)
+    permission_classes = [ValidKeyPermission | AdminPermission]
 
     def post(self, request, *args, **kwargs):
         key = request.query_params.get("key")
