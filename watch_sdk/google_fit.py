@@ -37,11 +37,14 @@ class GoogleFitConnection(object):
         self._get_access_token()
         self.end_time_in_millis = int(datetime.datetime.now().timestamp() * 1000)
         if self.connection.last_sync is None:
-            # set last sync time as start of today in local timezone
+            # set start time as 120 days before todays date
             self.start_time_in_millis = int(
-                datetime.datetime.now()
-                .replace(hour=0, minute=0, second=0, microsecond=0)
-                .timestamp()
+                (
+                    datetime.datetime.now().replace(
+                        hour=0, minute=0, second=0, microsecond=0
+                    )
+                    - datetime.timedelta(days=120)
+                ).timestamp()
                 * 1000
             )
         else:
