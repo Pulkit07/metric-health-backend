@@ -144,7 +144,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     filterset_fields = ["email"]
-    permission_classes = [FirebaseAuthPermission or AdminPermission]
+    permission_classes = [FirebaseAuthPermission | AdminPermission]
 
 
 class UserAppFromKeyViewSet(generics.RetrieveAPIView):
