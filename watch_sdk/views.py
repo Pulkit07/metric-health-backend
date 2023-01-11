@@ -6,7 +6,11 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework import viewsets, views, generics
 
 from watch_sdk.google_fit import GoogleFitConnection
-from watch_sdk.permissions import AdminPermission, FirebaseAuthPermission, ValidKeyPermission
+from watch_sdk.permissions import (
+    AdminPermission,
+    FirebaseAuthPermission,
+    ValidKeyPermission,
+)
 from .models import FitnessData, User, UserApp, WatchConnection
 from .serializers import (
     FitnessDataSerializer,
@@ -148,6 +152,7 @@ class UserAppFromKeyViewSet(generics.RetrieveAPIView):
         key = request.query_params.get("key")
         app = self.queryset.get(key=key)
         return Response({"success": True, "data": UserAppSerializer(app).data})
+
 
 # CRUD view for UserApp model
 class UserAppViewSet(viewsets.ModelViewSet):

@@ -4,8 +4,8 @@ from watch_sdk import utils
 
 from watch_sdk.models import UserApp
 
-class ValidKeyPermission(permissions.BasePermission):
 
+class ValidKeyPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         key = request.query_params.get("key")
         if not key:
@@ -18,7 +18,6 @@ class ValidKeyPermission(permissions.BasePermission):
 
 
 class FirebaseAuthPermission(permissions.BasePermission):
-
     def has_permission(self, request, view):
         auth_token = request.META.get("HTTP_AUTHORIZATION")
         if not auth_token:
@@ -27,7 +26,6 @@ class FirebaseAuthPermission(permissions.BasePermission):
 
 
 class AdminPermission(permissions.BasePermission):
-
     def has_permission(self, request, view):
         # TODO: Change this to a more secure method
         if request.META.get("HTTP_ADMIN_PASSWORD") == "admin":

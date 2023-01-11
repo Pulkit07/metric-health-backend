@@ -23,21 +23,11 @@ urlpatterns = [
     path("upload_health_data", views.upload_health_data),
     path(
         "user",
-        views.UserViewSet.as_view(
-            {
-                "get": "list",
-                "post": "create",
-            }
-        ),
+        views.UserViewSet.as_view({"get": "list", "post": "create"}),
     ),
     path(
         "user/<int:pk>",
-        views.UserViewSet.as_view(
-            {
-                "get": "retrieve",
-                "put": "update",
-            }
-        ),
+        views.UserViewSet.as_view({"get": "retrieve", "put": "update"}),
     ),
     path(
         "user_app_from_key",
@@ -45,30 +35,15 @@ urlpatterns = [
     ),
     path(
         "user_app",
-        views.UserAppViewSet.as_view(
-            {
-                "get": "list",
-                "post": "create",
-            }
-        ),
+        views.UserAppViewSet.as_view({"get": "list", "post": "create"}),
     ),
     path(
         "user_app/<int:pk>",
-        views.UserAppViewSet.as_view(
-            {
-                "get": "retrieve",
-                "put": "update",
-            }
-        ),
+        views.UserAppViewSet.as_view({"get": "retrieve", "put": "update"}),
     ),
     path(
         "fitness_data",
-        views.FitnessDataViewSet.as_view(
-            {
-                "get": "list",
-                "post": "create",
-            }
-        ),
+        views.FitnessDataViewSet.as_view({"get": "list", "post": "create"}),
     ),
     path("watch_connection", views.WatchConnectionListCreateView.as_view()),
     path("watch_connection/<int:pk>", views.WatchConnectionUpdateView.as_view()),
