@@ -104,38 +104,76 @@ class GoogleFitConnection(object):
         )
         return r.json()["dataSource"]
 
-    def get_steps_since_last_sync(self):
-        """
-        Returns the number of steps since the last sync
-        """
-        # we get estimated steps and manual entry data sources and then calculate
-        # the total steps as : estimated_steps - manual_entry_steps
-        dataSources = self._get_specific_data_sources(
-            "com.google.step_count.delta", ["estimated_steps", "user_input"]
+    def get_data_points(self):
+        data_type_unit_mapping = {
+           "com.google.weight": "fpVal",
+           "com.google.sleep.segment": "unknown",
+        }
+
+        data_types_mapping = {
+            "com.google.weight": ["merge_weight"],
+            "com.google.sleep.segment": ["merged"],
+        }
+
+        data_points = {}
+        for data_type, data_streams in data_types_mapping.items():
+            dataSources = self._get_specific_data_sources(data_type, data_streams)
+            data_points[data_type] = []
+            for _, streamId in dataSources.items():
+                data_points[data_type].extend(self._get_data_points_for_data_source(streamId, valType=data_type_unit_mapping[data_type],))
+
+        return data_points
+
+
+    def get_data_for_various_data_points(self):
+        data_type_unit_mapping = {
+            "com.google.active_minutes": "intVal",
+            "com.google.step_count.delta": "intVal",
+            "com.google.calories.expended": "fpVal",
+            "com.google.hydration": "fpVal",
+            "com.google.calories.bmr": "fpVal",
+        }
+
+        data_types_mapping = {
+            "com.google.active_minutes": ["merge_active_minutes", "user_input"],
+            "com.google.step_count.delta": ["estimated_steps", "user_input"],
+            "com.google.calories.expended": ["merge_calories_expended", "user_input"],
+            "com.google.hydration": ["merged_hydration", "user_input"],
+            "com.google.calories.bmr": ["merged"],
+        }
+
+        data_points = {}
+        for data_type, data_streams in data_types_mapping.items():
+            dataSources = self._get_specific_data_sources(data_type, data_streams)
+            total = 0
+            for name, streamId in dataSources.items():
+                val = self._get_dataset_sum_for_data_source(streamId, valType=data_type_unit_mapping[data_type],)
+                total += val * SOURCE_MULTIPLIER.get(name, 1)
+            data_points[data_type] = ((total, self.start_time_in_millis, self.end_time_in_millis),)
+
+        return data_points
+
+    def _get_data_points_for_data_source(self, dataSreamId, valType="intVal"):
+        response = requests.get(
+            f"https://www.googleapis.com/fitness/v1/users/me/dataSources/{dataSreamId}/datasets/"
+            f"{self.start_time_in_millis * 1000000}-{self.end_time_in_millis * 1000000}",
+            headers={
+                "Authorization": f"Bearer {self._access_token}",
+                "Content-Type": "application/json",
+            },
+            timeout=10,
         )
-        total_steps = 0
-        for name, streamId in dataSources.items():
-            val = self._get_dataset_sum_for_data_source(streamId)
-            total_steps += val * SOURCE_MULTIPLIER.get(name, 1)
 
-        return ((total_steps, self.start_time_in_millis, self.end_time_in_millis),)
+        points = []
+        for point in response.json()["point"]:
+            if valType == "unknown":
+                print(point)
+                continue
+            points.append((point["value"][0][valType], point["startTimeNanos"], point["endTimeNanos"]))
 
-    def get_move_minutes_since_last_sync(self):
-        """
-        Returns the number of move minutes since the last sync
-        """
-        sources = self._get_specific_data_sources(
-            "com.google.active_minutes",
-            ["merge_active_minutes", "user_input"],
-        )
-        total_minutes = 0
-        for name, streamId in sources.items():
-            val = self._get_dataset_sum_for_data_source(streamId)
-            total_minutes += val * SOURCE_MULTIPLIER.get(name, 1)
+        return points
 
-        return ((total_minutes, self.start_time_in_millis, self.end_time_in_millis),)
-
-    def _get_dataset_sum_for_data_source(self, dataStreamId):
+    def _get_dataset_sum_for_data_source(self, dataStreamId, valType="intVal"):
         response = requests.get(
             f"https://www.googleapis.com/fitness/v1/users/me/dataSources/{dataStreamId}/datasets/"
             f"{self.start_time_in_millis * 1000000}-{self.end_time_in_millis * 1000000}",
@@ -147,7 +185,10 @@ class GoogleFitConnection(object):
         )
         total = 0
         for point in response.json()["point"]:
-            total += point["value"][0]["intVal"]
+            if valType == "unknown":
+                print(point)
+                continue
+            total += point["value"][0][valType]
 
         return total
 
@@ -157,21 +198,21 @@ class GoogleFitConnection(object):
         """
         # start time should be start of yesterday in Asia/Kolkata timezone in millis
         self.start_time_in_millis = int(
-            datetime.datetime.now()
-            .astimezone(ZoneInfo("Asia/Kolkata"))
-            .replace(hour=0, minute=0, second=0, microsecond=0, day=15)
-            .timestamp()
+            (
+                datetime.datetime.now().replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+                - datetime.timedelta(days=365)
+            ).timestamp()
             * 1000
         )
         self.end_time_in_millis = int(
             datetime.datetime.now()
             .astimezone(ZoneInfo("Asia/Kolkata"))
-            .replace(hour=0, minute=0, second=0, microsecond=0, day=16)
+            .replace(hour=0, minute=0, second=0, microsecond=0, day=11)
             .timestamp()
             * 1000
         )
         self._update_last_sync = False
-        print(f"Steps since last sync are {self.get_steps_since_last_sync()}")
-        print(
-            f"Move minutes since last sync are {self.get_move_minutes_since_last_sync()}"
-        )
+        print(f"Data sum for various points is {self.get_data_for_various_data_points()}")
+        print(f"Data points for various values are {self.get_data_points()}")
