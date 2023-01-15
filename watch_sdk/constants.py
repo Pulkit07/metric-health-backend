@@ -1,12 +1,15 @@
+from .dataclasses import *
+import typing
+
 RANGE_DATA_TYPES = {
-    "com.google.active_minutes": "move_minutes",
-    "com.google.step_count.delta": "steps",
-    "com.google.calories.expended": "calories",
-    "com.google.hydration": "water_consumed",
-    "com.google.calories.bmr": "calories_bmr",
+    "com.google.active_minutes": ("move_minutes", MoveMinutes),
+    "com.google.step_count.delta": ("steps", Steps),
+    "com.google.calories.expended": ("calories", CaloriesBurned),
+    "com.google.hydration": ("water_consumed", WaterConsumed),
+    "com.google.calories.bmr": ("calories_bmr", CaloriesBMR),
 }
 
-RANGE_DATA_TYPES_ATTRIBUTES = {
+RANGE_DATA_TYPES_ATTRIBUTES: typing.Dict[str, typing.List[str]] = {
     "com.google.active_minutes": ["merge_active_minutes", "user_input"],
     "com.google.step_count.delta": ["estimated_steps", "user_input"],
     "com.google.calories.expended": ["merge_calories_expended", "user_input"],
@@ -14,7 +17,7 @@ RANGE_DATA_TYPES_ATTRIBUTES = {
     "com.google.calories.bmr": ["merged"],
 }
 
-RANGE_DATA_TYPES_UNTS = {
+RANGE_DATA_TYPES_UNTS: typing.Dict[str, str] = {
     "com.google.active_minutes": "intVal",
     "com.google.step_count.delta": "intVal",
     "com.google.calories.expended": "fpVal",
@@ -23,15 +26,16 @@ RANGE_DATA_TYPES_UNTS = {
 }
 
 POINT_DATA_TYPES = {
-    "com.google.sleep.segment": "sleep",
+    "com.google.weight": ("weight", Weight),
+    # "com.google.sleep.segment": ("sleep", None),
 }
 
-POINT_DATA_TYPES_ATTRIBUTES = {
+POINT_DATA_TYPES_ATTRIBUTES: typing.Dict[str, typing.List[str]] = {
     "com.google.weight": ["merge_weight"],
-    "com.google.sleep.segment": ["merged"],
+    # "com.google.sleep.segment": ["merged"],
 }
 
-POINT_DATA_TYPES_UNITS = {
+POINT_DATA_TYPES_UNITS: typing.Dict[str, str] = {
     "com.google.weight": "fpVal",
-    "com.google.sleep.segment": "unknown",
+    # "com.google.sleep.segment": "unknown",
 }
