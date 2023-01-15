@@ -112,10 +112,14 @@ class GoogleFitConnection(object):
             dataSources = self._get_specific_data_sources(data_type, data_streams)
             data_points[data_type] = []
             for _, streamId in dataSources.items():
-                data_points[data_type].extend(self._get_data_points_for_data_source(streamId, valType=constants.POINT_DATA_TYPES_UNITS[data_type],))
+                data_points[data_type].extend(
+                    self._get_data_points_for_data_source(
+                        streamId,
+                        valType=constants.POINT_DATA_TYPES_UNITS[data_type],
+                    )
+                )
 
         return data_points
-
 
     def get_data_for_various_data_points(self):
         data_points = {}
@@ -123,9 +127,14 @@ class GoogleFitConnection(object):
             dataSources = self._get_specific_data_sources(data_type, data_streams)
             total = 0
             for name, streamId in dataSources.items():
-                val = self._get_dataset_sum_for_data_source(streamId, valType=constants.RANGE_DATA_TYPES_UNTS[data_type],)
+                val = self._get_dataset_sum_for_data_source(
+                    streamId,
+                    valType=constants.RANGE_DATA_TYPES_UNTS[data_type],
+                )
                 total += val * SOURCE_MULTIPLIER.get(name, 1)
-            data_points[data_type] = ((total, self.start_time_in_millis, self.end_time_in_millis),)
+            data_points[data_type] = (
+                (total, self.start_time_in_millis, self.end_time_in_millis),
+            )
 
         return data_points
 
@@ -145,7 +154,13 @@ class GoogleFitConnection(object):
             if valType == "unknown":
                 print(point)
                 continue
-            points.append((point["value"][0][valType], point["startTimeNanos"], point["endTimeNanos"]))
+            points.append(
+                (
+                    point["value"][0][valType],
+                    point["startTimeNanos"],
+                    point["endTimeNanos"],
+                )
+            )
 
         return points
 
@@ -190,5 +205,7 @@ class GoogleFitConnection(object):
             * 1000
         )
         self._update_last_sync = False
-        print(f"Data sum for various points is {self.get_data_for_various_data_points()}")
+        print(
+            f"Data sum for various points is {self.get_data_for_various_data_points()}"
+        )
         print(f"Data points for various values are {self.get_data_points()}")

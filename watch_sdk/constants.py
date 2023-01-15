@@ -23,15 +23,15 @@ RANGE_DATA_TYPES_UNTS = {
 }
 
 POINT_DATA_TYPES = {
-           "com.google.sleep.segment": "sleep",
+    "com.google.sleep.segment": "sleep",
 }
 
-POINT_DATA_TYPES_ATTRIBUTES =  {
-            "com.google.weight": ["merge_weight"],
-            "com.google.sleep.segment": ["merged"],
-        }
+POINT_DATA_TYPES_ATTRIBUTES = {
+    "com.google.weight": ["merge_weight"],
+    "com.google.sleep.segment": ["merged"],
+}
 
 POINT_DATA_TYPES_UNITS = {
-           "com.google.weight": "fpVal",
-           "com.google.sleep.segment": "unknown",
-        }
+    "com.google.weight": "fpVal",
+    "com.google.sleep.segment": "unknown",
+}
