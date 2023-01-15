@@ -27,7 +27,7 @@ def _sync_app_from_google_fit(user_app):
                 connection.mark_logout()
                 continue
             try:
-                for data_type, data in fit_connection.get_data_for_various_data_points():
+                for data_type, data in fit_connection.get_data_for_range_types():
                     FitnessData.objects.create(
                         app=user_app,
                         connection=connection,
@@ -37,7 +37,7 @@ def _sync_app_from_google_fit(user_app):
                         data_source="google_fit",
                     )
 
-                for data_type, data in fit_connection.get_data_points():
+                for data_type, data in fit_connection.get_data_for_point_types():
                     for point in data:
                         FitnessData.objects.create(
                             app=user_app,
@@ -48,10 +48,7 @@ def _sync_app_from_google_fit(user_app):
                             data_source="google_fit",
                         )
             except Exception as e:
-                print(
-                    "Unable to sync data %s"
-                    % connection.user_uuid
-                )
+                print("Unable to sync data %s" % connection.user_uuid)
                 continue
 
 

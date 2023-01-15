@@ -106,7 +106,7 @@ class GoogleFitConnection(object):
         )
         return r.json()["dataSource"]
 
-    def get_data_points(self):
+    def get_data_for_point_types(self):
         data_points = {}
         for data_type, data_streams in constants.POINT_DATA_TYPES_ATTRIBUTES.items():
             dataSources = self._get_specific_data_sources(data_type, data_streams)
@@ -121,7 +121,7 @@ class GoogleFitConnection(object):
 
         return data_points
 
-    def get_data_for_various_data_points(self):
+    def get_data_for_range_types(self):
         data_points = {}
         for data_type, data_streams in constants.RANGE_DATA_TYPES_ATTRIBUTES.items():
             dataSources = self._get_specific_data_sources(data_type, data_streams)
@@ -205,7 +205,5 @@ class GoogleFitConnection(object):
             * 1000
         )
         self._update_last_sync = False
-        print(
-            f"Data sum for various points is {self.get_data_for_various_data_points()}"
-        )
-        print(f"Data points for various values are {self.get_data_points()}")
+        print(f"Data sum for various points is {self.get_data_for_range_types()}")
+        print(f"Data points for various values are {self.get_data_for_point_types()}")
