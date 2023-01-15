@@ -132,6 +132,9 @@ class GoogleFitConnection(object):
                     valType=constants.RANGE_DATA_TYPES_UNTS[data_type],
                 )
                 total += val * SOURCE_MULTIPLIER.get(name, 1)
+
+            if total is 0:
+                continue
             data_points[data_type] = (
                 total,
                 self.start_time_in_millis,
