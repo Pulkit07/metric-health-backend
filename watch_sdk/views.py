@@ -14,6 +14,7 @@ from watch_sdk.permissions import (
 from .models import FitnessData, TestWebhookData, User, UserApp, WatchConnection
 from .serializers import (
     FitnessDataSerializer,
+    TestWebhookDataSerializer,
     UserAppSerializer,
     UserSerializer,
     WatchConnectionSerializer,
@@ -174,6 +175,14 @@ class FitnessDataViewSet(viewsets.ModelViewSet):
     permission_classes = [AdminPermission]
 
 
+# CRUD view for webhook data (for testing purpose only)
+class WebhookDataViewSet(viewsets.ModelViewSet):
+    queryset = TestWebhookData.objects.all()
+    serializer_class = TestWebhookDataSerializer
+    filterset_fields = ["uuid"]
+    permission_classes = [AdminPermission]
+
+
 @api_view(["GET"])
 @permission_classes([AdminPermission])
 def test_google_sync(request):
@@ -192,8 +201,13 @@ def test_google_sync(request):
 
 @api_view(["POST"])
 def test_webhook_endpoint(request):
-    data = json.loads(request.data)
+    data = request.data.dict()
+    print(data)
+    if not data:
+        return
     TestWebhookData.objects.create(
         data=data["data"],
         uuid=data["uuid"],
     )
+
+    return Response({"success": True}, status=200)

@@ -62,11 +62,11 @@ def _sync_app_from_google_fit(user_app):
                         )
 
                 print(fitness_data)
-                requests.post(
-                    user_app.webhook_url,
-                    headers={"Content-Type": "application/json"},
-                    data={"data": fitness_data, "uuid": connection.user_uuid},
-                )
+                if fitness_data:
+                    requests.post(
+                        user_app.webhook_url,
+                        data={"data": fitness_data, "uuid": connection.user_uuid},
+                    )
 
             except Exception as e:
                 print(

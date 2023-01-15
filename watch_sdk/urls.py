@@ -45,6 +45,10 @@ urlpatterns = [
         "fitness_data",
         views.FitnessDataViewSet.as_view({"get": "list", "post": "create"}),
     ),
+    path(
+        "test_webhook_data",
+        views.WebhookDataViewSet.as_view({"get": "list"}),
+    ),
     path("check_watch_connection", views.watch_connection_exists),
     path("watch_connection", views.WatchConnectionListCreateView.as_view()),
     path("watch_connection/<int:pk>", views.WatchConnectionUpdateView.as_view()),

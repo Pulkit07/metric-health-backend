@@ -24,3 +24,9 @@ class FitnessDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = FitnessData
         fields = "__all__"
+
+
+class TestWebhookDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TestWebhookData
+        fields = "__all__"
