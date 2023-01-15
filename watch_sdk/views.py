@@ -201,7 +201,7 @@ def test_google_sync(request):
 
 @api_view(["POST"])
 def test_webhook_endpoint(request):
-    data = request.data.dict()
+    data = request.data
     print(data)
     if not data:
         return

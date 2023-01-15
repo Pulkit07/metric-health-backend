@@ -1,3 +1,4 @@
+import json
 from watch_sdk.google_fit import GoogleFitConnection
 from .models import FitnessData, UserApp, WatchConnection
 from . import constants
@@ -61,12 +62,17 @@ def _sync_app_from_google_fit(user_app):
                             ).to_dict()
                         )
 
-                print(fitness_data)
                 if fitness_data:
-                    requests.post(
+                    print(fitness_data)
+                    response = requests.post(
                         user_app.webhook_url,
-                        data={"data": fitness_data, "uuid": connection.user_uuid},
+                        headers={"Content-Type": "application/json"},
+                        data=json.dumps(
+                            {"data": fitness_data, "uuid": connection.user_uuid}
+                        ),
                     )
+
+                    print(response.json())
 
             except Exception as e:
                 print(
