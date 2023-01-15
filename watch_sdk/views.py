@@ -11,7 +11,7 @@ from watch_sdk.permissions import (
     FirebaseAuthPermission,
     ValidKeyPermission,
 )
-from .models import FitnessData, User, UserApp, WatchConnection
+from .models import FitnessData, TestWebhookData, User, UserApp, WatchConnection
 from .serializers import (
     FitnessDataSerializer,
     UserAppSerializer,
@@ -188,3 +188,12 @@ def test_google_sync(request):
             gfc.test_sync()
 
     return Response({"success": True}, status=200)
+
+
+@api_view(["POST"])
+def test_webhook_endpoint(request):
+    data = json.loads(request.data)
+    TestWebhookData.objects.create(
+        data=data["data"],
+        uuid=data["uuid"],
+    )
