@@ -7,6 +7,8 @@ try:
 except ImportError:
     from backports.zoneinfo import ZoneInfo
 
+from . import constants
+
 SOURCE_MULTIPLIER = {
     "user_input": -1,
 }
@@ -105,49 +107,23 @@ class GoogleFitConnection(object):
         return r.json()["dataSource"]
 
     def get_data_points(self):
-        data_type_unit_mapping = {
-           "com.google.weight": "fpVal",
-           "com.google.sleep.segment": "unknown",
-        }
-
-        data_types_mapping = {
-            "com.google.weight": ["merge_weight"],
-            "com.google.sleep.segment": ["merged"],
-        }
-
         data_points = {}
-        for data_type, data_streams in data_types_mapping.items():
+        for data_type, data_streams in constants.POINT_DATA_TYPES_ATTRIBUTES.items():
             dataSources = self._get_specific_data_sources(data_type, data_streams)
             data_points[data_type] = []
             for _, streamId in dataSources.items():
-                data_points[data_type].extend(self._get_data_points_for_data_source(streamId, valType=data_type_unit_mapping[data_type],))
+                data_points[data_type].extend(self._get_data_points_for_data_source(streamId, valType=constants.POINT_DATA_TYPES_UNITS[data_type],))
 
         return data_points
 
 
     def get_data_for_various_data_points(self):
-        data_type_unit_mapping = {
-            "com.google.active_minutes": "intVal",
-            "com.google.step_count.delta": "intVal",
-            "com.google.calories.expended": "fpVal",
-            "com.google.hydration": "fpVal",
-            "com.google.calories.bmr": "fpVal",
-        }
-
-        data_types_mapping = {
-            "com.google.active_minutes": ["merge_active_minutes", "user_input"],
-            "com.google.step_count.delta": ["estimated_steps", "user_input"],
-            "com.google.calories.expended": ["merge_calories_expended", "user_input"],
-            "com.google.hydration": ["merged_hydration", "user_input"],
-            "com.google.calories.bmr": ["merged"],
-        }
-
         data_points = {}
-        for data_type, data_streams in data_types_mapping.items():
+        for data_type, data_streams in constants.RANGE_DATA_TYPES_ATTRIBUTES.items():
             dataSources = self._get_specific_data_sources(data_type, data_streams)
             total = 0
             for name, streamId in dataSources.items():
-                val = self._get_dataset_sum_for_data_source(streamId, valType=data_type_unit_mapping[data_type],)
+                val = self._get_dataset_sum_for_data_source(streamId, valType=constants.RANGE_DATA_TYPES_UNTS[data_type],)
                 total += val * SOURCE_MULTIPLIER.get(name, 1)
             data_points[data_type] = ((total, self.start_time_in_millis, self.end_time_in_millis),)
 
