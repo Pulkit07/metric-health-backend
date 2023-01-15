@@ -164,7 +164,7 @@ class UserAppViewSet(viewsets.ModelViewSet):
     queryset = UserApp.objects.all()
     serializer_class = UserAppSerializer
     filterset_fields = ["user"]
-    permission_classes = [FirebaseAuthPermission]
+    permission_classes = [FirebaseAuthPermission | AdminPermission]
 
 
 # CRUD view for fitness data (for testing purpose only)
