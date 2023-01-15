@@ -3,58 +3,58 @@ from dataclasses_json import dataclass_json
 
 
 @dataclass
-class FitnessDatatype(frozen=True):
+class FitnessDatatype:
     source: str
 
 
 @dataclass
-class RangeDatatype(FitnessDatatype, frozen=True):
+class RangeDatatype(FitnessDatatype):
     start_time: int
     end_time: int
 
 
 @dataclass
-class PointDatatype(FitnessDatatype, frozen=True):
+class PointDatatype(FitnessDatatype):
     time: int
 
 
 @dataclass_json
 @dataclass
-class Steps(RangeDatatype, frozen=True):
+class Steps(RangeDatatype):
     value: int
 
 
 @dataclass_json
 @dataclass
-class MoveMinutes(RangeDatatype, frozen=True):
+class MoveMinutes(RangeDatatype):
     value: int
 
 
 @dataclass_json
 @dataclass
-class CaloriesBurned(RangeDatatype, frozen=True):
+class CaloriesBurned(RangeDatatype):
     value: float
 
 
 @dataclass_json
 @dataclass
-class WaterConsumed(RangeDatatype, frozen=True):
+class WaterConsumed(RangeDatatype):
     value: float
 
 
 @dataclass_json
 @dataclass
-class CaloriesBMR(RangeDatatype, frozen=True):
+class CaloriesBMR(RangeDatatype):
     value: float
 
 
 @dataclass_json
 @dataclass
-class Weight(PointDatatype, frozen=True):
+class Weight(PointDatatype):
     value: float
 
 
 @dataclass_json
 @dataclass
-class Height(PointDatatype, frozen=True):
+class Height(PointDatatype):
     value: float

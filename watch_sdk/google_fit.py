@@ -133,7 +133,9 @@ class GoogleFitConnection(object):
                 )
                 total += val * SOURCE_MULTIPLIER.get(name, 1)
             data_points[data_type] = (
-                (total, self.start_time_in_millis, self.end_time_in_millis),
+                total,
+                self.start_time_in_millis,
+                self.end_time_in_millis,
             )
 
         return data_points

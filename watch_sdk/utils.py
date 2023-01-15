@@ -1,10 +1,11 @@
-import datetime
 from watch_sdk.google_fit import GoogleFitConnection
 from .models import FitnessData, UserApp, WatchConnection
+from . import constants
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import auth
-import os
+import collections
+import requests
 
 
 def google_fit_cron():
@@ -20,35 +21,58 @@ def _sync_app_from_google_fit(user_app):
         google_fit_refresh_token__isnull=False,
         logged_in=True,
     )
+    if user_app.webhook_url is None:
+        print("No webhook url for app %s", user_app.id)
+        return
     for connection in connections:
+        print(f"\n\nSyncing for {connection.user_uuid}")
         with GoogleFitConnection(user_app, connection) as fit_connection:
+            fitness_data = collections.defaultdict(list)
             if fit_connection._access_token is None:
                 print("Unable to get access token")
                 connection.mark_logout()
                 continue
             try:
-                for data_type, data in fit_connection.get_data_for_range_types():
-                    FitnessData.objects.create(
-                        app=user_app,
-                        connection=connection,
-                        record_start_time=data[1],
-                        record_end_time=data[2],
-                        data={data_type: data[0]},
-                        data_source="google_fit",
+                for (
+                    data_type,
+                    data,
+                ) in fit_connection.get_data_for_range_types().items():
+                    data_key, dclass = constants.RANGE_DATA_TYPES[data_type]
+                    fitness_data[data_key].append(
+                        dclass(
+                            source="google_fit",
+                            start_time=data[1],
+                            end_time=data[2],
+                            value=data[0],
+                        ).to_dict()
                     )
 
-                for data_type, data in fit_connection.get_data_for_point_types():
-                    for point in data:
-                        FitnessData.objects.create(
-                            app=user_app,
-                            connection=connection,
-                            record_start_time=point[1],
-                            record_end_time=point[2],
-                            data={data_type: point[0]},
-                            data_source="google_fit",
+                for (
+                    data_type,
+                    data,
+                ) in fit_connection.get_data_for_point_types().items():
+                    data_key, dclass = constants.POINT_DATA_TYPES[data_type]
+                    for d in data:
+                        fitness_data[data_key].append(
+                            dclass(
+                                source="google_fit",
+                                time=d[1],
+                                value=d[0],
+                            ).to_dict()
                         )
+
+                print(fitness_data)
+                requests.post(
+                    user_app.webhook_url,
+                    headers={"Content-Type": "application/json"},
+                    data={"data": fitness_data, "uuid": connection.user_uuid},
+                )
+
             except Exception as e:
-                print("Unable to sync data %s" % connection.user_uuid)
+                print(
+                    "Unable to sync data %s, got exception %s"
+                    % (connection.user_uuid, e)
+                )
                 continue
 
 
