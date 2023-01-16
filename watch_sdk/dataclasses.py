@@ -5,56 +5,48 @@ from dataclasses_json import dataclass_json
 @dataclass
 class FitnessDatatype:
     source: str
-
-
-@dataclass
-class RangeDatatype(FitnessDatatype):
     start_time: int
+    # start time and endtime will be same in case of point datatype
     end_time: int
 
 
-@dataclass
-class PointDatatype(FitnessDatatype):
-    time: int
-
-
 @dataclass_json
 @dataclass
-class Steps(RangeDatatype):
+class Steps(FitnessDatatype):
     value: int
 
 
 @dataclass_json
 @dataclass
-class MoveMinutes(RangeDatatype):
+class MoveMinutes(FitnessDatatype):
     value: int
 
 
 @dataclass_json
 @dataclass
-class CaloriesBurned(RangeDatatype):
+class CaloriesBurned(FitnessDatatype):
     value: float
 
 
 @dataclass_json
 @dataclass
-class WaterConsumed(RangeDatatype):
+class WaterConsumed(FitnessDatatype):
     value: float
 
 
 @dataclass_json
 @dataclass
-class CaloriesBMR(RangeDatatype):
+class CaloriesBMR(FitnessDatatype):
     value: float
 
 
 @dataclass_json
 @dataclass
-class Weight(PointDatatype):
+class Weight(FitnessDatatype):
     value: float
 
 
 @dataclass_json
 @dataclass
-class Height(PointDatatype):
+class Height(FitnessDatatype):
     value: float
