@@ -27,15 +27,18 @@ RANGE_DATA_TYPES_UNTS: typing.Dict[str, str] = {
 
 POINT_DATA_TYPES = {
     "com.google.weight": ("weight", Weight),
+    "com.google.height": ("height", Height),
     # "com.google.sleep.segment": ("sleep", None),
 }
 
 POINT_DATA_TYPES_ATTRIBUTES: typing.Dict[str, typing.List[str]] = {
     "com.google.weight": ["merge_weight"],
+    "com.google.height": ["merge_height"],
     # "com.google.sleep.segment": ["merged"],
 }
 
 POINT_DATA_TYPES_UNITS: typing.Dict[str, str] = {
     "com.google.weight": "fpVal",
+    "com.google.height": "fpVal",
     # "com.google.sleep.segment": "unknown",
 }
