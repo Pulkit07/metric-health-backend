@@ -48,7 +48,7 @@ def upload_health_data(request):
     except:
         return Response({"error": "No connection exists for this user"}, status=400)
 
-    data = json.loads(request.data)
+    data = request.data
     FitnessData.objects.create(
         app=app,
         data=data,
