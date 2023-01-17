@@ -9,3 +9,4 @@ django-filter==22.1
 django-cors-headers==3.13.0
 firebase-admin==6.0.1
 dataclasses-json==0.5.7
+daphne==4.0.0
