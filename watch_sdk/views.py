@@ -137,7 +137,7 @@ class WatchConnectionListCreateView(generics.ListCreateAPIView):
 class WatchConnectionUpdateView(generics.UpdateAPIView):
     queryset = WatchConnection.objects.all()
     serializer_class = WatchConnectionSerializer
-    permission_classes = [ValidKeyPermission]
+    permission_classes = [ValidKeyPermission | AdminPermission]
 
 
 # CRUD view for User model
