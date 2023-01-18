@@ -72,8 +72,11 @@ def _sync_app_from_google_fit(user_app):
                             {"data": fitness_data, "uuid": connection.user_uuid}
                         ),
                     )
-
-                    print(response.json())
+                    if response.status_code > 200:
+                        print(
+                            "Error in response, status code: %s" % response.status_code
+                        )
+                        fit_connection._update_last_sync = False
 
             except Exception as e:
                 print(
