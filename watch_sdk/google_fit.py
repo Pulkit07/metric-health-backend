@@ -45,7 +45,7 @@ class GoogleFitConnection(object):
                     datetime.datetime.now().replace(
                         hour=0, minute=0, second=0, microsecond=0
                     )
-                    - datetime.timedelta(days=120)
+                    - datetime.timedelta(days=30)
                 ).timestamp()
                 * 1000
             )
