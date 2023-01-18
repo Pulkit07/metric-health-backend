@@ -125,21 +125,13 @@ class GoogleFitConnection(object):
         data_points = {}
         for data_type, data_streams in constants.RANGE_DATA_TYPES_ATTRIBUTES.items():
             dataSources = self._get_specific_data_sources(data_type, data_streams)
-            total = 0
+            data_points[data_type] = []
             for name, streamId in dataSources.items():
-                val = self._get_dataset_sum_for_data_source(
+                vals = self._get_dataset_sum_for_data_source(
                     streamId,
                     valType=constants.RANGE_DATA_TYPES_UNTS[data_type],
                 )
-                total += val * SOURCE_MULTIPLIER.get(name, 1)
-
-            if total is 0:
-                continue
-            data_points[data_type] = (
-                total,
-                self.start_time_in_millis,
-                self.end_time_in_millis,
-            )
+                data_points[data_type].extend(vals)
 
         return data_points
 
@@ -179,14 +171,20 @@ class GoogleFitConnection(object):
             },
             timeout=10,
         )
-        total = 0
+        vals = []
         for point in response.json()["point"]:
+            vals.append(
+                (
+                    point["value"][0][valType],
+                    int(point["startTimeNanos"]) / 1000000,
+                    int(point["endTimeNanos"]) / 1000000,
+                )
+            )
             if valType == "unknown":
                 print(point)
                 continue
-            total += point["value"][0][valType]
 
-        return total
+        return vals
 
     def test_sync(self):
         """

@@ -39,14 +39,15 @@ def _sync_app_from_google_fit(user_app):
                     data,
                 ) in fit_connection.get_data_for_range_types().items():
                     data_key, dclass = constants.RANGE_DATA_TYPES[data_type]
-                    fitness_data[data_key].append(
-                        dclass(
-                            source="google_fit",
-                            start_time=data[1],
-                            end_time=data[2],
-                            value=data[0],
-                        ).to_dict()
-                    )
+                    for d in data:
+                        fitness_data[data_key].append(
+                            dclass(
+                                source="google_fit",
+                                start_time=d[1],
+                                end_time=d[2],
+                                value=d[0],
+                            ).to_dict()
+                        )
 
                 for (
                     data_type,
