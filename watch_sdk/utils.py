@@ -15,6 +15,15 @@ def google_fit_cron():
         _sync_app_from_google_fit(app)
 
 
+def _split_data_into_chunks(fitness_data):
+    chunk_size = 10
+    data_chunks = []
+    for data_type, data in fitness_data.items():
+        for i in range(0, len(data), chunk_size):
+            data_chunks.append({data_type: data[i : i + chunk_size]})
+    return data_chunks
+
+
 def _sync_app_from_google_fit(user_app):
     connections = WatchConnection.objects.filter(
         app=user_app,
@@ -65,19 +74,28 @@ def _sync_app_from_google_fit(user_app):
                         )
 
                 if fitness_data:
-                    print(fitness_data)
-                    response = requests.post(
-                        user_app.webhook_url,
-                        headers={"Content-Type": "application/json"},
-                        data=json.dumps(
-                            {"data": fitness_data, "uuid": connection.user_uuid}
-                        ),
-                    )
-                    if response.status_code > 200:
-                        print(
-                            "Error in response, status code: %s" % response.status_code
+                    chunks = _split_data_into_chunks(fitness_data)
+                    print("got chunks %s" % len(chunks))
+                    cur_chunk = 0
+                    for chunk in chunks:
+                        response = requests.post(
+                            user_app.webhook_url,
+                            headers={"Content-Type": "application/json"},
+                            data=json.dumps(
+                                {"data": chunk, "uuid": connection.user_uuid}
+                            ),
                         )
-                        fit_connection._update_last_sync = False
+                        print(
+                            f"response for chunk {cur_chunk}: {response}, {user_app.webhook_url}"
+                        )
+                        cur_chunk += 1
+                        if response.status_code > 200:
+                            print(
+                                "Error in response, status code: %s"
+                                % response.status_code
+                            )
+                            fit_connection._update_last_sync = False
+                            break
 
             except Exception as e:
                 print(
