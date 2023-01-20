@@ -47,6 +47,7 @@ class WatchConnection(BaseModel):
 
     # only when platform is android
     google_fit_refresh_token = models.CharField(max_length=200, blank=True, null=True)
+    google_fit_email = models.CharField(max_length=400, blank=True, null=True)
 
     # last sync time
     last_sync = models.DateTimeField(blank=True, null=True)
