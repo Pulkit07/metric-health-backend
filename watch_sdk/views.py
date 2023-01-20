@@ -128,8 +128,10 @@ class WatchConnectionListCreateView(generics.ListCreateAPIView):
             return Response({"error": "Invalid platform"}, status=400)
 
         google_fit_refresh_token = None
+        google_fit_email = None
         if platform == "android":
             google_fit_refresh_token = request.data.get("google_fit_refresh_token")
+            google_fit_email = request.data.get("google_fit_email")
             if not google_fit_refresh_token:
                 return Response(
                     {"error": "google_fit_refresh_token required for android platform"},
@@ -148,6 +150,7 @@ class WatchConnectionListCreateView(generics.ListCreateAPIView):
             user_uuid=user_uuid,
             platform=platform,
             google_fit_refresh_token=google_fit_refresh_token,
+            google_fit_email=google_fit_email,
             logged_in=True,
         )
         return Response(
