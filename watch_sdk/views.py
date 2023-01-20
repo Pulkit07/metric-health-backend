@@ -70,6 +70,7 @@ def upload_health_data(request):
                         source="apple_healthkit",
                     ).to_dict()
                 )
+        utils.send_data_to_webhook(fitness_data, app.webhook_url, connection.user_uuid)
     FitnessData.objects.create(
         app=app,
         data=data,

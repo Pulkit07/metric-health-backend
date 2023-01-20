@@ -74,35 +74,37 @@ def _sync_app_from_google_fit(user_app):
                         )
 
                 if fitness_data:
-                    chunks = _split_data_into_chunks(fitness_data)
-                    print("got chunks %s" % len(chunks))
-                    cur_chunk = 0
-                    for chunk in chunks:
-                        response = requests.post(
-                            user_app.webhook_url,
-                            headers={"Content-Type": "application/json"},
-                            data=json.dumps(
-                                {"data": chunk, "uuid": connection.user_uuid}
-                            ),
-                        )
-                        print(
-                            f"response for chunk {cur_chunk}: {response}, {user_app.webhook_url}"
-                        )
-                        cur_chunk += 1
-                        if response.status_code > 200:
-                            print(
-                                "Error in response, status code: %s"
-                                % response.status_code
-                            )
-                            fit_connection._update_last_sync = False
-                            break
-
+                    send_data_to_webhook(
+                        fitness_data,
+                        user_app.webhook_url,
+                        connection.user_uuid,
+                        fit_connection,
+                    )
             except Exception as e:
                 print(
                     "Unable to sync data %s, got exception %s"
                     % (connection.user_uuid, e)
                 )
                 continue
+
+
+def send_data_to_webhook(fitness_data, webhook_url, user_uuid, fit_connection=None):
+    chunks = _split_data_into_chunks(fitness_data)
+    print("got chunks %s" % len(chunks))
+    cur_chunk = 0
+    for chunk in chunks:
+        response = requests.post(
+            webhook_url,
+            headers={"Content-Type": "application/json"},
+            data=json.dumps({"data": chunk, "uuid": user_uuid}),
+        )
+        print(f"response for chunk {cur_chunk}: {response}, {webhook_url}")
+        cur_chunk += 1
+        if response.status_code > 200:
+            print("Error in response, status code: %s" % response.status_code)
+            if fit_connection:
+                fit_connection._update_last_sync = False
+            break
 
 
 cred = credentials.Certificate(
