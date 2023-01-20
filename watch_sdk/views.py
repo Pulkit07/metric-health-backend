@@ -20,6 +20,7 @@ from .serializers import (
     WatchConnectionSerializer,
 )
 from . import utils
+from .constants import apple_healthkit
 
 
 @api_view(["POST"])
@@ -49,6 +50,26 @@ def upload_health_data(request):
         return Response({"error": "No connection exists for this user"}, status=400)
 
     data = request.data
+    print(f"Health data received for {user_uuid}: {data}")
+    print(type(data))
+    if False:
+        fitness_data = collections.defaultdict(list)
+        for data_type, data in data.items():
+            key, dclass = apple_healthkit.DATA_TYPES.get(data_type, (None, None))
+            if not key or not dclass:
+                continue
+            for d in data:
+                value = d["value"]
+                start_time = d["date_from"]
+                end_time = d["date_to"]
+                fitness_data[key].append(
+                    dclass(
+                        value=value,
+                        start_time=start_time,
+                        end_time=end_time,
+                        source="apple_healthkit",
+                    ).to_dict()
+                )
     FitnessData.objects.create(
         app=app,
         data=data,
@@ -57,7 +78,6 @@ def upload_health_data(request):
         record_end_time=datetime.datetime.now(),
         data_source=request.query_params.get("data_source") or "api",
     )
-    print(f"Health data received for {user_uuid}: {data}")
     return Response({"success": True}, status=200)
 
 
