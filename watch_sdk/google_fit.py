@@ -7,7 +7,7 @@ try:
 except ImportError:
     from backports.zoneinfo import ZoneInfo
 
-from . import constants
+from .constants import google_fit
 
 SOURCE_MULTIPLIER = {
     "user_input": -1,
@@ -108,31 +108,29 @@ class GoogleFitConnection(object):
 
     def get_data_for_point_types(self):
         data_points = {}
-        for data_type, data_streams in constants.POINT_DATA_TYPES_ATTRIBUTES.items():
+        for data_type, data_streams in google_fit.POINT_DATA_TYPES_ATTRIBUTES.items():
             dataSources = self._get_specific_data_sources(data_type, data_streams)
             data_points[data_type] = []
             for _, streamId in dataSources.items():
                 data_points[data_type].extend(
                     self._get_data_points_for_data_source(
                         streamId,
-                        valType=constants.POINT_DATA_TYPES_UNITS[data_type],
+                        valType=google_fit.POINT_DATA_TYPES_UNITS[data_type],
                     )
                 )
-
         return data_points
 
     def get_data_for_range_types(self):
         data_points = {}
-        for data_type, data_streams in constants.RANGE_DATA_TYPES_ATTRIBUTES.items():
+        for data_type, data_streams in google_fit.RANGE_DATA_TYPES_ATTRIBUTES.items():
             dataSources = self._get_specific_data_sources(data_type, data_streams)
             data_points[data_type] = []
             for name, streamId in dataSources.items():
                 vals = self._get_dataset_sum_for_data_source(
                     streamId,
-                    valType=constants.RANGE_DATA_TYPES_UNTS[data_type],
+                    valType=google_fit.RANGE_DATA_TYPES_UNTS[data_type],
                 )
                 data_points[data_type].extend(vals)
-
         return data_points
 
     def _get_data_points_for_data_source(self, dataSreamId, valType="intVal"):

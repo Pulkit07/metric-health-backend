@@ -1,7 +1,7 @@
 import json
 from watch_sdk.google_fit import GoogleFitConnection
 from .models import FitnessData, UserApp, WatchConnection
-from . import constants
+from .constants import google_fit
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import auth
@@ -47,7 +47,7 @@ def _sync_app_from_google_fit(user_app):
                     data_type,
                     data,
                 ) in fit_connection.get_data_for_range_types().items():
-                    data_key, dclass = constants.RANGE_DATA_TYPES[data_type]
+                    data_key, dclass = google_fit.RANGE_DATA_TYPES[data_type]
                     for d in data:
                         fitness_data[data_key].append(
                             dclass(
@@ -62,7 +62,7 @@ def _sync_app_from_google_fit(user_app):
                     data_type,
                     data,
                 ) in fit_connection.get_data_for_point_types().items():
-                    data_key, dclass = constants.POINT_DATA_TYPES[data_type]
+                    data_key, dclass = google_fit.POINT_DATA_TYPES[data_type]
                     for d in data:
                         fitness_data[data_key].append(
                             dclass(
