@@ -11,6 +11,17 @@ class User(BaseModel):
     country = models.CharField(max_length=100, blank=True, null=True)
 
 
+# object for refering various platforms that we support
+class Platform(BaseModel):
+    # google fit, apple healthkit, strava etc.
+    name = models.CharField(max_length=100)
+
+
+class EnabledPlatform(BaseModel):
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
+    platform_app_id = models.CharField(max_length=200)
+
+
 # a basic model for apps that user will create
 class UserApp(BaseModel):
     name = models.CharField(max_length=100)
@@ -22,6 +33,7 @@ class UserApp(BaseModel):
     website = models.CharField(max_length=100, blank=True, null=True)
     webhook_url = models.CharField(max_length=600, blank=True, null=True)
     key = models.CharField(max_length=100, blank=True, null=True)
+    enabled_platforms = models.ManyToManyField(EnabledPlatform, blank=True)
     google_auth_client_id = models.CharField(max_length=200, blank=True, null=True)
     payment_plan = models.CharField(
         max_length=100,
@@ -35,6 +47,13 @@ class UserApp(BaseModel):
     )
 
 
+class ConnectedPlatformMetadata(BaseModel):
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
+    refresh_token = models.CharField(max_length=200, blank=True, null=True)
+    last_sync = models.DateTimeField(blank=True, null=True)
+    email = models.CharField(max_length=400, blank=True, null=True)
+
+
 class WatchConnection(BaseModel):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
     user_uuid = models.CharField(max_length=200)
@@ -45,6 +64,8 @@ class WatchConnection(BaseModel):
     # only used for cases where we get a token from the sdk and then talks directly
     # with the server to get the data. For example Google Fit
     logged_in = models.BooleanField(default=False)
+
+    connected_platforms = models.ManyToManyField(ConnectedPlatformMetadata, blank=True)
 
     # only when platform is android
     google_fit_refresh_token = models.CharField(max_length=200, blank=True, null=True)

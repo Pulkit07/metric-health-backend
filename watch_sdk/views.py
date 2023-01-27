@@ -11,9 +11,18 @@ from watch_sdk.permissions import (
     FirebaseAuthPermission,
     ValidKeyPermission,
 )
-from .models import FitnessData, TestWebhookData, User, UserApp, WatchConnection
+from .models import (
+    EnabledPlatform,
+    FitnessData,
+    Platform,
+    TestWebhookData,
+    User,
+    UserApp,
+    WatchConnection,
+)
 from .serializers import (
     FitnessDataSerializer,
+    PlatformSerializer,
     TestWebhookDataSerializer,
     UserAppSerializer,
     UserSerializer,
@@ -158,10 +167,33 @@ class WatchConnectionListCreateView(generics.ListCreateAPIView):
         )
 
 
+@api_view(["POST"])
+@permission_classes([FirebaseAuthPermission | AdminPermission])
+def enable_platform_for_app(request):
+    app = UserApp.objects.get(id=request.query_params.get("app_id"))
+    try:
+        platform = Platform.objects.get(name=request.data.get("platform"))
+    except:
+        return Response({"error": "Invalid platform"}, status=400)
+    enabled_platform = EnabledPlatform(
+        platform=platform, platform_app_id=request.data.get("platform_app_id")
+    )
+    enabled_platform.save()
+    app.enabled_platforms.add(enabled_platform)
+    app.save()
+    return Response({"success": True}, status=200)
+
+
 class WatchConnectionUpdateView(generics.RetrieveUpdateDestroyAPIView):
     queryset = WatchConnection.objects.all()
     serializer_class = WatchConnectionSerializer
     permission_classes = [ValidKeyPermission | AdminPermission]
+
+
+class PlatformViewSet(viewsets.ModelViewSet):
+    queryset = Platform.objects.all()
+    serializer_class = PlatformSerializer
+    permission_classes = [AdminPermission]
 
 
 # CRUD view for User model

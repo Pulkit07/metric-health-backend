@@ -8,13 +8,39 @@ class UserSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class PlatformSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Platform
+        fields = "__all__"
+
+
+class EnabledPlatformSerializer(serializers.ModelSerializer):
+    platform = PlatformSerializer()
+
+    class Meta:
+        model = EnabledPlatform
+        fields = "__all__"
+
+
 class UserAppSerializer(serializers.ModelSerializer):
+    enabled_platforms = EnabledPlatformSerializer(many=True)
+
     class Meta:
         model = UserApp
         fields = "__all__"
 
 
+class ConnectedPlatformMetadataSerializer(serializers.ModelSerializer):
+    platform = PlatformSerializer()
+
+    class Meta:
+        model = ConnectedPlatformMetadata
+        fields = "__all__"
+
+
 class WatchConnectionSerializer(serializers.ModelSerializer):
+    connected_platforms = ConnectedPlatformMetadataSerializer(many=True)
+
     class Meta:
         model = WatchConnection
         fields = "__all__"
