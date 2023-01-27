@@ -158,7 +158,7 @@ class WatchConnectionListCreateView(generics.ListCreateAPIView):
         )
 
 
-class WatchConnectionUpdateView(generics.UpdateAPIView):
+class WatchConnectionUpdateView(generics.RetrieveUpdateDestroyAPIView):
     queryset = WatchConnection.objects.all()
     serializer_class = WatchConnectionSerializer
     permission_classes = [ValidKeyPermission | AdminPermission]
