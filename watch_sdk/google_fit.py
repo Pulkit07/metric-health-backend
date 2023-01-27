@@ -2,6 +2,8 @@ import datetime
 import json
 import requests
 
+from watch_sdk.models import ConnectedPlatformMetadata
+
 try:
     from zoneinfo import ZoneInfo
 except ImportError:
@@ -21,7 +23,7 @@ class GoogleFitConnection(object):
 
     def __init__(self, user_app, connection):
         self.user_app = user_app
-        self.connection = connection
+        self.connection: ConnectedPlatformMetadata = connection
         self._access_token = None
         self.start_time_in_millis = None
         self.end_time_in_millis = None
@@ -71,7 +73,7 @@ class GoogleFitConnection(object):
             "https://www.googleapis.com/oauth2/v4/token",
             params={
                 "client_id": self.user_app.google_auth_client_id,
-                "refresh_token": self.connection.google_fit_refresh_token,
+                "refresh_token": self.connection.refresh_token,
                 "grant_type": "refresh_token",
             },
             headers={"Content-Type": "application/json"},

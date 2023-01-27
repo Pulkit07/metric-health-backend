@@ -52,6 +52,12 @@ class ConnectedPlatformMetadata(BaseModel):
     refresh_token = models.CharField(max_length=200, blank=True, null=True)
     last_sync = models.DateTimeField(blank=True, null=True)
     email = models.CharField(max_length=400, blank=True, null=True)
+    # to track whether the refresh token is valid or not
+    logged_in = models.BooleanField(default=True)
+
+    def mark_logout(self):
+        self.logged_in = False
+        self.save()
 
 
 class WatchConnection(BaseModel):
@@ -73,10 +79,6 @@ class WatchConnection(BaseModel):
 
     # last sync time
     last_sync = models.DateTimeField(blank=True, null=True)
-
-    def mark_logout(self):
-        self.logged_in = False
-        self.save()
 
 
 class FitnessData(BaseModel):

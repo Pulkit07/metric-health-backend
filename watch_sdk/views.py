@@ -144,6 +144,10 @@ def connect_platform_for_user(request):
         )
 
     app = UserApp.objects.get(key=key)
+    if not app.enabled_platforms.filter(platform=platform).exists():
+        return Response(
+            {"error": f"{platform.name} is not enabled for this app"}, status=400
+        )
 
     connections = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
     if connections.exists():
