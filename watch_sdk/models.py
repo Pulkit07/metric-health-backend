@@ -28,6 +28,7 @@ class UserApp(BaseModel):
         choices=(
             ("free", "free"),
             ("startup", "startup"),
+            ("business", "business"),
             ("enterprise", "enterprise"),
         ),
         default="free",
