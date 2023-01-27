@@ -12,6 +12,7 @@ from watch_sdk.permissions import (
     ValidKeyPermission,
 )
 from .models import (
+    ConnectedPlatformMetadata,
     EnabledPlatform,
     FitnessData,
     Platform,
@@ -122,49 +123,68 @@ def watch_connection_exists(request):
     return Response({"success": False}, status=404)
 
 
-class WatchConnectionListCreateView(generics.ListCreateAPIView):
+@api_view(["POST"])
+@permission_classes([ValidKeyPermission | AdminPermission])
+def connect_platform_for_user(request):
+    key = request.query_params.get("key")
+    user_uuid = request.query_params.get("user_uuid")
+
+    try:
+        platform = Platform.objects.get(name=request.data.get("platform"))
+    except Exception:
+        return Response({"error": "Invalid platform"}, status=400)
+
+    if (
+        platform.name in ["android", "strava"]
+        and request.data.get("platform_app_id") is None
+    ):
+        return Response(
+            {"error": f"platform_app_id required for {platform.name}"},
+            status=400,
+        )
+
+    app = UserApp.objects.get(key=key)
+
+    connections = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
+    if connections.exists():
+        connection: WatchConnection = connections.first()
+        if connection.connected_platforms.filter(platform=platform).exists():
+            return Response(
+                {
+                    "error": f"A connection with this user for {platform.name} already exists"
+                },
+                status=400,
+            )
+
+    else:
+        connection = WatchConnection.objects.create(
+            app=app,
+            user_uuid=user_uuid,
+            platform=platform,
+            logged_in=True,
+        )
+        connection.save()
+
+    connected_platform_metadata = ConnectedPlatformMetadata(
+        platform_app_id=request.data.get("platform_app_id"),
+        platform=platform,
+        email=request.data.get("email"),
+    )
+    connected_platform_metadata.save()
+    connection.connected_platforms.add(connected_platform_metadata)
+    connection.save()
+
+    return Response(
+        {"success": True, "data": WatchConnectionSerializer(connection).data},
+        status=200,
+    )
+
+
+class WatchConnectionListView(generics.ListAPIView):
     queryset = WatchConnection.objects.all()
     filterset_fields = ["app", "user_uuid", "platform", "logged_in"]
     serializer_class = WatchConnectionSerializer
     permission_classes = [ValidKeyPermission | AdminPermission]
-
-    def post(self, request, *args, **kwargs):
-        key = request.query_params.get("key")
-        user_uuid = request.query_params.get("user_uuid")
-        platform = request.query_params.get("platform")
-
-        if not platform in ["android", "ios"]:
-            return Response({"error": "Invalid platform"}, status=400)
-
-        google_fit_refresh_token = None
-        google_fit_email = None
-        if platform == "android":
-            google_fit_refresh_token = request.data.get("google_fit_refresh_token")
-            google_fit_email = request.data.get("google_fit_email")
-            if not google_fit_refresh_token:
-                return Response(
-                    {"error": "google_fit_refresh_token required for android platform"},
-                    status=400,
-                )
-
-        app = UserApp.objects.get(key=key)
-
-        if WatchConnection.objects.filter(app=app, user_uuid=user_uuid).exists():
-            return Response(
-                {"error": "A connection with this user already exists"}, status=400
-            )
-
-        obj = WatchConnection.objects.create(
-            app=app,
-            user_uuid=user_uuid,
-            platform=platform,
-            google_fit_refresh_token=google_fit_refresh_token,
-            google_fit_email=google_fit_email,
-            logged_in=True,
-        )
-        return Response(
-            {"success": True, "data": WatchConnectionSerializer(obj).data}, status=200
-        )
 
 
 @api_view(["POST"])

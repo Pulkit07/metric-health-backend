@@ -41,6 +41,12 @@ urlpatterns = [
         "user_app/<int:pk>",
         views.UserAppViewSet.as_view({"get": "retrieve", "put": "update"}),
     ),
+    path("platform", views.PlatformViewSet.as_view({"get": "list", "post": "create"})),
+    path(
+        "platform/<int:pk>",
+        views.PlatformViewSet.as_view({"get": "retrieve", "put": "update"}),
+    ),
+    path("enable_platform", views.enable_platform_for_app),
     path(
         "fitness_data",
         views.FitnessDataViewSet.as_view({"get": "list", "post": "create"}),
@@ -50,7 +56,8 @@ urlpatterns = [
         views.WebhookDataViewSet.as_view({"get": "list"}),
     ),
     path("check_watch_connection", views.watch_connection_exists),
-    path("watch_connection", views.WatchConnectionListCreateView.as_view()),
+    path("connect_platform_for_user", views.connect_platform_for_user),
+    path("watch_connection", views.WatchConnectionListView.as_view()),
     path("watch_connection/<int:pk>", views.WatchConnectionUpdateView.as_view()),
     path("sync_google_fit_data", views.sync_from_google_fit),
     path("test_sync", views.test_google_sync),
