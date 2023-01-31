@@ -126,7 +126,7 @@ class GoogleFitConnection(object):
             dataSources = self._get_specific_data_sources(data_type, data_streams)
             data_points[data_type] = []
             for name, streamId in dataSources.items():
-                vals = self._get_dataset_sum_for_data_source(
+                vals = self._get_dataset_for_range_types(
                     streamId,
                     valType=google_fit.RANGE_DATA_TYPES_UNTS[data_type],
                 )
@@ -159,7 +159,7 @@ class GoogleFitConnection(object):
 
         return points
 
-    def _get_dataset_sum_for_data_source(self, dataStreamId, valType="intVal"):
+    def _get_dataset_for_range_types(self, dataStreamId, valType="intVal"):
         response = requests.get(
             f"https://www.googleapis.com/fitness/v1/users/me/dataSources/{dataStreamId}/datasets/"
             f"{self.start_time_in_millis * 1000000}-{self.end_time_in_millis * 1000000}",
