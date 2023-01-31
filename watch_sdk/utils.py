@@ -46,7 +46,7 @@ def _sync_app_from_google_fit(user_app):
                 for (
                     data_type,
                     data,
-                ) in fit_connection.get_data_for_range_types().items():
+                ) in fit_connection.get_data_since_last_sync().items():
                     data_key, dclass = google_fit.RANGE_DATA_TYPES[data_type]
                     for d in data:
                         fitness_data[data_key].append(
@@ -54,21 +54,6 @@ def _sync_app_from_google_fit(user_app):
                                 source="google_fit",
                                 start_time=d[1],
                                 end_time=d[2],
-                                value=d[0],
-                            ).to_dict()
-                        )
-
-                for (
-                    data_type,
-                    data,
-                ) in fit_connection.get_data_for_point_types().items():
-                    data_key, dclass = google_fit.POINT_DATA_TYPES[data_type]
-                    for d in data:
-                        fitness_data[data_key].append(
-                            dclass(
-                                source="google_fit",
-                                start_time=d[1],
-                                end_time=d[1],
                                 value=d[0],
                             ).to_dict()
                         )

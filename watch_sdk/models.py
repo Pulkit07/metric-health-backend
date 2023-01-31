@@ -52,6 +52,8 @@ class WatchConnection(BaseModel):
 
     # last sync time
     last_sync = models.DateTimeField(blank=True, null=True)
+    # last modified time for the sync
+    last_modified = models.DateTimeField(blank=True, null=True)
 
     def mark_logout(self):
         self.logged_in = False

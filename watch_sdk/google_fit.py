@@ -1,3 +1,4 @@
+import collections
 import datetime
 import json
 import requests
@@ -23,11 +24,11 @@ class GoogleFitConnection(object):
         self.user_app = user_app
         self.connection = connection
         self._access_token = None
-        self.start_time_in_millis = None
-        self.end_time_in_millis = None
         # data sources cached for the connection lifecycle
         self._cached_data_sources = None
         self._update_last_sync = True
+        self._last_modified = None
+        self._new_last_modified = None
 
     @property
     def _data_sources(self):
@@ -37,30 +38,18 @@ class GoogleFitConnection(object):
 
     def __enter__(self):
         self._get_access_token()
-        self.end_time_in_millis = int(datetime.datetime.now().timestamp() * 1000)
-        if self.connection.last_sync is None:
-            # set start time as 120 days before todays date
-            self.start_time_in_millis = int(
-                (
-                    datetime.datetime.now().replace(
-                        hour=0, minute=0, second=0, microsecond=0
-                    )
-                    - datetime.timedelta(days=30)
-                ).timestamp()
-                * 1000
-            )
-        else:
-            self.start_time_in_millis = int(
-                self.connection.last_sync.timestamp() * 1000
-            )
+        if self.connection.last_modified:
+            self._last_modified = self.connection.last_modified.timestamp() * 1000
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self._access_token = None
         if exc_type is None and self._update_last_sync:
-            self.connection.last_sync = datetime.datetime.fromtimestamp(
-                self.end_time_in_millis / 1000.0
-            )
+            self.connection.last_sync = datetime.datetime.now()
+            if self._new_last_modified:
+                self.connection.last_modified = datetime.datetime.fromtimestamp(
+                    self._new_last_modified / 1000
+                )
             self.connection.save()
 
     def _get_access_token(self):
@@ -84,6 +73,26 @@ class GoogleFitConnection(object):
             if response.status_code >= 400:
                 print("Status code is more than 400")
 
+    def _perform_first_sync(self, dataStreamId, valType):
+        """
+        Perform first sync for the connection
+        """
+        print("performing first sync")
+        points = self._get_all_point_changes(dataStreamId, valType)
+
+        minimum_start_time = int(min(points, key=lambda x: int(x[1]))[1])
+
+        historical_points = self._get_dataset_points(
+            dataStreamId,
+            minimum_start_time - 120 * 24 * 60 * 60 * 1000 * 1000 * 1000,
+            minimum_start_time,
+            valType=valType,
+        )
+
+        points.extend(historical_points)
+
+        return points
+
     def _get_specific_data_sources(self, data_type_name, data_stream_names):
         dataStreams = {}
         for source in self._data_sources:
@@ -95,6 +104,7 @@ class GoogleFitConnection(object):
 
         return dataStreams
 
+    # TODO: this can be hardcoded instead of fetched from google fit
     def _get_all_data_sources(self):
         if self._access_token is None:
             print("Access token is None")
@@ -106,63 +116,94 @@ class GoogleFitConnection(object):
         )
         return r.json()["dataSource"]
 
-    def get_data_for_point_types(self):
-        data_points = {}
-        for data_type, data_streams in google_fit.POINT_DATA_TYPES_ATTRIBUTES.items():
-            dataSources = self._get_specific_data_sources(data_type, data_streams)
-            data_points[data_type] = []
-            for _, streamId in dataSources.items():
-                data_points[data_type].extend(
-                    self._get_data_points_for_data_source(
-                        streamId,
-                        valType=google_fit.POINT_DATA_TYPES_UNITS[data_type],
-                    )
-                )
-        return data_points
-
-    def get_data_for_range_types(self):
+    def get_data_since_last_sync(self):
         data_points = {}
         for data_type, data_streams in google_fit.RANGE_DATA_TYPES_ATTRIBUTES.items():
             dataSources = self._get_specific_data_sources(data_type, data_streams)
             data_points[data_type] = []
             for name, streamId in dataSources.items():
-                vals = self._get_dataset_for_range_types(
-                    streamId,
-                    valType=google_fit.RANGE_DATA_TYPES_UNTS[data_type],
-                )
-                data_points[data_type].extend(vals)
+                if self._last_modified is None:
+                    data_points[data_type].extend(
+                        self._perform_first_sync(
+                            streamId,
+                            google_fit.RANGE_DATA_TYPES_UNTS[data_type],
+                        )
+                    )
+                else:
+                    vals = self._get_all_point_changes(
+                        streamId,
+                        valType=google_fit.RANGE_DATA_TYPES_UNTS[data_type],
+                    )
+                    data_points[data_type].extend(vals)
+
         return data_points
 
-    def _get_data_points_for_data_source(self, dataSreamId, valType="intVal"):
+    def _get_data_point_changes(
+        self,
+        dataStreamId,
+        nextPageToken,
+        valType="intVal",
+    ):
         response = requests.get(
-            f"https://www.googleapis.com/fitness/v1/users/me/dataSources/{dataSreamId}/datasets/"
-            f"{self.start_time_in_millis * 1000000}-{self.end_time_in_millis * 1000000}",
+            f"https://www.googleapis.com/fitness/v1/users/me/dataSources/{dataStreamId}/dataPointChanges/",
             headers={
                 "Authorization": f"Bearer {self._access_token}",
                 "Content-Type": "application/json",
             },
-            timeout=10,
+            params={"limit": 1000, "pageToken": nextPageToken},
         )
 
         points = []
-        for point in response.json()["point"]:
-            if valType == "unknown":
-                print(point)
-                continue
+        for point in response.json()["insertedDataPoint"]:
             points.append(
                 (
                     point["value"][0][valType],
                     point["startTimeNanos"],
                     point["endTimeNanos"],
+                    point["modifiedTimeMillis"],
                 )
             )
 
+        return (points, response.json()["nextPageToken"])
+
+    def _get_all_point_changes(self, dataStreamId, valType="intVal"):
+        res = []
+        nextPageToken = None
+        while True:
+            points, nextPageToken = self._get_data_point_changes(
+                dataStreamId, nextPageToken, valType=valType
+            )
+            if not points:
+                break
+            res.extend(points)
+
+        points = []
+        self._new_last_modified = 0
+        for point in res:
+            if self._last_modified is not None and int(point[3]) <= self._last_modified:
+                continue
+            points.append(
+                (
+                    point[0],
+                    point[1],
+                    point[2],
+                )
+            )
+            self._new_last_modified = max(self._new_last_modified, int(point[3]))
+
         return points
 
-    def _get_dataset_for_range_types(self, dataStreamId, valType="intVal"):
+    def _get_dataset_points(
+        self,
+        dataStreamId,
+        start_time_in_nanos,
+        end_time_in_nanos,
+        valType="intVal",
+    ):
+        print("getting dataset points")
         response = requests.get(
             f"https://www.googleapis.com/fitness/v1/users/me/dataSources/{dataStreamId}/datasets/"
-            f"{self.start_time_in_millis * 1000000}-{self.end_time_in_millis * 1000000}",
+            f"{start_time_in_nanos}-{end_time_in_nanos}",
             headers={
                 "Authorization": f"Bearer {self._access_token}",
                 "Content-Type": "application/json",
@@ -174,8 +215,8 @@ class GoogleFitConnection(object):
             vals.append(
                 (
                     point["value"][0][valType],
-                    int(point["startTimeNanos"]) / 1000000,
-                    int(point["endTimeNanos"]) / 1000000,
+                    int(point["startTimeNanos"]),
+                    int(point["endTimeNanos"]),
                 )
             )
             if valType == "unknown":
@@ -189,22 +230,15 @@ class GoogleFitConnection(object):
         Returns the number of steps since the last sync
         """
         # start time should be start of yesterday in Asia/Kolkata timezone in millis
-        self.start_time_in_millis = int(
-            (
-                datetime.datetime.now().replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                )
-                - datetime.timedelta(days=365)
-            ).timestamp()
-            * 1000
-        )
-        self.end_time_in_millis = int(
-            datetime.datetime.now()
-            .astimezone(ZoneInfo("Asia/Kolkata"))
-            .replace(hour=0, minute=0, second=0, microsecond=0, day=11)
-            .timestamp()
-            * 1000
-        )
         self._update_last_sync = False
-        print(f"Data sum for various points is {self.get_data_for_range_types()}")
-        print(f"Data points for various values are {self.get_data_for_point_types()}")
+        data = self.get_data_since_last_sync()
+        date_wise_map = collections.defaultdict(int)
+        for key, values in data.items():
+            for value in values:
+                start_date = datetime.datetime.fromtimestamp(
+                    int(value[1]) / 10**9, tz=ZoneInfo("Asia/Kolkata")
+                ).date()
+                date_wise_map[start_date] += value[0]
+        import pdb
+
+        pdb.set_trace()
