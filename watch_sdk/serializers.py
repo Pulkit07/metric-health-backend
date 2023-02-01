@@ -15,11 +15,14 @@ class PlatformSerializer(serializers.ModelSerializer):
 
 
 class EnabledPlatformSerializer(serializers.ModelSerializer):
-    platform = PlatformSerializer()
+    platform_name = serializers.SerializerMethodField()
+
+    def get_platform_name(self, obj):
+        return obj.platform.name
 
     class Meta:
         model = EnabledPlatform
-        fields = "__all__"
+        fields = ["platform_name", "platform_app_id"]
 
 
 class UserAppSerializer(serializers.ModelSerializer):
@@ -31,11 +34,14 @@ class UserAppSerializer(serializers.ModelSerializer):
 
 
 class ConnectedPlatformMetadataSerializer(serializers.ModelSerializer):
-    platform = PlatformSerializer()
+    platform_name = serializers.SerializerMethodField()
+
+    def get_platform_name(self, obj):
+        return obj.platform.name
 
     class Meta:
         model = ConnectedPlatformMetadata
-        fields = "__all__"
+        fields = ["platform_name", "last_sync", "logged_in"]
 
 
 class WatchConnectionSerializer(serializers.ModelSerializer):
