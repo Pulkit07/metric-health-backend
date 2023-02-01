@@ -16,7 +16,7 @@ def google_fit_cron():
 
 
 def _split_data_into_chunks(fitness_data):
-    chunk_size = 1000
+    chunk_size = 100
     data_chunks = []
     for data_type, data in fitness_data.items():
         for i in range(0, len(data), chunk_size):
