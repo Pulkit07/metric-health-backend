@@ -11,7 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
 class PlatformSerializer(serializers.ModelSerializer):
     class Meta:
         model = Platform
-        fields = "__all__"
+        fields = ["name", "id"]
 
 
 class EnabledPlatformSerializer(serializers.ModelSerializer):
