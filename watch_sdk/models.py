@@ -19,7 +19,7 @@ class Platform(BaseModel):
 
 class EnabledPlatform(BaseModel):
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
-    platform_app_id = models.CharField(max_length=200)
+    platform_app_id = models.CharField(max_length=200, null=True, blank=True)
 
 
 # a basic model for apps that user will create
