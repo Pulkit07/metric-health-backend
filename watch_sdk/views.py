@@ -49,7 +49,7 @@ def upload_health_data(request):
     except:
         return Response({"error": "No connection exists for this user"}, status=400)
 
-    data = request.data
+    data = request.data.dict()
     print(f"Health data received for {user_uuid}: {data}")
     print(type(data))
     if False:
