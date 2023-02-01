@@ -50,7 +50,7 @@ def upload_health_data(request):
     except:
         return Response({"error": "No connection exists for this user"}, status=400)
 
-    data = request.data.dict()
+    data = request.data
     print(f"Health data received for {user_uuid}: {data}")
     print(type(data))
     fitness_data = collections.defaultdict(list)
