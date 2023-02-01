@@ -27,20 +27,23 @@ def _split_data_into_chunks(fitness_data):
 def _sync_app_from_google_fit(user_app):
     connections = WatchConnection.objects.filter(
         app=user_app,
-        platform="android",
-        google_fit_refresh_token__isnull=False,
-        logged_in=True,
     )
-    if user_app.webhook_url is None:
-        print("No webhook url for app %s", user_app.id)
-        return
     for connection in connections:
+        try:
+            google_fit_connection = connection.connected_platforms.get(
+                platform__name="google_fit"
+            )
+        except Exception:
+            continue
+        if not google_fit_connection.logged_in:
+            continue
+
         print(f"\n\nSyncing for {connection.user_uuid}")
-        with GoogleFitConnection(user_app, connection) as fit_connection:
+        with GoogleFitConnection(user_app, google_fit_connection) as fit_connection:
             fitness_data = collections.defaultdict(list)
             if fit_connection._access_token is None:
                 print("Unable to get access token")
-                connection.mark_logout()
+                google_fit_connection.mark_logout()
                 continue
             try:
                 for (
