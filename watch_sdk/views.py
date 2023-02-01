@@ -175,7 +175,7 @@ def connect_platform_for_user(request):
         connection.save()
 
     connected_platform_metadata = ConnectedPlatformMetadata(
-        platform_app_id=request.data.get("platform_app_id"),
+        refresh_token=request.data.get("refresh_token"),
         platform=platform,
         email=request.data.get("email"),
     )
