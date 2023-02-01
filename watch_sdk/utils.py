@@ -52,8 +52,8 @@ def _sync_app_from_google_fit(user_app):
                         fitness_data[data_key].append(
                             dclass(
                                 source="google_fit",
-                                start_time=d[1],
-                                end_time=d[2],
+                                start_time=int(d[1]) / 10**6,
+                                end_time=int(d[2]) / 10**6,
                                 value=d[0],
                             ).to_dict()
                         )
