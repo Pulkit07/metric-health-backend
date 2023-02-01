@@ -1,3 +1,4 @@
+import collections
 import datetime
 import json
 import uuid
@@ -52,25 +53,27 @@ def upload_health_data(request):
     data = request.data.dict()
     print(f"Health data received for {user_uuid}: {data}")
     print(type(data))
-    if False:
-        fitness_data = collections.defaultdict(list)
-        for data_type, data in data.items():
-            key, dclass = apple_healthkit.DATA_TYPES.get(data_type, (None, None))
-            if not key or not dclass:
-                continue
-            for d in data:
-                value = d["value"]
-                start_time = d["date_from"]
-                end_time = d["date_to"]
-                fitness_data[key].append(
-                    dclass(
-                        value=value,
-                        start_time=start_time,
-                        end_time=end_time,
-                        source="apple_healthkit",
-                    ).to_dict()
-                )
-        utils.send_data_to_webhook(fitness_data, app.webhook_url, connection.user_uuid)
+    fitness_data = collections.defaultdict(list)
+    for data_type, data in data.items():
+        key, dclass = apple_healthkit.DATA_TYPES.get(data_type, (None, None))
+        if not key or not dclass:
+            continue
+        for d in data:
+            value = d["value"]
+            start_time = d["date_from"]
+            end_time = d["date_to"]
+            fitness_data[key].append(
+                dclass(
+                    value=value,
+                    start_time=start_time,
+                    end_time=end_time,
+                    source="apple_healthkit",
+                ).to_dict()
+            )
+    print(
+        f"sending {len(fitness_data)} data points to webhook from apple healthkit for {user_uuid}"
+    )
+    utils.send_data_to_webhook(fitness_data, app.webhook_url, connection.user_uuid)
     FitnessData.objects.create(
         app=app,
         data=data,
