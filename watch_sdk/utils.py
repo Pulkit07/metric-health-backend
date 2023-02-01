@@ -10,8 +10,11 @@ import requests
 
 
 def google_fit_cron():
-    apps = UserApp.objects.filter(google_auth_client_id__isnull=False)
+    apps = UserApp.objects.filter(enabled_platforms__platform__name="google_fit")
     for app in apps:
+        if app.webhook_url is None:
+            print("No webhook url for app %s", app)
+            continue
         _sync_app_from_google_fit(app)
 
 

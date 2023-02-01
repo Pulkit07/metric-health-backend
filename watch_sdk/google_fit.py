@@ -1,7 +1,8 @@
 import collections
 import datetime
-import json
 import requests
+
+from watch_sdk.models import ConnectedPlatformMetadata
 
 try:
     from zoneinfo import ZoneInfo
@@ -22,13 +23,13 @@ class GoogleFitConnection(object):
 
     def __init__(self, user_app, connection):
         self.user_app = user_app
-        self.connection = connection
+        self.connection: ConnectedPlatformMetadata = connection
         self._access_token = None
         # data sources cached for the connection lifecycle
         self._cached_data_sources = None
         self._update_last_sync = True
         self._last_modified = None
-        self._new_last_modified = None
+        self._new_last_modified = collections.defaultdict(int)
 
     @property
     def _data_sources(self):
@@ -38,18 +39,21 @@ class GoogleFitConnection(object):
 
     def __enter__(self):
         self._get_access_token()
-        if self.connection.last_modified:
-            self._last_modified = self.connection.last_modified.timestamp() * 1000
+        self._last_modified = (
+            self.connection.last_modified_for_data_types
+            if self.connection.last_modified_for_data_types
+            else {}
+        )
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self._access_token = None
         if exc_type is None and self._update_last_sync:
             self.connection.last_sync = datetime.datetime.now()
-            if self._new_last_modified:
-                self.connection.last_modified = datetime.datetime.fromtimestamp(
-                    self._new_last_modified / 1000
-                )
+            if self.connection.last_modified_for_data_types is None:
+                self.connection.last_modified_for_data_types = {}
+            for data_type, last_modified in self._new_last_modified.items():
+                self.connection.last_modified_for_data_types[data_type] = last_modified
             self.connection.save()
 
     def _get_access_token(self):
@@ -60,7 +64,7 @@ class GoogleFitConnection(object):
             "https://www.googleapis.com/oauth2/v4/token",
             params={
                 "client_id": self.user_app.google_auth_client_id,
-                "refresh_token": self.connection.google_fit_refresh_token,
+                "refresh_token": self.connection.refresh_token,
                 "grant_type": "refresh_token",
             },
             headers={"Content-Type": "application/json"},
@@ -117,12 +121,11 @@ class GoogleFitConnection(object):
         return r.json()["dataSource"]
 
     def get_data_since_last_sync(self):
-        data_points = {}
+        data_points = collections.defaultdict(list)
         for data_type, data_streams in google_fit.RANGE_DATA_TYPES_ATTRIBUTES.items():
             dataSources = self._get_specific_data_sources(data_type, data_streams)
-            data_points[data_type] = []
             for name, streamId in dataSources.items():
-                if self._last_modified is None:
+                if not self._last_modified or self._last_modified.get(streamId) is None:
                     data_points[data_type].extend(
                         self._perform_first_sync(
                             streamId,
@@ -178,9 +181,10 @@ class GoogleFitConnection(object):
             res.extend(points)
 
         points = []
-        self._new_last_modified = 0
         for point in res:
-            if self._last_modified is not None and int(point[3]) <= self._last_modified:
+            if self._last_modified and int(point[3]) <= self._last_modified.get(
+                dataStreamId, 0
+            ):
                 continue
             points.append(
                 (
@@ -189,7 +193,9 @@ class GoogleFitConnection(object):
                     point[2],
                 )
             )
-            self._new_last_modified = max(self._new_last_modified, int(point[3]))
+            self._new_last_modified[dataStreamId] = max(
+                self._new_last_modified[dataStreamId], int(point[3])
+            )
 
         return points
 
