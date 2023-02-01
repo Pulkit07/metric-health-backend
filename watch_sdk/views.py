@@ -55,7 +55,9 @@ def upload_health_data(request):
     print(type(data))
     fitness_data = collections.defaultdict(list)
     for data_type, data in data.items():
-        key, dclass = apple_healthkit.DATA_TYPES.get(data_type, (None, None))
+        key, dclass = apple_healthkit.DATATYPE_NAME_CLASS_MAP.get(
+            data_type, (None, None)
+        )
         if not key or not dclass:
             continue
         for d in data:
