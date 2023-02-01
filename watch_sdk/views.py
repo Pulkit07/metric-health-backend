@@ -199,7 +199,10 @@ class WatchConnectionListView(generics.ListAPIView):
 @api_view(["POST"])
 @permission_classes([FirebaseAuthPermission | AdminPermission])
 def enable_platform_for_app(request):
-    app = UserApp.objects.get(id=request.query_params.get("app_id"))
+    try:
+        app = UserApp.objects.get(id=request.query_params.get("app_id"))
+    except:
+        return Response({"error": "Invalid app id"}, status=400)
     try:
         platform = Platform.objects.get(name=request.data.get("platform"))
     except:
