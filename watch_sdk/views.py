@@ -169,7 +169,7 @@ def connect_platform_for_user(request):
         connection = WatchConnection.objects.create(
             app=app,
             user_uuid=user_uuid,
-            platform=platform,
+            platform=platform.id,
             logged_in=True,
         )
         connection.save()
