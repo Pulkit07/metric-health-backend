@@ -26,7 +26,7 @@ class EnabledPlatformSerializer(serializers.ModelSerializer):
 
 
 class UserAppSerializer(serializers.ModelSerializer):
-    enabled_platforms = EnabledPlatformSerializer(many=True)
+    enabled_platforms = EnabledPlatformSerializer(many=True, read_only=True)
 
     class Meta:
         model = UserApp
