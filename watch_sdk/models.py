@@ -33,7 +33,7 @@ class UserApp(BaseModel):
     website = models.CharField(max_length=100, blank=True, null=True)
     webhook_url = models.CharField(max_length=600, blank=True, null=True)
     key = models.CharField(max_length=100, blank=True, null=True)
-    enabled_platforms = models.ManyToManyField(EnabledPlatform, blank=True, null=True)
+    enabled_platforms = models.ManyToManyField(EnabledPlatform, blank=True)
     payment_plan = models.CharField(
         max_length=100,
         choices=(
