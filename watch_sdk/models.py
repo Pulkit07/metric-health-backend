@@ -74,19 +74,6 @@ class WatchConnection(BaseModel):
 
     connected_platforms = models.ManyToManyField(ConnectedPlatformMetadata, blank=True)
 
-    # only when platform is android
-    google_fit_refresh_token = models.CharField(max_length=200, blank=True, null=True)
-    google_fit_email = models.CharField(max_length=400, blank=True, null=True)
-
-    # last sync time
-    last_sync = models.DateTimeField(blank=True, null=True)
-    # last modified time for the sync
-    last_modified = models.DateTimeField(blank=True, null=True)
-
-    def mark_logout(self):
-        self.logged_in = False
-        self.save()
-
 
 class FitnessData(BaseModel):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
