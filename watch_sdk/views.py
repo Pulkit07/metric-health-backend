@@ -281,7 +281,6 @@ class WebhookDataViewSet(viewsets.ModelViewSet):
     queryset = TestWebhookData.objects.all()
     serializer_class = TestWebhookDataSerializer
     filterset_fields = ["uuid"]
-    permission_classes = [AdminPermission]
 
 
 @api_view(["GET"])
