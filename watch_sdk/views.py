@@ -82,11 +82,15 @@ def upload_health_data(request):
                     source="apple_healthkit",
                 ).to_dict()
             )
-    print(
-        f"sending {len(fitness_data)} data points to webhook from apple healthkit for {user_uuid}"
-    )
+
     if app.webhook_url:
-        utils.send_data_to_webhook(fitness_data, app.webhook_url, connection.user_uuid)
+        if fitness_data:
+            utils.send_data_to_webhook(
+                fitness_data, app.webhook_url, connection.user_uuid
+            )
+            print(
+                f"sending {len(fitness_data)} data points to webhook from apple healthkit for {user_uuid}"
+            )
     else:
         print("No webhook url found, saving data in db")
         # for key, data in fitness_data.items():
