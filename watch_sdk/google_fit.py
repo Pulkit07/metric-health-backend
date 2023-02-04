@@ -30,6 +30,10 @@ class GoogleFitConnection(object):
         self._update_last_sync = True
         self._last_modified = None
         self._new_last_modified = collections.defaultdict(int)
+        # find the google_fit enabled platform from app and get the client id
+        self._client_id = user_app.enabled_platforms.get(
+            platform__name="google_fit"
+        ).platform_app_id
 
     @property
     def _data_sources(self):
@@ -63,7 +67,7 @@ class GoogleFitConnection(object):
         response = requests.post(
             "https://www.googleapis.com/oauth2/v4/token",
             params={
-                "client_id": self.user_app.google_auth_client_id,
+                "client_id": self._client_id,
                 "refresh_token": self.connection.refresh_token,
                 "grant_type": "refresh_token",
             },
