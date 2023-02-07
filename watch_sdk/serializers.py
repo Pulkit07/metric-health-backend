@@ -52,6 +52,29 @@ class WatchConnectionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class PlatformBasedWatchConnection(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        app = instance.app
+        for enabled_platform in app.enabled_platforms.all():
+            # check whether connection exists for this platform
+            platform_connection = instance.connected_platforms.filter(
+                platform=enabled_platform.platform
+            )
+            if platform_connection.exists():
+                data[enabled_platform.name] = ConnectedPlatformMetadataSerializer(
+                    platform_connection.first()
+                ).data
+            else:
+                data[enabled_platform.name] = None
+
+        return data
+
+    class Meta:
+        model = WatchConnection
+        fields = ["user_uuid"]
+
+
 class FitnessDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = FitnessData
