@@ -167,6 +167,7 @@ def watch_connection_exists(request):
 def connect_platform_for_user(request):
     key = request.query_params.get("key")
     user_uuid = request.query_params.get("user_uuid")
+    reconnect = request.query_params.get("reconnect", False)
 
     try:
         platform = Platform.objects.get(name=request.data.get("platform"))
@@ -174,8 +175,8 @@ def connect_platform_for_user(request):
         return Response({"error": "Invalid platform"}, status=400)
 
     if (
-        platform.name in ["android", "strava"]
-        and request.data.get("platform_app_id") is None
+        platform.name in ["google_fit", "strava"]
+        and request.data.get("refresh_token") is None
     ):
         return Response(
             {"error": f"platform_app_id required for {platform.name}"},
@@ -188,17 +189,42 @@ def connect_platform_for_user(request):
             {"error": f"{platform.name} is not enabled for this app"}, status=400
         )
 
+    # We have three cases here:
+    # 1. Connection does not exist, user is first time here
+    #   - Create connection and connected platform metadata
+    # 2. Connection exists, but connected platform metadata does not exist
+    #   - Create connected platform metadata
+    # 3. Connection exists, connected platform metadata exists but reconnect is true
+    #   - Update connected platform metadata
     connections = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
     if connections.exists():
         connection: WatchConnection = connections.first()
-        if connection.connected_platforms.filter(platform=platform).exists():
-            return Response(
-                {
-                    "error": f"A connection with this user for {platform.name} already exists"
-                },
-                status=400,
-            )
-
+        connected_platform_metadata: ConnectedPlatformMetadata = (
+            connection.connected_platforms.filter(platform=platform)
+        )
+        if connected_platform_metadata.exists():
+            if reconnect:
+                connected_platform_metadata = connected_platform_metadata.first()
+                connected_platform_metadata.refresh_token = request.data.get(
+                    "refresh_token"
+                )
+                connected_platform_metadata.email = request.data.get("email")
+                connected_platform_metadata.logged_in = True
+                connected_platform_metadata.save()
+                return Response(
+                    {
+                        "success": True,
+                        "data": WatchConnectionSerializer(connection).data,
+                    },
+                    status=200,
+                )
+            else:
+                return Response(
+                    {
+                        "error": f"A connection with this user for {platform.name} already exists"
+                    },
+                    status=400,
+                )
     else:
         connection = WatchConnection.objects.create(
             app=app,
