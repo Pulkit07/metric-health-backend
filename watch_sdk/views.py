@@ -208,7 +208,7 @@ def connect_platform_for_user(request):
                 return Response(
                     {
                         "success": True,
-                        "data": WatchConnectionSerializer(connection).data,
+                        "data": PlatformBasedWatchConnection(connection).data,
                     },
                     status=200,
                 )
@@ -238,7 +238,7 @@ def connect_platform_for_user(request):
     connection.save()
 
     return Response(
-        {"success": True, "data": WatchConnectionSerializer(connection).data},
+        {"success": True, "data": PlatformBasedWatchConnection(connection).data},
         status=200,
     )
 
