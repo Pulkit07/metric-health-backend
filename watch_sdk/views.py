@@ -225,7 +225,8 @@ def connect_platform_for_user(request):
 
 class WatchConnectionListView(generics.ListAPIView):
     queryset = WatchConnection.objects.all()
-    filterset_fields = ["app", "user_uuid", "platform", "logged_in"]
+    # TODO: implement platform wise filtering
+    filterset_fields = ["app", "user_uuid"]
     serializer_class = WatchConnectionSerializer
     permission_classes = [ValidKeyPermission | AdminPermission]
 

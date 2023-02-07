@@ -67,14 +67,6 @@ class ConnectedPlatformMetadata(BaseModel):
 class WatchConnection(BaseModel):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
     user_uuid = models.CharField(max_length=200)
-    # TODO: this in future should be google fit, apple health, strava, fitbit, oura, etc
-    platform = models.CharField(
-        max_length=100, choices=(("android", "android"), ("ios", "ios"))
-    )
-    # only used for cases where we get a token from the sdk and then talks directly
-    # with the server to get the data. For example Google Fit
-    logged_in = models.BooleanField(default=False)
-
     connected_platforms = models.ManyToManyField(ConnectedPlatformMetadata, blank=True)
 
 
