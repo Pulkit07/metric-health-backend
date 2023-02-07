@@ -276,7 +276,9 @@ def enable_platform_for_app(request):
     if already_enabled.exists():
         if disable:
             already_enabled.first().delete()
-            return Response({"success": True}, status=200)
+            return Response(
+                {"success": True, "data": UserAppSerializer(app).data}, status=200
+            )
         else:
             return Response(
                 {"error": f"{platform.name} is already enabled for this app"},
@@ -288,7 +290,7 @@ def enable_platform_for_app(request):
     enabled_platform.save()
     app.enabled_platforms.add(enabled_platform)
     app.save()
-    return Response({"success": True}, status=200)
+    return Response({"success": True, "data": UserAppSerializer(app).data}, status=200)
 
 
 class WatchConnectionUpdateView(generics.RetrieveUpdateDestroyAPIView):
