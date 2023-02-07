@@ -23,6 +23,7 @@ from .models import (
     WatchConnection,
 )
 from .serializers import (
+    ConnectedPlatformMetadataSerializer,
     FitnessDataSerializer,
     PlatformSerializer,
     TestWebhookDataSerializer,
@@ -133,16 +134,32 @@ def watch_connection_exists(request):
     key = request.query_params.get("key")
     user_uuid = request.query_params.get("user_uuid")
     app = UserApp.objects.get(key=key)
-    connection = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
-    if connection.exists():
-        return Response(
-            {
-                "success": True,
-                "data": WatchConnectionSerializer(connection.first()).data,
-            },
-            status=200,
-        )
-    return Response({"success": False}, status=404)
+    connection_filter = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
+    connection = None
+    if connection_filter.exists():
+        connection = connection_filter.first()
+    res = {}
+    for enabled_platform in app.enabled_platforms.all():
+        if connection:
+            # check whether connection exists for this platform
+            platform_connection = connection.connected_platforms.filter(
+                platform=enabled_platform.platform
+            )
+            if platform_connection.exists():
+                res[enabled_platform.name] = ConnectedPlatformMetadataSerializer(
+                    platform_connection.first()
+                ).data
+            else:
+                res[enabled_platform.name] = None
+        else:
+            res[enabled_platform.name] = None
+    return Response(
+        {
+            "success": True,
+            "data": res,
+        },
+        status=200,
+    )
 
 
 @api_view(["POST"])
