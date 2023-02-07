@@ -162,6 +162,7 @@ def connect_platform_for_user(request):
     key = request.query_params.get("key")
     user_uuid = request.query_params.get("user_uuid")
     reconnect = request.query_params.get("reconnect", False)
+    disconnect = request.query_params.get("disconnect", False)
 
     try:
         platform = Platform.objects.get(name=request.data.get("platform"))
@@ -190,6 +191,8 @@ def connect_platform_for_user(request):
     #   - Create connected platform metadata
     # 3. Connection exists, connected platform metadata exists but reconnect is true
     #   - Update connected platform metadata
+    # 4. Connection exists, connected platform metadata exists but disconnect is true
+    #   - Delete connected platform metadata
     connections = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
     if connections.exists():
         connection: WatchConnection = connections.first()
@@ -197,28 +200,33 @@ def connect_platform_for_user(request):
             connection.connected_platforms.filter(platform=platform)
         )
         if connected_platform_metadata.exists():
-            if reconnect:
-                connected_platform_metadata = connected_platform_metadata.first()
-                connected_platform_metadata.refresh_token = request.data.get(
-                    "refresh_token"
-                )
-                connected_platform_metadata.email = request.data.get("email")
-                connected_platform_metadata.logged_in = True
-                connected_platform_metadata.save()
-                return Response(
-                    {
-                        "success": True,
-                        "data": PlatformBasedWatchConnection(connection).data,
-                    },
-                    status=200,
-                )
-            else:
+            if not (reconnect or disconnect):
                 return Response(
                     {
                         "error": f"A connection with this user for {platform.name} already exists"
                     },
                     status=400,
                 )
+            connected_platform_metadata = connected_platform_metadata.first()
+            if reconnect:
+                connected_platform_metadata.refresh_token = request.data.get(
+                    "refresh_token"
+                )
+                connected_platform_metadata.email = request.data.get("email")
+                connected_platform_metadata.logged_in = True
+            elif disconnect:
+                connected_platform_metadata.refresh_token = None
+                connected_platform_metadata.email = None
+                connected_platform_metadata.logged_in = False
+
+            connected_platform_metadata.save()
+            return Response(
+                {
+                    "success": True,
+                    "data": PlatformBasedWatchConnection(connection).data,
+                },
+                status=200,
+            )
     else:
         connection = WatchConnection.objects.create(
             app=app,
