@@ -21,6 +21,10 @@ class EnabledPlatform(BaseModel):
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     platform_app_id = models.CharField(max_length=200, null=True, blank=True)
 
+    @property
+    def name(self):
+        return self.platform.name
+
 
 # a basic model for apps that user will create
 class UserApp(BaseModel):
