@@ -56,17 +56,20 @@ class PlatformBasedWatchConnection(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         app = instance.app
+        data["connections"] = {}
         for enabled_platform in app.enabled_platforms.all():
             # check whether connection exists for this platform
             platform_connection = instance.connected_platforms.filter(
                 platform=enabled_platform.platform
             )
             if platform_connection.exists():
-                data[enabled_platform.name] = ConnectedPlatformMetadataSerializer(
+                data["connections"][
+                    enabled_platform.name
+                ] = ConnectedPlatformMetadataSerializer(
                     platform_connection.first()
                 ).data
             else:
-                data[enabled_platform.name] = None
+                data["connections"][enabled_platform.name] = None
 
         return data
 

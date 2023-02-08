@@ -24,6 +24,7 @@ from .models import (
 )
 from .serializers import (
     ConnectedPlatformMetadataSerializer,
+    EnabledPlatformSerializer,
     FitnessDataSerializer,
     PlatformBasedWatchConnection,
     PlatformSerializer,
@@ -149,7 +150,10 @@ def watch_connection_exists(request):
             {
                 "success": True,
                 "data": {
-                    platform.name: None for platform in app.enabled_platforms.all()
+                    "user_uuid": user_uuid,
+                    "connections": {
+                        platform.name: None for platform in app.enabled_platforms.all()
+                    },
                 },
             },
             status=200,
@@ -172,6 +176,7 @@ def connect_platform_for_user(request):
     if (
         platform.name in ["google_fit", "strava"]
         and request.data.get("refresh_token") is None
+        and not disconnect
     ):
         return Response(
             {"error": f"platform_app_id required for {platform.name}"},
@@ -231,8 +236,6 @@ def connect_platform_for_user(request):
         connection = WatchConnection.objects.create(
             app=app,
             user_uuid=user_uuid,
-            platform=platform.id,
-            logged_in=True,
         )
         connection.save()
 
