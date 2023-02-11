@@ -41,7 +41,7 @@ class ConnectedPlatformMetadataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConnectedPlatformMetadata
-        fields = ["platform_name", "last_sync", "logged_in"]
+        fields = ["platform_name", "last_sync", "logged_in", "connected_device_uuids"]
 
 
 class WatchConnectionSerializer(serializers.ModelSerializer):

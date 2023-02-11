@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 
 from core.models import BaseModel
 
@@ -58,6 +59,12 @@ class ConnectedPlatformMetadata(BaseModel):
     # to track whether the refresh token is valid or not
     logged_in = models.BooleanField(default=True)
     last_modified_for_data_types = models.JSONField(blank=True, null=True)
+    # useful when syncing is done from local device and hence the connection
+    # depends on which device the user is checking from
+    # One good example is iOS
+    connected_device_uuids = ArrayField(
+        models.CharField(max_length=200), blank=True, null=True
+    )
 
     def mark_logout(self):
         self.logged_in = False
