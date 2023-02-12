@@ -55,6 +55,7 @@ urlpatterns = [
         "test_webhook_data",
         views.WebhookDataViewSet.as_view({"get": "list"}),
     ),
+    path("data_type", views.DataTypeViewSet.as_view({"get": "list", "post": "create"})),
     path("check_watch_connection", views.watch_connection_exists),
     path("connect_platform_for_user", views.connect_platform_for_user),
     path("watch_connection", views.WatchConnectionListView.as_view()),

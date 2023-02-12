@@ -14,6 +14,12 @@ class PlatformSerializer(serializers.ModelSerializer):
         fields = ["name", "id"]
 
 
+class DataTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DataType
+        fields = ["name", "id"]
+
+
 class EnabledPlatformSerializer(serializers.ModelSerializer):
     platform_name = serializers.SerializerMethodField()
 

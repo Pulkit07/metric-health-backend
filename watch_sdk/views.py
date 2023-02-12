@@ -14,6 +14,7 @@ from watch_sdk.permissions import (
 )
 from .models import (
     ConnectedPlatformMetadata,
+    DataType,
     EnabledPlatform,
     FitnessData,
     Platform,
@@ -24,6 +25,7 @@ from .models import (
 )
 from .serializers import (
     ConnectedPlatformMetadataSerializer,
+    DataTypeSerializer,
     EnabledPlatformSerializer,
     FitnessDataSerializer,
     PlatformBasedWatchConnection,
@@ -351,6 +353,12 @@ class FitnessDataViewSet(viewsets.ModelViewSet):
     queryset = FitnessData.objects.all()
     serializer_class = FitnessDataSerializer
     filterset_fields = ["app", "connection", "data_source"]
+    permission_classes = [AdminPermission]
+
+
+class DataTypeViewSet(viewsets.ModelViewSet):
+    queryset = DataType.objects.all()
+    serializer_class = DataTypeSerializer
     permission_classes = [AdminPermission]
 
 
