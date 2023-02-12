@@ -18,6 +18,10 @@ class Platform(BaseModel):
     name = models.CharField(max_length=100)
 
 
+class DataType(BaseModel):
+    name = models.CharField(max_length=200)
+
+
 class EnabledPlatform(BaseModel):
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     platform_app_id = models.CharField(max_length=200, null=True, blank=True)
@@ -49,6 +53,7 @@ class UserApp(BaseModel):
         ),
         default="free",
     )
+    enabled_data_types = models.ManyToManyField(DataType, blank=True)
 
 
 class ConnectedPlatformMetadata(BaseModel):
