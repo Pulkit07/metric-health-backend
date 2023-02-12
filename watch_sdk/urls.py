@@ -47,6 +47,7 @@ urlpatterns = [
         views.PlatformViewSet.as_view({"get": "retrieve", "put": "update"}),
     ),
     path("enable_platform", views.enable_platform_for_app),
+    path("enable_datatype", views.enable_datatype_for_app),
     path(
         "fitness_data",
         views.FitnessDataViewSet.as_view({"get": "list", "post": "create"}),

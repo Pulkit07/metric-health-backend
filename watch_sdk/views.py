@@ -309,6 +309,33 @@ def enable_platform_for_app(request):
     return Response({"success": True, "data": UserAppSerializer(app).data}, status=200)
 
 
+@api_view(["POST"])
+@permission_classes([FirebaseAuthPermission | AdminPermission])
+def enable_datatype_for_app(request):
+    disable_list = request.data.get("disable", [])
+    enable_list = request.data.get("enable", [])
+    try:
+        app = UserApp.objects.get(id=request.query_params.get("app_id"))
+    except:
+        return Response({"error": "Invalid app id"}, status=400)
+
+    for enable in enable_list:
+        try:
+            datatype = DataType.objects.get(name=enable)
+        except:
+            return Response({"error": f"Invalid datatype {enable}"}, status=400)
+        app.enabled_data_types.add(datatype)
+    for disable in disable_list:
+        try:
+            datatype = DataType.objects.get(name=disable)
+        except:
+            return Response({"error": f"Invalid datatype {disable}"}, status=400)
+        app.enabled_data_types.remove(datatype)
+
+    app.save()
+    return Response({"success": True, "data": UserAppSerializer(app).data}, status=200)
+
+
 class WatchConnectionUpdateView(generics.RetrieveUpdateDestroyAPIView):
     queryset = WatchConnection.objects.all()
     serializer_class = WatchConnectionSerializer
