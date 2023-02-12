@@ -15,11 +15,11 @@ class User(BaseModel):
 # object for refering various platforms that we support
 class Platform(BaseModel):
     # google fit, apple healthkit, strava etc.
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
 
 
 class DataType(BaseModel):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
 
 
 class EnabledPlatform(BaseModel):
@@ -41,7 +41,7 @@ class UserApp(BaseModel):
     app_store_url = models.CharField(max_length=100, blank=True, null=True, unique=True)
     website = models.CharField(max_length=100, blank=True, null=True)
     webhook_url = models.CharField(max_length=600, blank=True, null=True)
-    key = models.CharField(max_length=100, blank=True, null=True)
+    key = models.CharField(max_length=100, blank=True, null=True, unique=True)
     enabled_platforms = models.ManyToManyField(EnabledPlatform, blank=True)
     payment_plan = models.CharField(
         max_length=100,
