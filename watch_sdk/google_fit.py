@@ -124,9 +124,16 @@ class GoogleFitConnection(object):
         )
         return r.json()["dataSource"]
 
+    def _get_enabled_data_types(self):
+        enabled_data_types = set()
+        for source in self.user_app.enabled_data_types.all():
+            enabled_data_types.add(google_fit.DB_DATA_TYPE_KEY_MAP[source.name])
+        return enabled_data_types
+
     def get_data_since_last_sync(self):
         data_points = collections.defaultdict(list)
-        for data_type, data_streams in google_fit.RANGE_DATA_TYPES_ATTRIBUTES.items():
+        for data_type in self._get_enabled_data_types():
+            data_streams = google_fit.RANGE_DATA_TYPES_ATTRIBUTES[data_type]
             dataSources = self._get_specific_data_sources(data_type, data_streams)
             for name, streamId in dataSources.items():
                 if not self._last_modified or self._last_modified.get(streamId) is None:

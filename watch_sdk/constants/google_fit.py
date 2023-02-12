@@ -1,6 +1,17 @@
 from ..dataclasses import *
 import typing
 
+DB_DATA_TYPE_KEY_MAP = {
+    "move_minutes": "com.google.active_minutes",
+    "steps": "com.google.step_count.delta",
+    "calories": "com.google.calories.expended",
+    "water_consumed": "com.google.hydration",
+    "calories_bmr": "com.google.calories.bmr",
+    "weight": "com.google.weight",
+    "height": "com.google.height",
+    # "sleep": "com.google.sleep.segment",
+}
+
 RANGE_DATA_TYPES = {
     "com.google.active_minutes": ("move_minutes", MoveMinutes),
     "com.google.step_count.delta": ("steps", Steps),
@@ -13,13 +24,13 @@ RANGE_DATA_TYPES = {
 }
 
 RANGE_DATA_TYPES_ATTRIBUTES: typing.Dict[str, typing.List[str]] = {
-    # "com.google.active_minutes": ["merge_active_minutes", "user_input"],
+    "com.google.active_minutes": ["merge_active_minutes", "user_input"],
     "com.google.step_count.delta": ["estimated_steps"],
-    # "com.google.calories.expended": ["merge_calories_expended", "user_input"],
-    # "com.google.hydration": ["merged_hydration", "user_input"],
-    # "com.google.calories.bmr": ["merged"],
-    # "com.google.weight": ["merge_weight"],
-    # "com.google.height": ["merge_height"],
+    "com.google.calories.expended": ["merge_calories_expended", "user_input"],
+    "com.google.hydration": ["merged_hydration", "user_input"],
+    "com.google.calories.bmr": ["merged"],
+    "com.google.weight": ["merge_weight"],
+    "com.google.height": ["merge_height"],
     # "com.google.sleep.segment": ["merged"],
 }
 
