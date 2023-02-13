@@ -234,7 +234,11 @@ def connect_platform_for_user(request):
                 connected_platform_metadata.refresh_token = None
                 connected_platform_metadata.email = None
                 connected_platform_metadata.logged_in = False
-                connected_platform_metadata.connected_device_uuids.remove(device_id)
+                if (
+                    device_id
+                    and device_id in connected_platform_metadata.connected_device_uuids
+                ):
+                    connected_platform_metadata.connected_device_uuids.remove(device_id)
 
             connected_platform_metadata.save()
             return Response(
