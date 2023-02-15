@@ -28,7 +28,7 @@ class EnabledPlatformSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EnabledPlatform
-        fields = ["platform_name", "platform_app_id"]
+        fields = ["platform_name", "platform_app_id", "id", "platform_app_secret"]
 
 
 class UserAppSerializer(serializers.ModelSerializer):

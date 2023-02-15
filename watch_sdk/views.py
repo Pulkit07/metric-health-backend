@@ -305,7 +305,9 @@ def enable_platform_for_app(request):
                 status=400,
             )
     enabled_platform = EnabledPlatform(
-        platform=platform, platform_app_id=request.data.get("platform_app_id")
+        platform=platform,
+        platform_app_id=request.data.get("platform_app_id"),
+        platform_app_secret=request.data.get("platform_app_secret"),
     )
     enabled_platform.save()
     app.enabled_platforms.add(enabled_platform)

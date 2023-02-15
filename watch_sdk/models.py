@@ -25,6 +25,7 @@ class DataType(BaseModel):
 class EnabledPlatform(BaseModel):
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     platform_app_id = models.CharField(max_length=200, null=True, blank=True)
+    platform_app_secret = models.CharField(max_length=400, null=True, blank=True)
 
     @property
     def name(self):
