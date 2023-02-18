@@ -55,6 +55,69 @@ def generate_key(request):
 
 @api_view(["POST"])
 @permission_classes([ValidKeyPermission])
+def upload_health_data_using_json_file(request):
+    key = request.query_params.get("key")
+    user_uuid = request.query_params.get("user_uuid")
+    app = UserApp.objects.get(key=key)
+
+    try:
+        connection = WatchConnection.objects.get(app=app, user_uuid=user_uuid)
+    except:
+        return Response({"error": "No connection exists for this user"}, status=400)
+
+    print(f"Health data received for {user_uuid} using a json file")
+    fitness_data = collections.defaultdict(list)
+    # read over a json file passed with the request and build fitness_data
+    data = request.FILES["data"].read()
+    data = json.loads(data)
+    total = 0
+    for data_type, data in data.items():
+        key, dclass = apple_healthkit.DATATYPE_NAME_CLASS_MAP.get(
+            data_type, (None, None)
+        )
+        if not key or not dclass:
+            continue
+        for d in data:
+            total += 1
+            value = d["value"]
+            start_time = d["date_from"]
+            end_time = d["date_to"]
+            fitness_data[key].append(
+                dclass(
+                    value=value,
+                    start_time=start_time,
+                    end_time=end_time,
+                    source="apple_healthkit",
+                ).to_dict()
+            )
+
+    print(f"Total data points received: {total}")
+    if app.webhook_url:
+        if fitness_data:
+            utils.send_data_to_webhook(
+                fitness_data, app.webhook_url, connection.user_uuid
+            )
+            print(
+                f"sending {len(fitness_data)} data points to webhook from apple healthkit for {user_uuid}"
+            )
+    else:
+        print("No webhook url found, saving data in db")
+        # TODO: implement this
+        # for key, data in fitness_data.items():
+        #     for d in data:
+        #         FitnessData.objects.create(
+        #             app=app,
+        #             data=d,
+        #             connection=connection,
+        #             record_start_time=d["start_time"],
+        #             record_end_time=d["end_time"],
+        #             data_source="apple_healthkit",
+        #         )
+    return Response({"success": True}, status=200)
+
+
+@api_view(["POST"])
+@permission_classes([ValidKeyPermission])
 def upload_health_data(request):
     key = request.query_params.get("key")
     user_uuid = request.query_params.get("user_uuid")
