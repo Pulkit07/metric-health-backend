@@ -90,15 +90,14 @@ def upload_health_data_using_json_file(request):
                     source="apple_healthkit",
                 ).to_dict()
             )
-
     print(f"Total data points received: {total}")
     if app.webhook_url:
         if fitness_data:
-            utils.send_data_to_webhook(
-                fitness_data, app.webhook_url, connection.user_uuid
-            )
             print(
                 f"sending {len(fitness_data)} data points to webhook from apple healthkit for {user_uuid}"
+            )
+            utils.send_data_to_webhook(
+                fitness_data, app.webhook_url, connection.user_uuid
             )
     else:
         print("No webhook url found, saving data in db")
@@ -484,7 +483,6 @@ def test_google_sync(request):
 @api_view(["POST"])
 def test_webhook_endpoint(request):
     data = request.data
-    print(data)
     if not data:
         return
     TestWebhookData.objects.create(
