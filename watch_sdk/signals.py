@@ -5,6 +5,8 @@ from .models import EnabledPlatform, Platform, UserApp
 
 @receiver(post_save, sender="watch_sdk.UserApp")
 def enable_basic_platforms(sender, instance, created, **kwargs):
+    if not created:
+        return
     google_fit = EnabledPlatform(
         platform=Platform.objects.get(name="google_fit"),
     )
