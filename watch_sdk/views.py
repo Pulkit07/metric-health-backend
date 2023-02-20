@@ -494,6 +494,23 @@ def test_webhook_endpoint(request):
     return Response({"success": True}, status=200)
 
 
+class FitbitWebhook(generics.GenericAPIView):
+    def get(self, request):
+        if (
+            request.query_params.get("verify")
+            == "8120a0818957ced239318eb30cd2ac10e0ba12749b431972d7da036a0069ead9"
+        ):
+            return Response({"success": True}, status=204)
+        return Response({"error": "Invalid request"}, status=404)
+
+    def post(self, request):
+        data = request.data
+        if not data:
+            return
+        print(f"got data from fitbit server\n: {data}")
+        return Response({"success": True}, status=200)
+
+
 @api_view(["GET"])
 @permission_classes([AdminPermission])
 def test_fitbit_integration(request):
