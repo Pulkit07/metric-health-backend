@@ -5,6 +5,7 @@ import uuid
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import viewsets, views, generics
+from watch_sdk.fitbit import FitbitAPIClient
 
 from watch_sdk.google_fit import GoogleFitConnection
 from watch_sdk.permissions import (
@@ -489,5 +490,25 @@ def test_webhook_endpoint(request):
         data=data["data"],
         uuid=data["uuid"],
     )
+
+    return Response({"success": True}, status=200)
+
+
+@api_view(["GET"])
+@permission_classes([AdminPermission])
+def test_fitbit_integration(request):
+    apps = UserApp.objects.filter(enabled_platforms__platform__name="fitbit")
+    for app in apps:
+        connections = WatchConnection.objects.filter(app=app)
+        for connection in connections:
+            try:
+                connected_platform = connection.connected_platforms.get(
+                    platform__name="fitbit"
+                )
+            except Exception:
+                continue
+
+            with FitbitAPIClient(app, connected_platform) as fbc:
+                pass
 
     return Response({"success": True}, status=200)
