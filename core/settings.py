@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import logging
 from pathlib import Path
 import os
+import sys
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -151,14 +152,17 @@ sentry_logging = LoggingIntegration(
     event_level=logging.ERROR,  # Send errors as events
 )
 
-sentry_sdk.init(
-    dsn="https://971ec680d8e542588af557b090d117ae@o4504701505175552.ingest.sentry.io/4504701524049920",
-    integrations=[
-        sentry_logging,
-        DjangoIntegration(),
-    ],
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    # We recommend adjusting this value in production,
-    traces_sample_rate=1.0,
-)
+if len(sys.argv) >= 2 and sys.argv[1] == "runserver":
+    pass
+else:
+    sentry_sdk.init(
+        dsn="https://971ec680d8e542588af557b090d117ae@o4504701505175552.ingest.sentry.io/4504701524049920",
+        integrations=[
+            sentry_logging,
+            DjangoIntegration(),
+        ],
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production,
+        traces_sample_rate=1.0,
+    )
