@@ -500,8 +500,8 @@ class FitbitWebhook(generics.GenericAPIView):
             request.query_params.get("verify")
             == "8120a0818957ced239318eb30cd2ac10e0ba12749b431972d7da036a0069ead9"
         ):
-            return Response({"success": True}, status=204)
-        return Response({"error": "Invalid request"}, status=404)
+            return Response(status=204)
+        return Response(status=404)
 
     def post(self, request):
         data = request.data
