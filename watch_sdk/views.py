@@ -1,5 +1,8 @@
+import base64
 import collections
 import datetime
+import hashlib
+import hmac
 import json
 import uuid
 from rest_framework.response import Response
@@ -494,6 +497,18 @@ def test_webhook_endpoint(request):
     return Response({"success": True}, status=200)
 
 
+def verify_fitbit_signature(client_secret, request_body, signature):
+    signing_key = client_secret + "&"
+    encoded_body = base64.b64encode(
+        hmac.new(
+            signing_key.encode("utf-8"),
+            request_body.encode("utf-8"),
+            hashlib.sha1,
+        ).digest()
+    )
+    return encoded_body.decode("utf-8") == signature
+
+
 class FitbitWebhook(generics.GenericAPIView):
     def get(self, request):
         if (
@@ -504,7 +519,22 @@ class FitbitWebhook(generics.GenericAPIView):
         return Response(status=404)
 
     def post(self, request):
+        app_id = request.query_params.get("app_id")
+        try:
+            app = UserApp.objects.get(id=app_id)
+        except Exception:
+            # TODO: log this
+            return Response(status=404)
+
+        enabled_app = app.enabled_platforms.get(platform__name="fitbit")
         data = request.data
+        if not verify_fitbit_signature(
+            enabled_app.client_secret,
+            request.body,
+            request.headers["X-Fitbit-Signature"],
+        ):
+            print("fitbit signature verification failed")
+            return Response(status=404)
         if not data:
             return
         print(f"got data from fitbit server\n: {data}")
