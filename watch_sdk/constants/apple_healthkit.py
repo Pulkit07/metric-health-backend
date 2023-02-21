@@ -1,6 +1,21 @@
 from ..dataclasses import *
 
 
+DB_DATA_TYPE_KEY_MAP = {
+    "steps": "steps",
+    # TODO: figure this out
+    "move_minutes": None,
+    "water_consumed": "water",
+    "calories": "active_energy_burned",
+    "height": "height",
+    "weight": "weight",
+    # TODO: this should be basal energy burned
+    "calories_bmr": None,
+    "blood_glucose": "blood_glucose",
+    "blood_oxygen": "blood_oxygen",
+    "heart_rate": "heart_rate",
+}
+
 DATATYPE_NAME_CLASS_MAP = {
     "height": ("height", Height),
     "weight": ("weight", Weight),

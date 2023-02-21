@@ -73,13 +73,18 @@ def upload_health_data_using_json_file(request):
     data = request.FILES["data"].read()
     data = json.loads(data)
     total = 0
-    for data_type, data in data.items():
+    enabled_datatypes = app.enabled_data_types.all()
+    for enabled in enabled_datatypes:
+        data_type = apple_healthkit.DB_DATA_TYPE_KEY_MAP.get(enabled.name)
+        if not data.get(data_type):
+            continue
         key, dclass = apple_healthkit.DATATYPE_NAME_CLASS_MAP.get(
             data_type, (None, None)
         )
         if not key or not dclass:
             continue
-        for d in data:
+        values = data[data_type]
+        for d in values:
             total += 1
             value = d["value"]
             start_time = d["date_from"]
