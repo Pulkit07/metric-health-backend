@@ -20,7 +20,6 @@ from .models import (
     ConnectedPlatformMetadata,
     DataType,
     EnabledPlatform,
-    FitnessData,
     Platform,
     TestWebhookData,
     User,
@@ -31,7 +30,6 @@ from .serializers import (
     ConnectedPlatformMetadataSerializer,
     DataTypeSerializer,
     EnabledPlatformSerializer,
-    FitnessDataSerializer,
     PlatformBasedWatchConnection,
     PlatformSerializer,
     TestWebhookDataSerializer,
@@ -104,18 +102,7 @@ def upload_health_data_using_json_file(request):
                 fitness_data, app.webhook_url, connection.user_uuid
             )
     else:
-        print("No webhook url found, saving data in db")
-        # TODO: implement this
-        # for key, data in fitness_data.items():
-        #     for d in data:
-        #         FitnessData.objects.create(
-        #             app=app,
-        #             data=d,
-        #             connection=connection,
-        #             record_start_time=d["start_time"],
-        #             record_end_time=d["end_time"],
-        #             data_source="apple_healthkit",
-        #         )
+        print("No webhook url found, skipping")
     return Response({"success": True}, status=200)
 
 
@@ -163,25 +150,7 @@ def upload_health_data(request):
                 f"sending {len(fitness_data)} data points to webhook from apple healthkit for {user_uuid}"
             )
     else:
-        print("No webhook url found, saving data in db")
-        # for key, data in fitness_data.items():
-        #     for d in data:
-        #         FitnessData.objects.create(
-        #             app=app,
-        #             data=d,
-        #             connection=connection,
-        #             record_start_time=d["start_time"],
-        #             record_end_time=d["end_time"],
-        #             data_source="apple_healthkit",
-        #         )
-    FitnessData.objects.create(
-        app=app,
-        data=data,
-        connection=connection,
-        record_start_time=datetime.datetime.now(),
-        record_end_time=datetime.datetime.now(),
-        data_source=request.query_params.get("data_source") or "api",
-    )
+        print("No webhook url found, skipping")
     return Response({"success": True}, status=200)
 
 
@@ -445,14 +414,6 @@ class UserAppViewSet(viewsets.ModelViewSet):
     serializer_class = UserAppSerializer
     filterset_fields = ["user"]
     permission_classes = [FirebaseAuthPermission | AdminPermission]
-
-
-# CRUD view for fitness data (for testing purpose only)
-class FitnessDataViewSet(viewsets.ModelViewSet):
-    queryset = FitnessData.objects.all()
-    serializer_class = FitnessDataSerializer
-    filterset_fields = ["app", "connection", "data_source"]
-    permission_classes = [AdminPermission]
 
 
 class DataTypeViewSet(viewsets.ModelViewSet):

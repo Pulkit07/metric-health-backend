@@ -83,24 +83,6 @@ class WatchConnection(BaseModel):
     connected_platforms = models.ManyToManyField(ConnectedPlatformMetadata, blank=True)
 
 
-class FitnessData(BaseModel):
-    app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
-    connection = models.ForeignKey(WatchConnection, on_delete=models.CASCADE, null=True)
-    data = models.JSONField()
-    record_start_time = models.DateTimeField()
-    record_end_time = models.DateTimeField()
-    data_source = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        choices=(
-            ("google_fit", "google_fit"),
-            ("api", "api"),
-            ("sdk_healthkit", "sdk_healthkit"),
-        ),
-    )
-
-
 class TestWebhookData(BaseModel):
     data = models.JSONField()
     uuid = models.CharField(max_length=100, blank=True, null=True)

@@ -85,12 +85,6 @@ class PlatformBasedWatchConnection(serializers.ModelSerializer):
         fields = ["user_uuid"]
 
 
-class FitnessDataSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FitnessData
-        fields = "__all__"
-
-
 class TestWebhookDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestWebhookData

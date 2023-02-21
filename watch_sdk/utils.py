@@ -1,6 +1,6 @@
 import json
 from watch_sdk.google_fit import GoogleFitConnection
-from .models import FitnessData, UserApp, WatchConnection
+from .models import UserApp, WatchConnection
 from .constants import google_fit
 import firebase_admin
 from firebase_admin import credentials
