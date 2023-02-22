@@ -9,7 +9,7 @@ try:
 except ImportError:
     from backports.zoneinfo import ZoneInfo
 
-from .constants import google_fit
+from watch_sdk.constants import google_fit
 
 SOURCE_MULTIPLIER = {
     "user_input": -1,

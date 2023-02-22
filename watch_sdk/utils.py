@@ -1,5 +1,5 @@
 import json
-from watch_sdk.google_fit import GoogleFitConnection
+from watch_sdk.data_providers.google_fit import GoogleFitConnection
 from .models import UserApp, WatchConnection
 from .constants import google_fit
 import firebase_admin

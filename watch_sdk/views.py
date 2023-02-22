@@ -8,9 +8,9 @@ import uuid
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import viewsets, views, generics
-from watch_sdk.fitbit import FitbitAPIClient
+from watch_sdk.data_providers.fitbit import FitbitAPIClient
 
-from watch_sdk.google_fit import GoogleFitConnection
+from watch_sdk.data_providers.google_fit import GoogleFitConnection
 from watch_sdk.permissions import (
     AdminPermission,
     FirebaseAuthPermission,
