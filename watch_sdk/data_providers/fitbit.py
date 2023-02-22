@@ -56,9 +56,9 @@ class FitbitAPIClient(object):
             # mark the connection as logged out as Fitbit requires user to re-authenticate
             self.connection.logged_in = False
 
-    def _create_subscription(self):
+    def create_subscription(self):
         response = requests.post(
-            f"https://api.fitbit.com/1/user/-/apiSubscriptions/{self.user_uuid}.json",
+            f"https://api.fitbit.com/1/user/-/apiSubscriptions/{self.connection.id}.json",
             headers={
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + self._get_access_token(),
@@ -67,7 +67,7 @@ class FitbitAPIClient(object):
 
         if response.status_code == 200:
             print("Fitbit subscription already exist with same user/subscription id")
-        elif response.staus_code == 201:
+        elif response.status_code == 201:
             print("Fitbit subscription created successfully")
         elif response.status_code == 409:
             print(
@@ -79,9 +79,9 @@ class FitbitAPIClient(object):
                 response.status_code,
             )
 
-    def _delete_subscription(self):
+    def delete_subscription(self):
         response = requests.delete(
-            f"https://api.fitbit.com/1/user/-/apiSubscriptions/{self.user_uuid}.json",
+            f"https://api.fitbit.com/1/user/-/apiSubscriptions/{self.connection.id}.json",
             headers={
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + self._get_access_token(),

@@ -1,6 +1,7 @@
 import json
+from watch_sdk.data_providers.fitbit import FitbitAPIClient
 from watch_sdk.data_providers.google_fit import GoogleFitConnection
-from .models import UserApp, WatchConnection
+from .models import ConnectedPlatformMetadata, UserApp, WatchConnection
 from .constants import google_fit
 import firebase_admin
 from firebase_admin import credentials
@@ -129,3 +130,33 @@ def verify_firebase_token(auth_token):
         return True
     except Exception:
         return False
+
+
+def on_new_platform_connection(
+    connection: WatchConnection, connected_metadata: ConnectedPlatformMetadata
+):
+    if connected_metadata.platform.name == "fitbit":
+        with FitbitAPIClient(
+            connection.app, connected_metadata, connection.user_uuid
+        ) as fac:
+            fac.create_subscription()
+
+
+def on_platform_reconnected(
+    connection: WatchConnection, connected_metadata: ConnectedPlatformMetadata
+):
+    if connected_metadata.platform.name == "fitbit":
+        with FitbitAPIClient(
+            connection.app, connected_metadata, connection.user_uuid
+        ) as fac:
+            fac.create_subscription()
+
+
+def on_platform_disconnected(
+    connection: WatchConnection, connected_metadata: ConnectedPlatformMetadata
+):
+    if connected_metadata.platform.name == "fitbit":
+        with FitbitAPIClient(
+            connection.app, connected_metadata, connection.user_uuid
+        ) as fac:
+            fac.delete_subscription()

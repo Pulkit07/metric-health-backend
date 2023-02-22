@@ -270,7 +270,10 @@ def connect_platform_for_user(request):
                 connected_platform_metadata.connected_device_uuids = (
                     connected_platform_metadata.connected_device_uuids or []
                 ) + ([device_id] if device_id else [])
+                utils.on_platform_reconnected(connection, connected_platform_metadata)
             elif disconnect:
+                # call this before setting refresh token as None
+                utils.on_platform_disconnected(connection, connected_platform_metadata)
                 connected_platform_metadata.refresh_token = None
                 connected_platform_metadata.email = None
                 connected_platform_metadata.logged_in = False
@@ -304,6 +307,7 @@ def connect_platform_for_user(request):
     connected_platform_metadata.save()
     connection.connected_platforms.add(connected_platform_metadata)
     connection.save()
+    utils.on_new_platform_connected(connection, connected_platform_metadata)
 
     return Response(
         {"success": True, "data": PlatformBasedWatchConnection(connection).data},
