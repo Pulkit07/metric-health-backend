@@ -521,7 +521,7 @@ def test_fitbit_integration(request):
             except Exception:
                 continue
 
-            with FitbitAPIClient(app, connected_platform) as fbc:
+            with FitbitAPIClient(app, connected_platform, connection.user_uuid) as fbc:
                 pass
 
     return Response({"success": True}, status=200)
