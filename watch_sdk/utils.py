@@ -132,7 +132,7 @@ def verify_firebase_token(auth_token):
         return False
 
 
-def on_new_platform_connection(
+def on_new_platform_connected(
     connection: WatchConnection, connected_metadata: ConnectedPlatformMetadata
 ):
     if connected_metadata.platform.name == "fitbit":
