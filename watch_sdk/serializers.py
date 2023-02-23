@@ -89,3 +89,9 @@ class TestWebhookDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestWebhookData
         fields = "__all__"
+
+
+class FitbitNotificationLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FitbitNotificationLog
+        fields = "__all__"

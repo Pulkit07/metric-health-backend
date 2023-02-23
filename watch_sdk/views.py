@@ -20,6 +20,7 @@ from .models import (
     ConnectedPlatformMetadata,
     DataType,
     EnabledPlatform,
+    FitbitNotificationLog,
     Platform,
     TestWebhookData,
     User,
@@ -30,6 +31,7 @@ from .serializers import (
     ConnectedPlatformMetadataSerializer,
     DataTypeSerializer,
     EnabledPlatformSerializer,
+    FitbitNotificationLogSerializer,
     PlatformBasedWatchConnection,
     PlatformSerializer,
     TestWebhookDataSerializer,
@@ -505,10 +507,25 @@ class FitbitWebhook(generics.GenericAPIView):
         ):
             print("fitbit signature verification failed")
             return Response(status=404)
-        if not data:
-            return
-        print(f"got data from fitbit server\n: {data}")
-        return Response({"success": True}, status=200)
+        total = 0
+        for entry in request.data:
+            total += 1
+            FitbitNotificationLog.objects.create(
+                collection_type=entry["collectionType"],
+                date=entry["date"],
+                owner_id=entry["ownerId"],
+                owner_type=entry["ownerType"],
+                subscription_id=entry["subscriptionId"],
+            )
+
+        print(f"Received {total} notifications from fitbit")
+        return Response(status=204)
+
+
+class FitbitNotificationLogViewSet(viewsets.ModelViewSet):
+    queryset = FitbitNotificationLog.objects.all()
+    serializer_class = FitbitNotificationLogSerializer
+    permission_classes = [AdminPermission]
 
 
 @api_view(["GET"])

@@ -86,3 +86,11 @@ class WatchConnection(BaseModel):
 class TestWebhookData(BaseModel):
     data = models.JSONField()
     uuid = models.CharField(max_length=100, blank=True, null=True)
+
+
+class FitbitNotificationLog(BaseModel):
+    collection_type = models.CharField(max_length=100)
+    date = models.DateField()
+    owner_id = models.CharField(max_length=100)
+    owner_type = models.CharField(max_length=100)
+    subscription_id = models.CharField(max_length=100)
