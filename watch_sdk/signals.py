@@ -1,8 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from watch_sdk.data_providers.fitbit import FitbitAPIClient
-from .models import EnabledPlatform, Platform, UserApp, WatchConnection
+from .models import EnabledPlatform, Platform
 
 
 @receiver(post_save, sender="watch_sdk.UserApp")
@@ -19,6 +18,21 @@ def enable_basic_platforms(sender, instance, created, **kwargs):
     apple_healthkit.save()
     instance.enabled_platforms.add(google_fit)
     instance.enabled_platforms.add(apple_healthkit)
+    instance.save()
+
+
+@receiver(post_save, sender="watch_sdk.UserApp")
+def enable_basic_data_types(sender, instance, created, **kwargs):
+    if not created:
+        return
+    from watch_sdk.models import DataType
+
+    steps = DataType.objects.get(name="steps")
+    distance = DataType.objects.get(name="distance")
+    calories = DataType.objects.get(name="calories")
+    instance.enabled_data_types.add(steps)
+    instance.enabled_data_types.add(distance)
+    instance.enabled_data_types.add(calories)
     instance.save()
 
 
