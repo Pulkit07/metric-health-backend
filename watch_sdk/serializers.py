@@ -32,8 +32,12 @@ class EnabledPlatformSerializer(serializers.ModelSerializer):
 
 
 class UserAppSerializer(serializers.ModelSerializer):
-    enabled_platforms = EnabledPlatformSerializer(many=True, read_only=True)
+    enabled_platforms = serializers.SerializerMethodField()
     enabled_data_types = DataTypeSerializer(many=True, read_only=True)
+
+    def get_enabled_platforms(self, obj):
+        enabled_platforms = EnabledPlatform.objects.filter(user_app=obj)
+        return EnabledPlatformSerializer(enabled_platforms, many=True).data
 
     class Meta:
         model = UserApp
@@ -64,7 +68,7 @@ class PlatformBasedWatchConnection(serializers.ModelSerializer):
         data = super().to_representation(instance)
         app = instance.app
         data["connections"] = {}
-        for enabled_platform in app.enabled_platforms.all():
+        for enabled_platform in EnabledPlatform.objects.filter(user_app=app):
             # check whether connection exists for this platform
             platform_connection = instance.connected_platforms.filter(
                 platform=enabled_platform.platform

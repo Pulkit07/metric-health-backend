@@ -196,7 +196,8 @@ def watch_connection_exists(request):
                 "data": {
                     "user_uuid": user_uuid,
                     "connections": {
-                        platform.name: None for platform in app.enabled_platforms.all()
+                        platform.name: None
+                        for platform in EnabledPlatform.objects.filter(user_app=app)
                     },
                 },
             },
@@ -231,7 +232,7 @@ def connect_platform_for_user(request):
             )
 
     app = UserApp.objects.get(key=key)
-    if not app.enabled_platforms.filter(platform=platform).exists():
+    if not EnabledPlatform.objects.filter(user_app=app, platform=platform).exists():
         return Response(
             {"error": f"{platform.name} is not enabled for this app"}, status=400
         )
@@ -338,7 +339,7 @@ def enable_platform_for_app(request):
     except:
         return Response({"error": "Invalid platform"}, status=400)
 
-    already_enabled = app.enabled_platforms.filter(platform=platform)
+    already_enabled = EnabledPlatform.objects.filter(user_app=app, platform=platform)
     if already_enabled.exists():
         if disable:
             already_enabled.first().delete()
@@ -354,10 +355,9 @@ def enable_platform_for_app(request):
         platform=platform,
         platform_app_id=request.data.get("platform_app_id"),
         platform_app_secret=request.data.get("platform_app_secret"),
+        user_app=app,
     )
     enabled_platform.save()
-    app.enabled_platforms.add(enabled_platform)
-    app.save()
     return Response({"success": True, "data": UserAppSerializer(app).data}, status=200)
 
 
@@ -498,7 +498,13 @@ class FitbitWebhook(generics.GenericAPIView):
             # TODO: log this
             return Response(status=404)
 
-        enabled_app = app.enabled_platforms.get(platform__name="fitbit")
+        try:
+            enabled_app = EnabledPlatform.objects.get(
+                platform__name="fitbit", user_app=app
+            )
+        except EnabledPlatform.DoesNotExist:
+            print("No enabled app found")
+            return Response(status=404)
         data = request.data
         if not verify_fitbit_signature(
             enabled_app.client_secret,
@@ -531,7 +537,9 @@ class FitbitNotificationLogViewSet(viewsets.ModelViewSet):
 @api_view(["GET"])
 @permission_classes([AdminPermission])
 def test_fitbit_integration(request):
-    apps = UserApp.objects.filter(enabled_platforms__platform__name="fitbit")
+    apps = EnabledPlatform.objects.filter(platform__name="fitbit").values_list(
+        "user_app", flat=True
+    )
     for app in apps:
         connections = WatchConnection.objects.filter(app=app)
         for connection in connections:

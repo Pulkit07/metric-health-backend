@@ -10,15 +10,14 @@ def enable_basic_platforms(sender, instance, created, **kwargs):
         return
     google_fit = EnabledPlatform(
         platform=Platform.objects.get(name="google_fit"),
+        user_app=instance,
     )
     google_fit.save()
     apple_healthkit = EnabledPlatform(
         platform=Platform.objects.get(name="apple_healthkit"),
+        user_app=instance,
     )
     apple_healthkit.save()
-    instance.enabled_platforms.add(google_fit)
-    instance.enabled_platforms.add(apple_healthkit)
-    instance.save()
 
 
 @receiver(post_save, sender="watch_sdk.UserApp")

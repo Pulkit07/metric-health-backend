@@ -2,7 +2,7 @@ import collections
 import datetime
 import requests
 
-from watch_sdk.models import ConnectedPlatformMetadata
+from watch_sdk.models import ConnectedPlatformMetadata, EnabledPlatform
 
 try:
     from zoneinfo import ZoneInfo
@@ -31,8 +31,8 @@ class GoogleFitConnection(object):
         self._last_modified = None
         self._new_last_modified = collections.defaultdict(int)
         # find the google_fit enabled platform from app and get the client id
-        self._client_id = user_app.enabled_platforms.get(
-            platform__name="google_fit"
+        self._client_id = EnabledPlatform.objects.get(
+            user_app=user_app, platform__name="google_fit"
         ).platform_app_id
 
     @property

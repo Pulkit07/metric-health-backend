@@ -26,6 +26,7 @@ class EnabledPlatform(BaseModel):
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     platform_app_id = models.CharField(max_length=200, null=True, blank=True)
     platform_app_secret = models.CharField(max_length=400, null=True, blank=True)
+    user_app = models.ForeignKey("UserApp", on_delete=models.CASCADE)
 
     @property
     def name(self):
@@ -43,7 +44,6 @@ class UserApp(BaseModel):
     website = models.CharField(max_length=100, blank=True, null=True)
     webhook_url = models.CharField(max_length=600, blank=True, null=True)
     key = models.CharField(max_length=100, blank=True, null=True, unique=True)
-    enabled_platforms = models.ManyToManyField(EnabledPlatform, blank=True)
     payment_plan = models.CharField(
         max_length=100,
         choices=(

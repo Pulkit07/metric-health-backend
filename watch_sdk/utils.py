@@ -1,7 +1,7 @@
 import json
 from watch_sdk.data_providers.fitbit import FitbitAPIClient
 from watch_sdk.data_providers.google_fit import GoogleFitConnection
-from .models import ConnectedPlatformMetadata, UserApp, WatchConnection
+from .models import ConnectedPlatformMetadata, EnabledPlatform, UserApp, WatchConnection
 from .constants import google_fit
 import firebase_admin
 from firebase_admin import credentials
@@ -11,7 +11,9 @@ import requests
 
 
 def google_fit_cron():
-    apps = UserApp.objects.filter(enabled_platforms__platform__name="google_fit")
+    apps = EnabledPlatform.objects.filter(platform__name="google_fit").values_list(
+        "user_app", flat=True
+    )
     for app in apps:
         if app.webhook_url is None:
             print("No webhook url for app %s", app)
