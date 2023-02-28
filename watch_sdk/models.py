@@ -71,6 +71,11 @@ class ConnectedPlatformMetadata(BaseModel):
     connected_device_uuids = ArrayField(
         models.CharField(max_length=200), blank=True, null=True
     )
+    # Sometimes platform asks to pass in a UUID while creating a subscription
+    # Fitbit is one of them.
+    # This is the UUID that we will pass to the platform APIs
+    # we cannot use user uuid since that can contain special characters
+    platform_connection_uuid = models.CharField(max_length=200, blank=True, null=True)
 
     def mark_logout(self):
         self.logged_in = False

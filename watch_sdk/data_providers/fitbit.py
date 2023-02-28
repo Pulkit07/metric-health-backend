@@ -1,5 +1,6 @@
 import base64
 import requests
+import uuid
 from watch_sdk.models import ConnectedPlatformMetadata
 
 
@@ -13,6 +14,8 @@ class FitbitAPIClient(object):
         enabled_platform = user_app.enabled_platforms.get(platform__name="fitbit")
         self._client_id = enabled_platform.platform_app_id
         self._client_secret = enabled_platform.platform_app_secret
+        if self.connection.platform_connection_uuid is None:
+            self.connection.platform_connection_uuid = str(uuid.uuid4())
 
     def __enter__(self):
         self._get_access_token()
@@ -58,7 +61,7 @@ class FitbitAPIClient(object):
 
     def create_subscription(self):
         response = requests.post(
-            f"https://api.fitbit.com/1/user/-/apiSubscriptions/{self.connection.id}.json",
+            f"https://api.fitbit.com/1/user/-/apiSubscriptions/{self.connection.platform_connection_uuid}.json",
             headers={
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + self._get_access_token(),
@@ -81,7 +84,7 @@ class FitbitAPIClient(object):
 
     def delete_subscription(self):
         response = requests.delete(
-            f"https://api.fitbit.com/1/user/-/apiSubscriptions/{self.connection.id}.json",
+            f"https://api.fitbit.com/1/user/-/apiSubscriptions/{self.connection.platform_connection_uuid}.json",
             headers={
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + self._get_access_token(),
