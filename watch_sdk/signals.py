@@ -28,10 +28,8 @@ def enable_basic_data_types(sender, instance, created, **kwargs):
     from watch_sdk.models import DataType
 
     steps = DataType.objects.get(name="steps")
-    distance = DataType.objects.get(name="distance")
     calories = DataType.objects.get(name="calories")
     instance.enabled_data_types.add(steps)
-    instance.enabled_data_types.add(distance)
     instance.enabled_data_types.add(calories)
     instance.save()
 
