@@ -11,6 +11,7 @@ from rest_framework import viewsets, views, generics
 from watch_sdk.data_providers.fitbit import FitbitAPIClient
 
 from watch_sdk.data_providers.google_fit import GoogleFitConnection
+from watch_sdk.data_providers.strava import StravaAPIClient
 from watch_sdk.permissions import (
     AdminPermission,
     FirebaseAuthPermission,
@@ -553,5 +554,26 @@ def test_fitbit_integration(request):
 
             with FitbitAPIClient(app, connected_platform, connection.user_uuid) as fbc:
                 pass
+
+    return Response({"success": True}, status=200)
+
+
+@api_view(["POST"])
+@permission_classes([AdminPermission])
+def strava_cron_job(request):
+    apps = UserApp.objects.filter(enabled_platforms__platform__name="strava")
+    for app in apps:
+        connections = WatchConnection.objects.filter(app=app)
+        for connection in connections:
+            try:
+                connected_platform = connection.connected_platforms.get(
+                    platform__name="strava",
+                    logged_in=True,
+                )
+            except Exception:
+                continue
+
+            with StravaAPIClient(app, connected_platform, connection.user_uuid) as sac:
+                sac.get_activities_since_last_sync()
 
     return Response({"success": True}, status=200)

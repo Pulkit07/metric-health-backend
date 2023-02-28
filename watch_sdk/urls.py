@@ -63,6 +63,7 @@ urlpatterns = [
     path("watch_connection", views.WatchConnectionListView.as_view()),
     path("watch_connection/<int:pk>", views.WatchConnectionUpdateView.as_view()),
     path("sync_google_fit_data", views.sync_from_google_fit),
+    path("sync_strava", views.strava_cron_job),
     path("test_sync", views.test_google_sync),
     path("test_webhook", views.test_webhook_endpoint),
     path("test_fitbit", views.test_fitbit_integration),
