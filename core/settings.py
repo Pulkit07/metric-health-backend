@@ -14,6 +14,7 @@ import logging
 from pathlib import Path
 import os
 import sys
+from decouple import config
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -166,3 +167,11 @@ else:
         # We recommend adjusting this value in production,
         traces_sample_rate=1.0,
     )
+
+ADMINS = (('ADMIN', 'pulkit@hekahealth.co'),)
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
