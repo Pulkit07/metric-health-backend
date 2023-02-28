@@ -540,7 +540,8 @@ def test_fitbit_integration(request):
     apps = EnabledPlatform.objects.filter(platform__name="fitbit").values_list(
         "user_app", flat=True
     )
-    for app in apps:
+    for app_id in apps:
+        app = UserApp.objects.get(id=app_id)
         connections = WatchConnection.objects.filter(app=app)
         for connection in connections:
             try:

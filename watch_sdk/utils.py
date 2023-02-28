@@ -14,7 +14,8 @@ def google_fit_cron():
     apps = EnabledPlatform.objects.filter(platform__name="google_fit").values_list(
         "user_app", flat=True
     )
-    for app in apps:
+    for app_id in apps:
+        app = UserApp.objects.get(id=app_id)
         if app.webhook_url is None:
             print("No webhook url for app %s", app)
             continue
