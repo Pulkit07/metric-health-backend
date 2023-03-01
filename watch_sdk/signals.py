@@ -1,6 +1,8 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from watch_sdk.data_providers.fitbit import FitbitAPIClient
+
 from .models import EnabledPlatform, Platform
 
 
@@ -33,49 +35,30 @@ def enable_basic_data_types(sender, instance, created, **kwargs):
     instance.save()
 
 
-# @receiver(post_save, sender="watch_sdk.ConnectedPlatformMetadata")
-# def fitbit_subscription_update(sender, instance, created, **kwargs):
-#     if instance.platform.name != "fitbit":
-#         return
-#     import pdb
+# TODO: this is not correctly working on reconnect
+@receiver(post_save, sender="watch_sdk.ConnectedPlatformMetadata")
+def fitbit_subscription_update(sender, instance, created, **kwargs):
+    if instance.platform.name != "fitbit":
+        return
+    connection = instance.connection
+    if created:
+        # create a fitbit subscription
+        with FitbitAPIClient(connection.app, instance, connection.user_uuid) as fac:
+            fac.create_subscription()
+    else:
+        if getattr(instance, "_ConnectedPlatformMetadata__original_copy", None) is None:
+            return
+        before = instance.original_copy
+        after = instance
+        if before.logged_in == after.logged_in:
+            return
 
-#     pdb.set_trace()
-#     if created:
-#         try:
-#             connection = WatchConnection.objects.get(connected_platforms=instance)
-#         except WatchConnection.DoesNotExist:
-#             return
-#         # create a fitbit subscription
-#         with FitbitAPIClient(connection.app, instance, connection.user_uuid) as fac:
-#             fac.create_subscription()
-#     else:
-#         if instance.__original_copy is None:
-#             return
-#         before = instance.__original_copy
-#         after = instance
-
-#         if before.logged_in != after.logged_in:
-#             if after.logged_in:
-#                 # create a fitbit subscription
-#                 try:
-#                     connection = WatchConnection.objects.get(
-#                         connected_platforms=instance
-#                     )
-#                 except WatchConnection.DoesNotExist:
-#                     return
-#                 with FitbitAPIClient(
-#                     connection.app, instance, connection.user_uuid
-#                 ) as fac:
-#                     fac.create_subscription()
-#             else:
-#                 # delete the fitbit subscription
-#                 try:
-#                     connection = WatchConnection.objects.get(
-#                         connected_platforms=instance
-#                     )
-#                 except WatchConnection.DoesNotExist:
-#                     return
-#                 with FitbitAPIClient(
-#                     connection.app, instance, connection.user_uuid
-#                 ) as fac:
-#                     fac.delete_subscription()
+        if after.logged_in:
+            # create a fitbit subscription
+            with FitbitAPIClient(connection.app, instance, connection.user_uuid) as fac:
+                fac.create_subscription()
+        else:
+            # delete the fitbit subscription
+            with FitbitAPIClient(connection.app, before, connection.user_uuid) as fac:
+                fac.delete_subscription()
+            pass

@@ -1,3 +1,5 @@
+import copy
+from typing import Any
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
@@ -77,6 +79,16 @@ class ConnectedPlatformMetadata(BaseModel):
     # we cannot use user uuid since that can contain special characters
     platform_connection_uuid = models.CharField(max_length=200, blank=True, null=True)
     connection = models.ForeignKey("WatchConnection", on_delete=models.CASCADE)
+
+    __original_copy = None
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.__original_copy = copy.deepcopy(self)
+
+    @property
+    def original_copy(self):
+        return self.__original_copy
 
     def mark_logout(self):
         self.logged_in = False

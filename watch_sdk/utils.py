@@ -133,33 +133,3 @@ def verify_firebase_token(auth_token):
         return True
     except Exception:
         return False
-
-
-def on_new_platform_connected(
-    connection: WatchConnection, connected_metadata: ConnectedPlatformMetadata
-):
-    if connected_metadata.platform.name == "fitbit":
-        with FitbitAPIClient(
-            connection.app, connected_metadata, connection.user_uuid
-        ) as fac:
-            fac.create_subscription()
-
-
-def on_platform_reconnected(
-    connection: WatchConnection, connected_metadata: ConnectedPlatformMetadata
-):
-    if connected_metadata.platform.name == "fitbit":
-        with FitbitAPIClient(
-            connection.app, connected_metadata, connection.user_uuid
-        ) as fac:
-            fac.create_subscription()
-
-
-def on_platform_disconnected(
-    connection: WatchConnection, connected_metadata: ConnectedPlatformMetadata
-):
-    if connected_metadata.platform.name == "fitbit":
-        with FitbitAPIClient(
-            connection.app, connected_metadata, connection.user_uuid
-        ) as fac:
-            fac.delete_subscription()
