@@ -1,6 +1,8 @@
 import requests
 from datetime import datetime
 
+from watch_sdk.dataclasses import StravaCycling
+
 
 class StravaAPIClient(object):
     def __init__(self, user_app, platform_connection, user_uuid):
@@ -60,11 +62,26 @@ class StravaAPIClient(object):
             # mark the connection as logged out as Strava requires user to re-authenticate
             self._platform_connection.logged_in = False
 
-    def get_activities_since_last_sync(self):
+    def get_activity_by_id(self, activity_id):
         access_token = self._get_access_token()
-        import pdb
+        response = requests.get(
+            f"https://www.strava.com/api/v3/activities/{activity_id}",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print("Error getting activity by id: ", response.status_code)
+            return None
 
-        pdb.set_trace()
+    def get_activities_for_first_sync(self, before):
+        """
+        Gets activities user did before the given timestamp
+        for the first sync. For future data, we shall get it over webhook
+
+        Gets data for 500 days before the given timestamp
+        """
+        access_token = self._get_access_token()
         before = datetime.now().timestamp()
         after = (
             self._last_sync.timestamp()
@@ -73,21 +90,52 @@ class StravaAPIClient(object):
             else before - 500 * 24 * 60 * 60
         )
 
+        activities = []
+        page_number = 1
+        while True:
+            acts = self._get_activities_before_after(before, after, page_number, 200)
+            activities.extend(acts)
+            if len(acts) < 200:
+                # we got less entries then page size, it means there are no more entries
+                break
+            page_number += 1
+
+        return activities
+
+    def _get_activities_before_after(self, before, after, pageNumber, pageSize):
+        access_token = self._get_access_token()
         response = requests.get(
             "https://www.strava.com/api/v3/athlete/activities",
             params={
                 "before": before,
                 "after": after,
+                "page": pageNumber,
+                "per_page": pageSize,
             },
             headers={
                 "Authorization": f"Bearer {access_token}",
             },
         )
 
+        activity_objects = []
         if response.status_code == 200:
             activities = response.json()
-            self._last_sync = datetime.fromtimestamp(before)
-            return activities
+            for activity in activities:
+                if activity["type"] != "Ride":
+                    # TODO: handle other types here
+                    continue
+                activity_objects.append(
+                    StravaCycling(
+                        source="strava",
+                        start_time=activity["start_date"],
+                        distance=activity["distance"],
+                        moving_time=activity["moving_time"],
+                        total_elevation_gain=activity["total_elevation_gain"],
+                        max_speed=activity["max_speed"],
+                        average_speed=activity["average_speed"],
+                    )
+                )
+            return activity_objects
         else:
             print("Error getting activities: ", response.status_code)
             return []

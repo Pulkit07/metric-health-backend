@@ -50,3 +50,13 @@ class Weight(FitnessDatatype):
 @dataclass
 class Height(FitnessDatatype):
     value: float
+
+
+@dataclass_json
+@dataclass
+class StravaCycling(FitnessDatatype):
+    distance: float
+    moving_time: int
+    max_speed: float
+    average_speed: float
+    total_elevation_gain: float

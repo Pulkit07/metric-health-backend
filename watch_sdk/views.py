@@ -561,8 +561,11 @@ def test_fitbit_integration(request):
 @api_view(["POST"])
 @permission_classes([AdminPermission])
 def strava_cron_job(request):
-    apps = UserApp.objects.filter(enabled_platforms__platform__name="strava")
-    for app in apps:
+    apps = EnabledPlatform.objects.filter(platform__name="strava").values_list(
+        "user_app", flat=True
+    )
+    for app_id in apps:
+        app = UserApp.objects.get(id=app_id)
         connections = WatchConnection.objects.filter(app=app)
         for connection in connections:
             try:
