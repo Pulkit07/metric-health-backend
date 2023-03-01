@@ -133,6 +133,7 @@ class StravaAPIClient(object):
                         total_elevation_gain=activity["total_elevation_gain"],
                         max_speed=activity["max_speed"],
                         average_speed=activity["average_speed"],
+                        source_device=None,
                     )
                 )
             return activity_objects

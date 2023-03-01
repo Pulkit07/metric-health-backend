@@ -70,7 +70,7 @@ def upload_health_data_using_json_file(request):
     except:
         return Response({"error": "No connection exists for this user"}, status=400)
 
-    print(f"Health data received for {user_uuid} using a json file")
+    print(f"Health data received for {user_uuid} using a json file of app {app}")
     fitness_data = collections.defaultdict(list)
     # read over a json file passed with the request and build fitness_data
     data = request.FILES["data"].read()
@@ -98,6 +98,7 @@ def upload_health_data_using_json_file(request):
                     start_time=start_time,
                     end_time=end_time,
                     source="apple_healthkit",
+                    source_device=d.get("source_name"),
                 ).to_dict()
             )
     print(f"Total data points received: {total}")
@@ -146,6 +147,7 @@ def upload_health_data(request):
                     start_time=start_time,
                     end_time=end_time,
                     source="apple_healthkit",
+                    source_device=d.get("source_name"),
                 ).to_dict()
             )
 

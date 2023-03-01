@@ -64,6 +64,7 @@ def _sync_app_from_google_fit(user_app):
                                 source="google_fit",
                                 start_time=int(d[1]) / 10**6,
                                 end_time=int(d[2]) / 10**6,
+                                source_device=None,
                                 value=d[0],
                             ).to_dict()
                         )
