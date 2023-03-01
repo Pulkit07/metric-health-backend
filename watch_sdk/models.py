@@ -76,9 +76,7 @@ class ConnectedPlatformMetadata(BaseModel):
     # This is the UUID that we will pass to the platform APIs
     # we cannot use user uuid since that can contain special characters
     platform_connection_uuid = models.CharField(max_length=200, blank=True, null=True)
-    connection = models.ForeignKey(
-        "WatchConnection", on_delete=models.CASCADE, null=True
-    )
+    connection = models.ForeignKey("WatchConnection", on_delete=models.CASCADE)
 
     def mark_logout(self):
         self.logged_in = False
@@ -88,7 +86,6 @@ class ConnectedPlatformMetadata(BaseModel):
 class WatchConnection(BaseModel):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
     user_uuid = models.CharField(max_length=200)
-    connected_platforms = models.ManyToManyField(ConnectedPlatformMetadata, blank=True)
 
 
 class TestWebhookData(BaseModel):
