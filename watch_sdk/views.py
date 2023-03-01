@@ -1,10 +1,16 @@
 import base64
 import collections
-import datetime
+from datetime import datetime
 import hashlib
 import hmac
 import json
 import uuid
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
+
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import viewsets, views, generics
@@ -463,6 +469,45 @@ def test_webhook_endpoint(request):
         data=data["data"],
         uuid=data["uuid"],
     )
+
+    return Response({"success": True}, status=200)
+
+
+@api_view(["GET"])
+@permission_classes([AdminPermission])
+def analyze_webhook_data(request):
+    # for each uuid in TestWebhookData, let's build date wise aggregated data
+    uuids = TestWebhookData.objects.values_list("uuid", flat=True).distinct()
+    for uuid in uuids:
+        datas = TestWebhookData.objects.filter(uuid=uuid)
+        hour_wise_map = collections.defaultdict(int)
+        start_end_set = set()
+        for data in datas:
+            for points in data.data["steps"]:
+                start_time = points["start_time"] / 1000
+                end_time = points["end_time"] / 1000
+                key = f"{start_time}-{end_time}"
+                if key in start_end_set:
+                    print(
+                        f"Duplicate key {key} for {uuid} with value {points['value']}"
+                    )
+                else:
+                    start_end_set.add(key)
+                # convert start time to date and hour format
+                date = datetime.fromtimestamp(start_time, tz=ZoneInfo("Asia/Kolkata"))
+                end_date = datetime.fromtimestamp(end_time, tz=ZoneInfo("Asia/Kolkata"))
+                start_date = datetime.strftime(date, "%Y-%m-%d %H")
+                end_date = datetime.strftime(end_date, "%Y-%m-%d %H")
+                # if start_date != end_date:
+                #     continue
+                hour_wise_map[datetime.strftime(date, "%Y-%m-%d")] += points["value"]
+
+        # pretty print the hour wise data we have
+        print(f"total data points for {uuid} : {len(hour_wise_map)}")
+        for key, value in hour_wise_map.items():
+            print(f"{key} : {value}")
+
+        print("\n\n")
 
     return Response({"success": True}, status=200)
 

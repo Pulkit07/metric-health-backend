@@ -66,6 +66,7 @@ urlpatterns = [
     path("sync_strava", views.strava_cron_job),
     path("test_sync", views.test_google_sync),
     path("test_webhook", views.test_webhook_endpoint),
+    path("analyze_webhook_data", views.analyze_webhook_data),
     path("test_fitbit", views.test_fitbit_integration),
     path("fitbit_webhook", views.FitbitWebhook.as_view()),
 ]
