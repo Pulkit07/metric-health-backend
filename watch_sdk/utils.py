@@ -37,8 +37,8 @@ def _sync_app_from_google_fit(user_app):
     )
     for connection in connections:
         try:
-            google_fit_connection = connection.connected_platforms.get(
-                platform__name="google_fit"
+            google_fit_connection = ConnectedPlatformMetadata.objects.get(
+                connection=connection, platform__name="google_fit"
             )
         except Exception:
             continue

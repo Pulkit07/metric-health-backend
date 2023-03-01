@@ -56,7 +56,11 @@ class ConnectedPlatformMetadataSerializer(serializers.ModelSerializer):
 
 
 class WatchConnectionSerializer(serializers.ModelSerializer):
-    connected_platforms = ConnectedPlatformMetadataSerializer(many=True)
+    connected_platforms = serializers.SerializerMethodField()
+
+    def get_connected_platforms(self, obj):
+        connected_platforms = ConnectedPlatformMetadata.objects.filter(connection=obj)
+        return ConnectedPlatformMetadataSerializer(connected_platforms, many=True).data
 
     class Meta:
         model = WatchConnection
@@ -70,8 +74,8 @@ class PlatformBasedWatchConnection(serializers.ModelSerializer):
         data["connections"] = {}
         for enabled_platform in EnabledPlatform.objects.filter(user_app=app):
             # check whether connection exists for this platform
-            platform_connection = instance.connected_platforms.filter(
-                platform=enabled_platform.platform
+            platform_connection = ConnectedPlatformMetadata.objects.filter(
+                connection=instance, platform=enabled_platform.platform
             )
             if platform_connection.exists():
                 data["connections"][

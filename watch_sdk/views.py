@@ -250,8 +250,8 @@ def connect_platform_for_user(request):
     connections = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
     if connections.exists():
         connection: WatchConnection = connections.first()
-        connected_platform_metadata = connection.connected_platforms.filter(
-            platform=platform
+        connected_platform_metadata = ConnectedPlatformMetadata.objects.filter(
+            connection=connection, platform=platform
         )
         if connected_platform_metadata.exists():
             connected_platform_metadata = connected_platform_metadata.first()
@@ -307,10 +307,9 @@ def connect_platform_for_user(request):
         platform=platform,
         email=request.data.get("email"),
         connected_device_uuids=[device_id] if device_id else [],
+        connection=connection,
     )
     connected_platform_metadata.save()
-    connection.connected_platforms.add(connected_platform_metadata)
-    connection.save()
     utils.on_new_platform_connected(connection, connected_platform_metadata)
 
     return Response(
@@ -546,8 +545,9 @@ def test_fitbit_integration(request):
         connections = WatchConnection.objects.filter(app=app)
         for connection in connections:
             try:
-                connected_platform = connection.connected_platforms.get(
-                    platform__name="fitbit"
+                connected_platform = ConnectedPlatformMetadata.objects.get(
+                    platform__name="fitbit",
+                    connection=connection,
                 )
             except Exception:
                 continue
@@ -569,8 +569,9 @@ def strava_cron_job(request):
         connections = WatchConnection.objects.filter(app=app)
         for connection in connections:
             try:
-                connected_platform = connection.connected_platforms.get(
+                connected_platform = ConnectedPlatformMetadata.objects.get(
                     platform__name="strava",
+                    connection=connection,
                     logged_in=True,
                 )
             except Exception:

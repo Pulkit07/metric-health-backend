@@ -76,6 +76,9 @@ class ConnectedPlatformMetadata(BaseModel):
     # This is the UUID that we will pass to the platform APIs
     # we cannot use user uuid since that can contain special characters
     platform_connection_uuid = models.CharField(max_length=200, blank=True, null=True)
+    connection = models.ForeignKey(
+        "WatchConnection", on_delete=models.CASCADE, null=True
+    )
 
     def mark_logout(self):
         self.logged_in = False
