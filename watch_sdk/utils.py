@@ -96,7 +96,7 @@ def send_data_to_webhook(fitness_data, webhook_url, user_uuid, fit_connection=No
         )
         print(f"response for chunk {cur_chunk}: {response}, {webhook_url}")
         cur_chunk += 1
-        if response.status_code > 200:
+        if response.status_code > 202 or response.status_code < 200:
             print("Error in response, status code: %s" % response.status_code)
             if fit_connection:
                 fit_connection._update_last_sync = False
