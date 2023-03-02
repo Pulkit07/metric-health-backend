@@ -1,8 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from .models import EnabledPlatform, Platform
-from .models import User,UserApp
+from .models import EnabledPlatform, Platform, User, UserApp
 from django.core.mail import mail_admins
 
 @receiver(post_save, sender="watch_sdk.UserApp")
@@ -36,13 +35,15 @@ def enable_basic_data_types(sender, instance, created, **kwargs):
     instance.enabled_data_types.add(calories)
     instance.save()
 
-def user_task_handler(sender,instance,**kwargs):
-    mail_admins("New User created",f"This Email is to infrom admin that a new user is created.\n NEW USER NAME : {instance.name} \n NEW USER EMAIL : {instance.email} \n NEW USER PHONE NUMBER : {instance.phone} \n NEW USER COMPANY NAME : {instance.company_name} \n NEW USER COUNTRY : {instance.country}")
-post_save.connect(user_task_handler,sender=User)
+@receiver(post_save, sender=User)
+def user_task_handler(sender, instance, created, **kwargs):
+    if created:
+        mail_admins("New User created",f"This Email is to infrom admin that a new user is created.\n NEW USER NAME : {instance.name} \n NEW USER EMAIL : {instance.email} \n NEW USER PHONE NUMBER : {instance.phone} \n NEW USER COMPANY NAME : {instance.company_name} \n NEW USER COUNTRY : {instance.country}")
 
-def userapp_task_handler(sender,instance,**kwargs):
-    mail_admins("New User created",f"This Email is to infrom admin that a new app is created.\n NAME : {instance.name} \n USER : {instance.user} \n PLAY STORE URL : {instance.play_store_url} \n APP STORE URL : {instance.app_store_url} \n WEBSITE : {instance.website} \n WEBHOOK URL : {instance.webhook_url} \n ENABLED PLATFORMS : {instance.enabled_platforms} \n PAYMENT PLAN : {instance.payment_plan}")
-post_save.connect(userapp_task_handler,sender=UserApp)
+@receiver(post_save, sender=UserApp)
+def userapp_task_handler(sender, instance, created, **kwargs):
+    if created:
+        mail_admins("New User created",f"This Email is to infrom admin that a new app is created.\n NAME : {instance.name} \n USER : {instance.user} \n PLAY STORE URL : {instance.play_store_url} \n APP STORE URL : {instance.app_store_url} \n WEBSITE : {instance.website} \n WEBHOOK URL : {instance.webhook_url} \n ENABLED PLATFORMS : {instance.enabled_platforms} \n PAYMENT PLAN : {instance.payment_plan}")
 
 
 # @receiver(post_save, sender="watch_sdk.ConnectedPlatformMetadata")
