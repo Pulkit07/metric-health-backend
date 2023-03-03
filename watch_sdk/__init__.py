@@ -1,1 +1,0 @@
-default_app_config = "watch_sdk.apps.ContactemqConfig"

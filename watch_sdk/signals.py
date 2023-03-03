@@ -6,6 +6,7 @@ from .models import EnabledPlatform, Platform, User, UserApp
 from django.core.mail import mail_admins
 from watch_sdk.data_providers.fitbit import FitbitAPIClient
 
+
 @receiver(post_save, sender="watch_sdk.UserApp")
 def enable_basic_platforms(sender, instance, created, **kwargs):
     if not created:
@@ -34,15 +35,23 @@ def enable_basic_data_types(sender, instance, created, **kwargs):
     instance.enabled_data_types.add(calories)
     instance.save()
 
+
 @receiver(post_save, sender=User)
-def user_task_handler(sender, instance, created, **kwargs):
+def send_email_on_user_create(sender, instance, created, **kwargs):
     if created:
-        mail_admins("New User created",f"This Email is to infrom admin that a new user is created.\n NEW USER NAME : {instance.name} \n NEW USER EMAIL : {instance.email} \n NEW USER PHONE NUMBER : {instance.phone} \n NEW USER COMPANY NAME : {instance.company_name} \n NEW USER COUNTRY : {instance.country}")
+        mail_admins(
+            "New User created",
+            f"This Email is to infrom admin that a new user is created.\n NEW USER NAME : {instance.name} \n NEW USER EMAIL : {instance.email} \n NEW USER PHONE NUMBER : {instance.phone} \n NEW USER COMPANY NAME : {instance.company_name} \n NEW USER COUNTRY : {instance.country}",
+        )
+
 
 @receiver(post_save, sender=UserApp)
-def userapp_task_handler(sender, instance, created, **kwargs):
+def send_email_on_userapp_create(sender, instance, created, **kwargs):
     if created:
-        mail_admins("New User created",f"This Email is to infrom admin that a new app is created.\n NAME : {instance.name} \n USER : {instance.user} \n PLAY STORE URL : {instance.play_store_url} \n APP STORE URL : {instance.app_store_url} \n WEBSITE : {instance.website} \n WEBHOOK URL : {instance.webhook_url} \n ENABLED PLATFORMS : {instance.enabled_platforms} \n PAYMENT PLAN : {instance.payment_plan}")
+        mail_admins(
+            "New User created",
+            f"This Email is to infrom admin that a new app is created.\n NAME : {instance.name} \n USER : {instance.user} \n PLAY STORE URL : {instance.play_store_url} \n APP STORE URL : {instance.app_store_url} \n WEBSITE : {instance.website} \n WEBHOOK URL : {instance.webhook_url} \n ENABLED PLATFORMS : {instance.enabled_platforms} \n PAYMENT PLAN : {instance.payment_plan}",
+        )
 
 
 # TODO: this is not correctly working on reconnect
