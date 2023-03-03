@@ -74,6 +74,13 @@ def upload_health_data_using_json_file(request):
     except:
         return Response({"error": "No connection exists for this user"}, status=400)
 
+    try:
+        connected_metadata = ConnectedPlatformMetadata.objects.get(
+            connection=connection, platform__name="apple_healthkit"
+        )
+    except:
+        return Response({"error": "No connection exists for this user"}, status=400)
+
     print(f"Health data received for {user_uuid} using a json file of app {app}")
     fitness_data = collections.defaultdict(list)
     # read over a json file passed with the request and build fitness_data
@@ -81,17 +88,15 @@ def upload_health_data_using_json_file(request):
     data = json.loads(data)
     total = 0
     enabled_datatypes = app.enabled_data_types.all()
+    max_last_sync = 0
     for enabled in enabled_datatypes:
         data_type = apple_healthkit.DB_DATA_TYPE_KEY_MAP.get(enabled.name)
-        if not data.get(data_type):
-            continue
         key, dclass = apple_healthkit.DATATYPE_NAME_CLASS_MAP.get(
             data_type, (None, None)
         )
         if not key or not dclass:
             continue
-        values = data[data_type]
-        for d in values:
+        for d in data.get(data_type, []):
             total += 1
             value = d["value"]
             start_time = d["date_from"]
@@ -105,6 +110,8 @@ def upload_health_data_using_json_file(request):
                     source_device=d.get("source_name"),
                 ).to_dict()
             )
+            max_last_sync = max(max_last_sync, end_time)
+
     print(f"Total data points received: {total}")
     if app.webhook_url:
         if fitness_data:
@@ -116,6 +123,11 @@ def upload_health_data_using_json_file(request):
             )
     else:
         print("No webhook url found, skipping")
+
+    # update last sync time on server
+    # TODO: we should rather update data type wise last sync
+    connected_metadata.last_sync = datetime.fromtimestamp(max_last_sync / 1000)
+    connected_metadata.save()
     return Response({"success": True}, status=200)
 
 
