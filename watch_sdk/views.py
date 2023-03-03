@@ -1,16 +1,23 @@
 import base64
 import collections
-import datetime
+from datetime import datetime
 import hashlib
 import hmac
 import json
 import uuid
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
+
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import viewsets, views, generics
 from watch_sdk.data_providers.fitbit import FitbitAPIClient
 
 from watch_sdk.data_providers.google_fit import GoogleFitConnection
+from watch_sdk.data_providers.strava import StravaAPIClient
 from watch_sdk.permissions import (
     AdminPermission,
     FirebaseAuthPermission,
@@ -69,7 +76,7 @@ def upload_health_data_using_json_file(request):
     except:
         return Response({"error": "No connection exists for this user"}, status=400)
 
-    print(f"Health data received for {user_uuid} using a json file")
+    print(f"Health data received for {user_uuid} using a json file of app {app}")
     fitness_data = collections.defaultdict(list)
     # read over a json file passed with the request and build fitness_data
     data = request.FILES["data"].read()
@@ -97,6 +104,7 @@ def upload_health_data_using_json_file(request):
                     start_time=start_time,
                     end_time=end_time,
                     source="apple_healthkit",
+                    source_device=d.get("source_name"),
                 ).to_dict()
             )
     print(f"Total data points received: {total}")
@@ -145,6 +153,7 @@ def upload_health_data(request):
                     start_time=start_time,
                     end_time=end_time,
                     source="apple_healthkit",
+                    source_device=d.get("source_name"),
                 ).to_dict()
             )
 
@@ -196,7 +205,8 @@ def watch_connection_exists(request):
                 "data": {
                     "user_uuid": user_uuid,
                     "connections": {
-                        platform.name: None for platform in app.enabled_platforms.all()
+                        platform.name: None
+                        for platform in EnabledPlatform.objects.filter(user_app=app)
                     },
                 },
             },
@@ -231,7 +241,7 @@ def connect_platform_for_user(request):
             )
 
     app = UserApp.objects.get(key=key)
-    if not app.enabled_platforms.filter(platform=platform).exists():
+    if not EnabledPlatform.objects.filter(user_app=app, platform=platform).exists():
         return Response(
             {"error": f"{platform.name} is not enabled for this app"}, status=400
         )
@@ -248,8 +258,8 @@ def connect_platform_for_user(request):
     connections = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
     if connections.exists():
         connection: WatchConnection = connections.first()
-        connected_platform_metadata = connection.connected_platforms.filter(
-            platform=platform
+        connected_platform_metadata = ConnectedPlatformMetadata.objects.filter(
+            connection=connection, platform=platform
         )
         if connected_platform_metadata.exists():
             connected_platform_metadata = connected_platform_metadata.first()
@@ -272,10 +282,7 @@ def connect_platform_for_user(request):
                 connected_platform_metadata.connected_device_uuids = (
                     connected_platform_metadata.connected_device_uuids or []
                 ) + ([device_id] if device_id else [])
-                utils.on_platform_reconnected(connection, connected_platform_metadata)
             elif disconnect:
-                # call this before setting refresh token as None
-                utils.on_platform_disconnected(connection, connected_platform_metadata)
                 connected_platform_metadata.refresh_token = None
                 connected_platform_metadata.email = None
                 connected_platform_metadata.logged_in = False
@@ -305,11 +312,9 @@ def connect_platform_for_user(request):
         platform=platform,
         email=request.data.get("email"),
         connected_device_uuids=[device_id] if device_id else [],
+        connection=connection,
     )
     connected_platform_metadata.save()
-    connection.connected_platforms.add(connected_platform_metadata)
-    connection.save()
-    utils.on_new_platform_connected(connection, connected_platform_metadata)
 
     return Response(
         {"success": True, "data": PlatformBasedWatchConnection(connection).data},
@@ -338,7 +343,7 @@ def enable_platform_for_app(request):
     except:
         return Response({"error": "Invalid platform"}, status=400)
 
-    already_enabled = app.enabled_platforms.filter(platform=platform)
+    already_enabled = EnabledPlatform.objects.filter(user_app=app, platform=platform)
     if already_enabled.exists():
         if disable:
             already_enabled.first().delete()
@@ -354,10 +359,9 @@ def enable_platform_for_app(request):
         platform=platform,
         platform_app_id=request.data.get("platform_app_id"),
         platform_app_secret=request.data.get("platform_app_secret"),
+        user_app=app,
     )
     enabled_platform.save()
-    app.enabled_platforms.add(enabled_platform)
-    app.save()
     return Response({"success": True, "data": UserAppSerializer(app).data}, status=200)
 
 
@@ -469,6 +473,45 @@ def test_webhook_endpoint(request):
     return Response({"success": True}, status=200)
 
 
+@api_view(["GET"])
+@permission_classes([AdminPermission])
+def analyze_webhook_data(request):
+    # for each uuid in TestWebhookData, let's build date wise aggregated data
+    uuids = TestWebhookData.objects.values_list("uuid", flat=True).distinct()
+    for uuid in uuids:
+        datas = TestWebhookData.objects.filter(uuid=uuid)
+        hour_wise_map = collections.defaultdict(int)
+        start_end_set = set()
+        for data in datas:
+            for points in data.data["steps"]:
+                start_time = points["start_time"] / 1000
+                end_time = points["end_time"] / 1000
+                key = f"{start_time}-{end_time}"
+                if key in start_end_set:
+                    print(
+                        f"Duplicate key {key} for {uuid} with value {points['value']}"
+                    )
+                else:
+                    start_end_set.add(key)
+                # convert start time to date and hour format
+                date = datetime.fromtimestamp(start_time, tz=ZoneInfo("Asia/Kolkata"))
+                end_date = datetime.fromtimestamp(end_time, tz=ZoneInfo("Asia/Kolkata"))
+                start_date = datetime.strftime(date, "%Y-%m-%d %H")
+                end_date = datetime.strftime(end_date, "%Y-%m-%d %H")
+                # if start_date != end_date:
+                #     continue
+                hour_wise_map[datetime.strftime(date, "%Y-%m-%d")] += points["value"]
+
+        # pretty print the hour wise data we have
+        print(f"total data points for {uuid} : {len(hour_wise_map)}")
+        for key, value in hour_wise_map.items():
+            print(f"{key} : {value}")
+
+        print("\n\n")
+
+    return Response({"success": True}, status=200)
+
+
 def verify_fitbit_signature(client_secret, request_body, signature):
     signing_key = client_secret + "&"
     encoded_body = base64.b64encode(
@@ -498,7 +541,13 @@ class FitbitWebhook(generics.GenericAPIView):
             # TODO: log this
             return Response(status=404)
 
-        enabled_app = app.enabled_platforms.get(platform__name="fitbit")
+        try:
+            enabled_app = EnabledPlatform.objects.get(
+                platform__name="fitbit", user_app=app
+            )
+        except EnabledPlatform.DoesNotExist:
+            print("No enabled app found")
+            return Response(status=404)
         data = request.data
         if not verify_fitbit_signature(
             enabled_app.client_secret,
@@ -531,18 +580,47 @@ class FitbitNotificationLogViewSet(viewsets.ModelViewSet):
 @api_view(["GET"])
 @permission_classes([AdminPermission])
 def test_fitbit_integration(request):
-    apps = UserApp.objects.filter(enabled_platforms__platform__name="fitbit")
-    for app in apps:
+    apps = EnabledPlatform.objects.filter(platform__name="fitbit").values_list(
+        "user_app", flat=True
+    )
+    for app_id in apps:
+        app = UserApp.objects.get(id=app_id)
         connections = WatchConnection.objects.filter(app=app)
         for connection in connections:
             try:
-                connected_platform = connection.connected_platforms.get(
-                    platform__name="fitbit"
+                connected_platform = ConnectedPlatformMetadata.objects.get(
+                    platform__name="fitbit",
+                    connection=connection,
                 )
             except Exception:
                 continue
 
             with FitbitAPIClient(app, connected_platform, connection.user_uuid) as fbc:
                 pass
+
+    return Response({"success": True}, status=200)
+
+
+@api_view(["POST"])
+@permission_classes([AdminPermission])
+def strava_cron_job(request):
+    apps = EnabledPlatform.objects.filter(platform__name="strava").values_list(
+        "user_app", flat=True
+    )
+    for app_id in apps:
+        app = UserApp.objects.get(id=app_id)
+        connections = WatchConnection.objects.filter(app=app)
+        for connection in connections:
+            try:
+                connected_platform = ConnectedPlatformMetadata.objects.get(
+                    platform__name="strava",
+                    connection=connection,
+                    logged_in=True,
+                )
+            except Exception:
+                continue
+
+            with StravaAPIClient(app, connected_platform, connection.user_uuid) as sac:
+                sac.get_activities_since_last_sync()
 
     return Response({"success": True}, status=200)

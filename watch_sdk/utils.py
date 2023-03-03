@@ -1,7 +1,7 @@
 import json
 from watch_sdk.data_providers.fitbit import FitbitAPIClient
 from watch_sdk.data_providers.google_fit import GoogleFitConnection
-from .models import ConnectedPlatformMetadata, UserApp, WatchConnection
+from .models import ConnectedPlatformMetadata, EnabledPlatform, UserApp, WatchConnection
 from .constants import google_fit
 import firebase_admin
 from firebase_admin import credentials
@@ -11,8 +11,11 @@ import requests
 
 
 def google_fit_cron():
-    apps = UserApp.objects.filter(enabled_platforms__platform__name="google_fit")
-    for app in apps:
+    apps = EnabledPlatform.objects.filter(platform__name="google_fit").values_list(
+        "user_app", flat=True
+    )
+    for app_id in apps:
+        app = UserApp.objects.get(id=app_id)
         if app.webhook_url is None:
             print("No webhook url for app %s", app)
             continue
@@ -34,8 +37,8 @@ def _sync_app_from_google_fit(user_app):
     )
     for connection in connections:
         try:
-            google_fit_connection = connection.connected_platforms.get(
-                platform__name="google_fit"
+            google_fit_connection = ConnectedPlatformMetadata.objects.get(
+                connection=connection, platform__name="google_fit"
             )
         except Exception:
             continue
@@ -61,6 +64,7 @@ def _sync_app_from_google_fit(user_app):
                                 source="google_fit",
                                 start_time=int(d[1]) / 10**6,
                                 end_time=int(d[2]) / 10**6,
+                                source_device=None,
                                 value=d[0],
                             ).to_dict()
                         )
@@ -92,7 +96,7 @@ def send_data_to_webhook(fitness_data, webhook_url, user_uuid, fit_connection=No
         )
         print(f"response for chunk {cur_chunk}: {response}, {webhook_url}")
         cur_chunk += 1
-        if response.status_code > 200:
+        if response.status_code > 202 or response.status_code < 200:
             print("Error in response, status code: %s" % response.status_code)
             if fit_connection:
                 fit_connection._update_last_sync = False
@@ -130,33 +134,3 @@ def verify_firebase_token(auth_token):
         return True
     except Exception:
         return False
-
-
-def on_new_platform_connected(
-    connection: WatchConnection, connected_metadata: ConnectedPlatformMetadata
-):
-    if connected_metadata.platform.name == "fitbit":
-        with FitbitAPIClient(
-            connection.app, connected_metadata, connection.user_uuid
-        ) as fac:
-            fac.create_subscription()
-
-
-def on_platform_reconnected(
-    connection: WatchConnection, connected_metadata: ConnectedPlatformMetadata
-):
-    if connected_metadata.platform.name == "fitbit":
-        with FitbitAPIClient(
-            connection.app, connected_metadata, connection.user_uuid
-        ) as fac:
-            fac.create_subscription()
-
-
-def on_platform_disconnected(
-    connection: WatchConnection, connected_metadata: ConnectedPlatformMetadata
-):
-    if connected_metadata.platform.name == "fitbit":
-        with FitbitAPIClient(
-            connection.app, connected_metadata, connection.user_uuid
-        ) as fac:
-            fac.delete_subscription()

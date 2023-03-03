@@ -1,3 +1,5 @@
+import copy
+from typing import Any
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
@@ -26,6 +28,7 @@ class EnabledPlatform(BaseModel):
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     platform_app_id = models.CharField(max_length=200, null=True, blank=True)
     platform_app_secret = models.CharField(max_length=400, null=True, blank=True)
+    user_app = models.ForeignKey("UserApp", on_delete=models.CASCADE)
 
     @property
     def name(self):
@@ -43,7 +46,6 @@ class UserApp(BaseModel):
     website = models.CharField(max_length=100, blank=True, null=True)
     webhook_url = models.CharField(max_length=600, blank=True, null=True)
     key = models.CharField(max_length=100, blank=True, null=True, unique=True)
-    enabled_platforms = models.ManyToManyField(EnabledPlatform, blank=True)
     payment_plan = models.CharField(
         max_length=100,
         choices=(
@@ -71,6 +73,22 @@ class ConnectedPlatformMetadata(BaseModel):
     connected_device_uuids = ArrayField(
         models.CharField(max_length=200), blank=True, null=True
     )
+    # Sometimes platform asks to pass in a UUID while creating a subscription
+    # Fitbit is one of them.
+    # This is the UUID that we will pass to the platform APIs
+    # we cannot use user uuid since that can contain special characters
+    platform_connection_uuid = models.CharField(max_length=200, blank=True, null=True)
+    connection = models.ForeignKey("WatchConnection", on_delete=models.CASCADE)
+
+    __original_copy = None
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.__original_copy = copy.deepcopy(self)
+
+    @property
+    def original_copy(self):
+        return self.__original_copy
 
     def mark_logout(self):
         self.logged_in = False
@@ -80,7 +98,6 @@ class ConnectedPlatformMetadata(BaseModel):
 class WatchConnection(BaseModel):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
     user_uuid = models.CharField(max_length=200)
-    connected_platforms = models.ManyToManyField(ConnectedPlatformMetadata, blank=True)
 
 
 class TestWebhookData(BaseModel):
