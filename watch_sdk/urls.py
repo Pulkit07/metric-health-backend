@@ -20,7 +20,6 @@ app_name = "watch_sdk"
 
 urlpatterns = [
     path("generate_key", views.generate_key),
-    path("upload_health_data", views.upload_health_data),
     path("upload_health_data_as_json", views.upload_health_data_using_json_file),
     path(
         "user",

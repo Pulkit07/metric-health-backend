@@ -35,9 +35,7 @@ from .models import (
     WatchConnection,
 )
 from .serializers import (
-    ConnectedPlatformMetadataSerializer,
     DataTypeSerializer,
-    EnabledPlatformSerializer,
     FitbitNotificationLogSerializer,
     PlatformBasedWatchConnection,
     PlatformSerializer,
@@ -115,55 +113,6 @@ def upload_health_data_using_json_file(request):
             )
             utils.send_data_to_webhook(
                 fitness_data, app.webhook_url, connection.user_uuid
-            )
-    else:
-        print("No webhook url found, skipping")
-    return Response({"success": True}, status=200)
-
-
-@api_view(["POST"])
-@permission_classes([ValidKeyPermission])
-def upload_health_data(request):
-    key = request.query_params.get("key")
-    user_uuid = request.query_params.get("user_uuid")
-    app = UserApp.objects.get(key=key)
-
-    try:
-        connection = WatchConnection.objects.get(app=app, user_uuid=user_uuid)
-    except:
-        return Response({"error": "No connection exists for this user"}, status=400)
-
-    data = request.data
-    print(f"Health data received for {user_uuid}: {data}")
-    print(type(data))
-    fitness_data = collections.defaultdict(list)
-    for data_type, data in data.items():
-        key, dclass = apple_healthkit.DATATYPE_NAME_CLASS_MAP.get(
-            data_type, (None, None)
-        )
-        if not key or not dclass:
-            continue
-        for d in data:
-            value = d["value"]
-            start_time = d["date_from"]
-            end_time = d["date_to"]
-            fitness_data[key].append(
-                dclass(
-                    value=value,
-                    start_time=start_time,
-                    end_time=end_time,
-                    source="apple_healthkit",
-                    source_device=d.get("source_name"),
-                ).to_dict()
-            )
-
-    if app.webhook_url:
-        if fitness_data:
-            utils.send_data_to_webhook(
-                fitness_data, app.webhook_url, connection.user_uuid
-            )
-            print(
-                f"sending {len(fitness_data)} data points to webhook from apple healthkit for {user_uuid}"
             )
     else:
         print("No webhook url found, skipping")
