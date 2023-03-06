@@ -1,9 +1,5 @@
-import base64
 import collections
 from datetime import datetime
-import hashlib
-import hmac
-import json
 import uuid
 
 try:
@@ -14,29 +10,24 @@ except ImportError:
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import viewsets, views, generics
-from watch_sdk.data_providers.fitbit import FitbitAPIClient
 
-from watch_sdk.data_providers.google_fit import GoogleFitConnection
-from watch_sdk.data_providers.strava import StravaAPIClient
 from watch_sdk.permissions import (
     AdminPermission,
     FirebaseAuthPermission,
     ValidKeyPermission,
 )
-from .models import (
+from watch_sdk.models import (
     ConnectedPlatformMetadata,
     DataType,
     EnabledPlatform,
-    FitbitNotificationLog,
     Platform,
     TestWebhookData,
     User,
     UserApp,
     WatchConnection,
 )
-from .serializers import (
+from watch_sdk.serializers import (
     DataTypeSerializer,
-    FitbitNotificationLogSerializer,
     PlatformBasedWatchConnection,
     PlatformSerializer,
     TestWebhookDataSerializer,
@@ -44,8 +35,6 @@ from .serializers import (
     UserSerializer,
     WatchConnectionSerializer,
 )
-from . import utils
-from .constants import apple_healthkit
 
 
 @api_view(["POST"])
@@ -60,91 +49,6 @@ def generate_key(request):
     app.key = key
     app.save()
     return Response({"key": key}, status=200)
-
-
-@api_view(["POST"])
-@permission_classes([ValidKeyPermission])
-def upload_health_data_using_json_file(request):
-    key = request.query_params.get("key")
-    user_uuid = request.query_params.get("user_uuid")
-    app = UserApp.objects.get(key=key)
-
-    try:
-        connection = WatchConnection.objects.get(app=app, user_uuid=user_uuid)
-    except:
-        return Response({"error": "No connection exists for this user"}, status=400)
-
-    try:
-        connected_metadata = ConnectedPlatformMetadata.objects.get(
-            connection=connection, platform__name="apple_healthkit"
-        )
-    except:
-        return Response({"error": "No connection exists for this user"}, status=400)
-
-    print(f"Health data received for {user_uuid} using a json file of app {app}")
-    fitness_data = collections.defaultdict(list)
-    # read over a json file passed with the request and build fitness_data
-    if "data" not in request.FILES:
-        print("No data file found")
-        return Response({"error": "No data file found"}, status=400)
-    data = request.FILES["data"].read()
-    data = json.loads(data)
-    total = 0
-    enabled_datatypes = app.enabled_data_types.all()
-    max_last_sync = 0
-    for enabled in enabled_datatypes:
-        data_type = apple_healthkit.DB_DATA_TYPE_KEY_MAP.get(enabled.name)
-        key, dclass = apple_healthkit.DATATYPE_NAME_CLASS_MAP.get(
-            data_type, (None, None)
-        )
-        if not key or not dclass:
-            continue
-        for d in data.get(data_type, []):
-            total += 1
-            value = d["value"]
-            start_time = d["date_from"]
-            end_time = d["date_to"]
-            fitness_data[key].append(
-                dclass(
-                    value=value,
-                    start_time=start_time,
-                    end_time=end_time,
-                    source="apple_healthkit",
-                    source_device=d.get("source_name"),
-                ).to_dict()
-            )
-            max_last_sync = max(max_last_sync, end_time)
-
-    print(f"Total data points received: {total}")
-    if app.webhook_url:
-        if fitness_data:
-            print(
-                f"sending {len(fitness_data)} data points to webhook from apple healthkit for {user_uuid}"
-            )
-            utils.send_data_to_webhook(
-                fitness_data, app.webhook_url, connection.user_uuid
-            )
-    else:
-        print("No webhook url found, skipping")
-
-    # update last sync time on server
-    # TODO: we should rather update data type wise last sync
-    connected_metadata.last_sync = datetime.fromtimestamp(max_last_sync / 1000)
-    connected_metadata.save()
-    return Response({"success": True}, status=200)
-
-
-# To be called from firebase function for now, should be removed in future
-@api_view(["POST"])
-@permission_classes([AdminPermission])
-def sync_from_google_fit(request):
-    """
-    Helper function to sync data from google fit
-
-    The API will be hit by a cron job
-    """
-    utils.google_fit_cron()
-    return Response({"success": True}, status=200)
 
 
 @api_view(["GET"])
@@ -408,22 +312,6 @@ class WebhookDataViewSet(viewsets.ModelViewSet):
     filterset_fields = ["uuid"]
 
 
-@api_view(["GET"])
-@permission_classes([AdminPermission])
-def test_google_sync(request):
-    connections = WatchConnection.objects.filter(
-        platform="android",
-        logged_in=True,
-        google_fit_refresh_token__isnull=False,
-    )
-    for connection in connections:
-        print(f"\n\nSyncing for {connection.user_uuid}")
-        with GoogleFitConnection(connection.app, connection) as gfc:
-            gfc.test_sync()
-
-    return Response({"success": True}, status=200)
-
-
 @api_view(["POST"])
 def test_webhook_endpoint(request):
     data = request.data
@@ -472,119 +360,5 @@ def analyze_webhook_data(request):
             print(f"{key} : {value}")
 
         print("\n\n")
-
-    return Response({"success": True}, status=200)
-
-
-def verify_fitbit_signature(client_secret, request_body, signature):
-    signing_key = client_secret + "&"
-    encoded_body = base64.b64encode(
-        hmac.new(
-            signing_key.encode("utf-8"),
-            request_body.encode("utf-8"),
-            hashlib.sha1,
-        ).digest()
-    )
-    return encoded_body.decode("utf-8") == signature
-
-
-class FitbitWebhook(generics.GenericAPIView):
-    def get(self, request):
-        if (
-            request.query_params.get("verify")
-            == "8120a0818957ced239318eb30cd2ac10e0ba12749b431972d7da036a0069ead9"
-        ):
-            return Response(status=204)
-        return Response(status=404)
-
-    def post(self, request):
-        app_id = request.query_params.get("app_id")
-        try:
-            app = UserApp.objects.get(id=app_id)
-        except Exception:
-            # TODO: log this
-            return Response(status=404)
-
-        try:
-            enabled_app = EnabledPlatform.objects.get(
-                platform__name="fitbit", user_app=app
-            )
-        except EnabledPlatform.DoesNotExist:
-            print("No enabled app found")
-            return Response(status=404)
-        data = request.data
-        if not verify_fitbit_signature(
-            enabled_app.client_secret,
-            request.body,
-            request.headers["X-Fitbit-Signature"],
-        ):
-            print("fitbit signature verification failed")
-            return Response(status=404)
-        total = 0
-        for entry in request.data:
-            total += 1
-            FitbitNotificationLog.objects.create(
-                collection_type=entry["collectionType"],
-                date=entry["date"],
-                owner_id=entry["ownerId"],
-                owner_type=entry["ownerType"],
-                subscription_id=entry["subscriptionId"],
-            )
-
-        print(f"Received {total} notifications from fitbit")
-        return Response(status=204)
-
-
-class FitbitNotificationLogViewSet(viewsets.ModelViewSet):
-    queryset = FitbitNotificationLog.objects.all()
-    serializer_class = FitbitNotificationLogSerializer
-    permission_classes = [AdminPermission]
-
-
-@api_view(["GET"])
-@permission_classes([AdminPermission])
-def test_fitbit_integration(request):
-    apps = EnabledPlatform.objects.filter(platform__name="fitbit").values_list(
-        "user_app", flat=True
-    )
-    for app_id in apps:
-        app = UserApp.objects.get(id=app_id)
-        connections = WatchConnection.objects.filter(app=app)
-        for connection in connections:
-            try:
-                connected_platform = ConnectedPlatformMetadata.objects.get(
-                    platform__name="fitbit",
-                    connection=connection,
-                )
-            except Exception:
-                continue
-
-            with FitbitAPIClient(app, connected_platform, connection.user_uuid) as fbc:
-                pass
-
-    return Response({"success": True}, status=200)
-
-
-@api_view(["POST"])
-@permission_classes([AdminPermission])
-def strava_cron_job(request):
-    apps = EnabledPlatform.objects.filter(platform__name="strava").values_list(
-        "user_app", flat=True
-    )
-    for app_id in apps:
-        app = UserApp.objects.get(id=app_id)
-        connections = WatchConnection.objects.filter(app=app)
-        for connection in connections:
-            try:
-                connected_platform = ConnectedPlatformMetadata.objects.get(
-                    platform__name="strava",
-                    connection=connection,
-                    logged_in=True,
-                )
-            except Exception:
-                continue
-
-            with StravaAPIClient(app, connected_platform, connection.user_uuid) as sac:
-                sac.get_activities_since_last_sync()
 
     return Response({"success": True}, status=200)
