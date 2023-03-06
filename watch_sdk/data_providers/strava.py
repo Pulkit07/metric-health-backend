@@ -1,7 +1,9 @@
+import uuid
 import requests
 from datetime import datetime
 
 from watch_sdk.dataclasses import StravaCycling
+from watch_sdk.models import EnabledPlatform
 
 
 class StravaAPIClient(object):
@@ -140,3 +142,29 @@ class StravaAPIClient(object):
         else:
             print("Error getting activities: ", response.status_code)
             return []
+
+
+def _get_callback_url(app):
+    # TODO: fix this and get the host from env
+    return f"https://watch-sdk.herokuapp.com/strava/webhook/{app.uuid}"
+
+
+def create_strava_subscription(app):
+    enabled_platform = EnabledPlatform.objects.get(app=app, platform__name="strava")
+    if enabled_platform.webhook_verify_token is None:
+        enabled_platform.webhook_verify_token = uuid.v4()
+        enabled_platform.save()
+
+    callback_url = _get_callback_url(app)
+
+    response = requests.post(
+        "https://www.strava.com/api/v3/push_subscriptions",
+        params={
+            "client_id": enabled_platform.platform_app_id,
+            "client_secret": enabled_platform.platform_app_secret,
+            "callback_url": callback_url,
+            "verify_token": enabled_platform.webhook_verify_token,
+        },
+    )
+
+    print("Create subscription response: ", response.status_code, response.json())
