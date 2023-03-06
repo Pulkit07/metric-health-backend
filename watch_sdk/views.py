@@ -84,6 +84,9 @@ def upload_health_data_using_json_file(request):
     print(f"Health data received for {user_uuid} using a json file of app {app}")
     fitness_data = collections.defaultdict(list)
     # read over a json file passed with the request and build fitness_data
+    if "data" not in request.FILES:
+        print("No data file found")
+        return Response({"error": "No data file found"}, status=400)
     data = request.FILES["data"].read()
     data = json.loads(data)
     total = 0
