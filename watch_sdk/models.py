@@ -114,3 +114,14 @@ class FitbitNotificationLog(BaseModel):
     owner_id = models.CharField(max_length=100)
     owner_type = models.CharField(max_length=100)
     subscription_id = models.CharField(max_length=100)
+
+
+class StravaWebhookLog(BaseModel):
+    connected_platform = models.ForeignKey(
+        ConnectedPlatformMetadata, on_delete=models.CASCADE
+    )
+    object_id = models.CharField(max_length=100)
+    subscription_id = models.CharField(max_length=100)
+    aspect_type = models.CharField(max_length=100)
+    object_type = models.CharField(max_length=100)
+    updates = models.JSONField()
