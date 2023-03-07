@@ -31,6 +31,7 @@ class EnabledPlatform(BaseModel):
     user_app = models.ForeignKey("UserApp", on_delete=models.CASCADE)
     # only used for Strava as of now
     webhook_verify_token = models.CharField(max_length=200, null=True, blank=True)
+    webhook_id = models.CharField(max_length=200, null=True, blank=True)
 
     @property
     def name(self):

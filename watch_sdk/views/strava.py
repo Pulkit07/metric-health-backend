@@ -8,6 +8,30 @@ from watch_sdk.models import (
 from watch_sdk.permissions import AdminPermission
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework import generics
+
+
+class StravaWebhook(generics.GenericAPIView):
+    def get(self, request, pk):
+        mode = request.query_params.get("hub.mode")
+        challenge = request.query_params.get("hub.challenge")
+        verify_token = request.query_params.get("hub.verify_token")
+        try:
+            user_app = UserApp.objects.get(id=pk)
+        except Exception:
+            return Response({"error": "no user app found for given id"}, status=404)
+
+        enabled_platform = EnabledPlatform.objects.get(
+            platform__name="strava", user_app=user_app
+        )
+        webhook_token = enabled_platform.webhook_verify_token
+        if mode == "subscribe" and verify_token == webhook_token:
+            return Response(
+                {"hub.challenge": challenge},
+                status=200,
+                content_type="application/json",
+            )
+        return Response(status=404)
 
 
 @api_view(["POST"])

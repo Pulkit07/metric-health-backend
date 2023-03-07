@@ -146,13 +146,15 @@ class StravaAPIClient(object):
 
 def _get_callback_url(app):
     # TODO: fix this and get the host from env
-    return f"https://watch-sdk.herokuapp.com/strava/webhook/{app.uuid}"
+    return f"https://apidev.hekahealth.co/watch_sdk/strava/{app.id}/webhook"
 
 
 def create_strava_subscription(app):
-    enabled_platform = EnabledPlatform.objects.get(app=app, platform__name="strava")
+    enabled_platform = EnabledPlatform.objects.get(
+        user_app=app, platform__name="strava"
+    )
     if enabled_platform.webhook_verify_token is None:
-        enabled_platform.webhook_verify_token = uuid.v4()
+        enabled_platform.webhook_verify_token = uuid.uuid4()
         enabled_platform.save()
 
     callback_url = _get_callback_url(app)
@@ -167,4 +169,52 @@ def create_strava_subscription(app):
         },
     )
 
-    print("Create subscription response: ", response.status_code, response.json())
+    if response.status_code == 201:
+        response_data = response.json()
+        enabled_platform.webhook_id = response_data["id"]
+        enabled_platform.save()
+        print("Created subscription")
+    else:
+        print("Error creating subscription: ", response.status_code, response.json())
+
+
+def get_strava_subscriptions(app):
+    enabled_platform = EnabledPlatform.objects.get(
+        user_app=app, platform__name="strava"
+    )
+    response = requests.get(
+        "https://www.strava.com/api/v3/push_subscriptions",
+        params={
+            "client_id": enabled_platform.platform_app_id,
+            "client_secret": enabled_platform.platform_app_secret,
+        },
+    )
+
+    if response.status_code == 200:
+        response_data = response.json()
+        print("Got subscriptions", response_data)
+    else:
+        print("Error getting subscriptions: ", response.status_code, response.json())
+
+
+def delete_strava_subscription(app):
+    enabled_platform = EnabledPlatform.objects.get(
+        user_app=app, platform__name="strava"
+    )
+    response = requests.delete(
+        "https://www.strava.com/api/v3/push_subscriptions/{}".format(
+            enabled_platform.webhook_id
+        ),
+        params={
+            "client_id": enabled_platform.platform_app_id,
+            "client_secret": enabled_platform.platform_app_secret,
+        },
+    )
+
+    if response.status_code == 204:
+        enabled_platform.webhook_id = None
+        enabled_platform.webhook_verify_token = None
+        enabled_platform.save()
+        print("Deleted subscription")
+    else:
+        print("Error deleting subscription: ", response.status_code, response.json())
