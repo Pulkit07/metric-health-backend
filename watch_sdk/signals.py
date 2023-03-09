@@ -52,6 +52,20 @@ def send_email_on_userapp_create(sender, instance, created, **kwargs):
             "New User created",
             f"This Email is to infrom admin that a new app is created.\n NAME : {instance.name} \n USER : {instance.user} \n PLAY STORE URL : {instance.play_store_url} \n APP STORE URL : {instance.app_store_url} \n WEBSITE : {instance.website} \n WEBHOOK URL : {instance.webhook_url} \n ENABLED PLATFORMS : {instance.enabled_platforms} \n PAYMENT PLAN : {instance.payment_plan}",
         )
+# TODO: handle the case when a platform is disconnected
+@receiver(post_save, sender="watch_sdk.EnabledPlatform")
+def strava_subscription_create(sender, instance, created, **kwargs):
+    if instance.platform.name != "strava":
+        return
+
+    from watch_sdk.data_providers.strava import (
+        create_strava_subscription,
+        delete_strava_subscription,
+    )
+
+    if created:
+        # create a strava subscription
+        create_strava_subscription(instance.app)
 
 
 # TODO: this is not correctly working on reconnect
