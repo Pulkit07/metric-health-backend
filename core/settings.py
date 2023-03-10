@@ -172,14 +172,9 @@ else:
         },
         "loggers": {
             # This should be something else when not using gunicorn
-            "gunicorn": {
+            "root": {
                 "handlers": ["SysLog", "console"],
                 "level": "INFO",
-                "propagate": True,
-            },
-            "app-logger": {
-                "handlers": ["console", "SysLog"],
-                "level": "CRITICAL",
                 "propagate": True,
             },
         },
