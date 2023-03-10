@@ -11,6 +11,8 @@ import collections
 import requests
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 def google_fit_cron():
     apps = EnabledPlatform.objects.filter(platform__name="google_fit").values_list(
@@ -19,7 +21,7 @@ def google_fit_cron():
     for app_id in apps:
         app = UserApp.objects.get(id=app_id)
         if app.webhook_url is None:
-            logging.info("No webhook url for app %s", app)
+            logger.info("No webhook url for app %s", app)
             continue
         _sync_app_from_google_fit(app)
 
@@ -47,11 +49,11 @@ def _sync_app_from_google_fit(user_app):
         if not google_fit_connection.logged_in:
             continue
 
-        logging.debug(f"\n\nSyncing for {connection.user_uuid}")
+        logger.debug(f"\n\nSyncing for {connection.user_uuid}")
         with GoogleFitConnection(user_app, google_fit_connection) as fit_connection:
             fitness_data = collections.defaultdict(list)
             if fit_connection._access_token is None:
-                logging.debug(
+                logger.debug(
                     "Unable to get access token for connection, marking it logged out"
                 )
                 google_fit_connection.mark_logout()
@@ -81,7 +83,7 @@ def _sync_app_from_google_fit(user_app):
                         fit_connection,
                     )
             except Exception as e:
-                logging.error(
+                logger.error(
                     "Unable to sync data %s, got exception %s"
                     % (connection.user_uuid, e),
                     exc_info=True,
@@ -91,7 +93,7 @@ def _sync_app_from_google_fit(user_app):
 
 def send_data_to_webhook(fitness_data, webhook_url, user_uuid, fit_connection=None):
     chunks = _split_data_into_chunks(fitness_data)
-    logging.info("got chunks %s" % len(chunks))
+    logger.info("got chunks %s" % len(chunks))
     cur_chunk = 0
     for chunk in chunks:
         response = requests.post(
@@ -99,10 +101,10 @@ def send_data_to_webhook(fitness_data, webhook_url, user_uuid, fit_connection=No
             headers={"Content-Type": "application/json"},
             data=json.dumps({"data": chunk, "uuid": user_uuid}),
         )
-        logging.info(f"response for chunk {cur_chunk}: {response}, {webhook_url}")
+        logger.info(f"response for chunk {cur_chunk}: {response}, {webhook_url}")
         cur_chunk += 1
         if response.status_code > 202 or response.status_code < 200:
-            logging.error("Error in response, status code: %s" % response.status_code)
+            logger.error("Error in response, status code: %s" % response.status_code)
             if fit_connection:
                 fit_connection._update_last_sync = False
             break

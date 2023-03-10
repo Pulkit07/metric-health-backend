@@ -182,6 +182,11 @@ else:
                 "level": "CRITICAL",
                 "propagate": True,
             },
+            "watch_sdk": {
+                "handlers": ["console", "SysLog"],
+                "level": "DEBUG",
+                "propagate": True,
+            },
         },
     }
 

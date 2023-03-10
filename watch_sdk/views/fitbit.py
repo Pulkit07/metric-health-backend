@@ -18,6 +18,9 @@ from watch_sdk.permissions import AdminPermission
 from watch_sdk.serializers import FitbitNotificationLogSerializer
 
 
+logger = logging.getLogger(__name__)
+
+
 class FitbitWebhook(generics.GenericAPIView):
     def get(self, request):
         if (
@@ -40,7 +43,7 @@ class FitbitWebhook(generics.GenericAPIView):
                 platform__name="fitbit", user_app=app
             )
         except EnabledPlatform.DoesNotExist:
-            logging.error("No enabled app found for fitbit with id %s", app_id)
+            logger.error("No enabled app found for fitbit with id %s", app_id)
             return Response(status=404)
         data = request.data
         if not verify_fitbit_signature(
@@ -48,7 +51,7 @@ class FitbitWebhook(generics.GenericAPIView):
             request.body,
             request.headers["X-Fitbit-Signature"],
         ):
-            logging.error("fitbit signature verification failed")
+            logger.error("fitbit signature verification failed")
             return Response(status=404)
         total = 0
         for entry in request.data:
@@ -61,7 +64,7 @@ class FitbitWebhook(generics.GenericAPIView):
                 subscription_id=entry["subscriptionId"],
             )
 
-        logging.info(f"Received {total} notifications from fitbit")
+        logger.info(f"Received {total} notifications from fitbit")
         return Response(status=204)
 
 

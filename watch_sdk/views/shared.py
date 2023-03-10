@@ -37,6 +37,8 @@ from watch_sdk.serializers import (
     WatchConnectionSerializer,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @api_view(["POST"])
 @permission_classes([FirebaseAuthPermission])
@@ -341,7 +343,7 @@ def analyze_webhook_data(request):
                 end_time = points["end_time"] / 1000
                 key = f"{start_time}-{end_time}"
                 if key in start_end_set:
-                    logging.warn(
+                    logger.warn(
                         f"Duplicate key {key} for {uuid} with value {points['value']}"
                     )
                 else:
@@ -356,10 +358,10 @@ def analyze_webhook_data(request):
                 hour_wise_map[datetime.strftime(date, "%Y-%m-%d")] += points["value"]
 
         # pretty print the hour wise data we have
-        logging.info(f"total data points for {uuid} : {len(hour_wise_map)}")
+        logger.info(f"total data points for {uuid} : {len(hour_wise_map)}")
         for key, value in hour_wise_map.items():
-            logging.debug(f"{key} : {value}")
+            logger.debug(f"{key} : {value}")
 
-        logging.debug("\n\n")
+        logger.debug("\n\n")
 
     return Response({"success": True}, status=200)

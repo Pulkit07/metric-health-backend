@@ -16,6 +16,9 @@ from watch_sdk.permissions import ValidKeyPermission
 from watch_sdk.constants import apple_healthkit
 
 
+logger = logging.getLogger(__name__)
+
+
 @api_view(["POST"])
 @permission_classes([ValidKeyPermission])
 def upload_health_data_using_json_file(request):
@@ -35,17 +38,17 @@ def upload_health_data_using_json_file(request):
     except:
         return Response({"error": "No connection exists for this user"}, status=400)
 
-    logging.info(f"Health data received for {user_uuid} using a json file of app {app}")
+    logger.info(f"Health data received for {user_uuid} using a json file of app {app}")
     fitness_data = collections.defaultdict(list)
     # read over a json file passed with the request and build fitness_data
     if "data" not in request.FILES:
-        logging.error("No data file found")
+        logger.error("No data file found")
         return Response({"error": "No data file found"}, status=400)
     data = request.FILES["data"].read()
     data = json.loads(data)
     hash = utils.get_hash(data)
     if IOSDataHashLog.objects.filter(hash=hash, connection=connection).exists():
-        logging.warn("Already processed this data")
+        logger.warn("Already processed this data")
         return Response({"success": True}, status=200)
     else:
         IOSDataHashLog.objects.create(hash=hash, connection=connection)
@@ -75,17 +78,17 @@ def upload_health_data_using_json_file(request):
             )
             max_last_sync = max(max_last_sync, end_time)
 
-    logging.info(f"Total data points received: {total}")
+    logger.info(f"Total data points received: {total}")
     if app.webhook_url:
         if fitness_data:
-            logging.info(
+            logger.info(
                 f"sending {len(fitness_data)} data points to webhook from apple healthkit for {user_uuid}"
             )
             utils.send_data_to_webhook(
                 fitness_data, app.webhook_url, connection.user_uuid
             )
     else:
-        logging.warn("No webhook url found, skipping")
+        logger.warn("No webhook url found, skipping")
 
     # update last sync time on server
     # TODO: we should rather update data type wise last sync

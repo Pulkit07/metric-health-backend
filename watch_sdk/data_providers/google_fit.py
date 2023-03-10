@@ -16,6 +16,8 @@ SOURCE_MULTIPLIER = {
     "user_input": -1,
 }
 
+logger = logging.getLogger(__name__)
+
 
 class GoogleFitConnection(object):
     """
@@ -78,15 +80,15 @@ class GoogleFitConnection(object):
         try:
             self._access_token = response.json()["access_token"]
         except KeyError:
-            logging.debug(response.text)
+            logger.debug(response.text)
             if response.status_code >= 400:
-                logging.error("Status code is more than 400")
+                logger.error("Status code is more than 400")
 
     def _perform_first_sync(self, dataStreamId, valType):
         """
         Perform first sync for the connection
         """
-        logging.debug("performing first sync")
+        logger.debug("performing first sync")
         points = self._get_all_point_changes(dataStreamId, valType)
 
         minimum_start_time = int(min(points, key=lambda x: int(x[1]))[1])
@@ -116,7 +118,7 @@ class GoogleFitConnection(object):
     # TODO: this can be hardcoded instead of fetched from google fit
     def _get_all_data_sources(self):
         if self._access_token is None:
-            logging.debug("Access token is None")
+            logger.debug("Access token is None")
             return
         r = requests.get(
             "https://www.googleapis.com/fitness/v1/users/me/dataSources",
@@ -218,7 +220,7 @@ class GoogleFitConnection(object):
         end_time_in_nanos,
         valType="intVal",
     ):
-        logging.debug("getting dataset points")
+        logger.debug("getting dataset points")
         response = requests.get(
             f"https://www.googleapis.com/fitness/v1/users/me/dataSources/{dataStreamId}/datasets/"
             f"{start_time_in_nanos}-{end_time_in_nanos}",
@@ -238,7 +240,7 @@ class GoogleFitConnection(object):
                 )
             )
             if valType == "unknown":
-                logging.debug(point)
+                logger.debug(point)
                 continue
 
         return vals
