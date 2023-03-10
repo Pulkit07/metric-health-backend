@@ -96,11 +96,12 @@ WSGI_APPLICATION = "core.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "db",
-        "USER": "db",
-        "PASSWORD": "AVNS_X78tOl4tg-8EfgBpLsN",
-        "HOST": "app-6172d2f2-4f8f-4132-803f-4125ba9797be-do-user-13045542-0.b.db.ondigitalocean.com",
-        "PORT": "25060",
+        "NAME": "hekadev",
+        "USER": "hekadmin@heka-dev",
+        "PASSWORD": "Goyal@2502!",
+        "HOST": "heka-dev.postgres.database.azure.com",
+        "PORT": "5432",
+        "OPTIONS": {"sslmode": "require"},
     }
 }
 
