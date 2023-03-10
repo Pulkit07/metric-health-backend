@@ -177,11 +177,6 @@ else:
                 "level": "DEBUG",
                 "propagate": True,
             },
-            "django": {
-                "handlers": ["console", "SysLog"],
-                "level": "DEBUG",
-                "propagate": True,
-            },
             "app-logger": {
                 "handlers": ["console", "SysLog"],
                 "level": "CRITICAL",
