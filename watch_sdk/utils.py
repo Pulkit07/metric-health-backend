@@ -138,4 +138,4 @@ def verify_firebase_token(auth_token):
 
 
 def get_hash(data):
-    return hashlib.sha256(data.encode("utf-8")).hexdigest()
+    return hashlib.sha256(str(data).encode("utf-8")).hexdigest()
