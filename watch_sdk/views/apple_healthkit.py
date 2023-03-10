@@ -4,7 +4,12 @@ import json
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from watch_sdk import utils
-from watch_sdk.models import ConnectedPlatformMetadata, UserApp, WatchConnection
+from watch_sdk.models import (
+    ConnectedPlatformMetadata,
+    IOSDataHashLog,
+    UserApp,
+    WatchConnection,
+)
 
 from watch_sdk.permissions import ValidKeyPermission
 from watch_sdk.constants import apple_healthkit
@@ -37,6 +42,12 @@ def upload_health_data_using_json_file(request):
         return Response({"error": "No data file found"}, status=400)
     data = request.FILES["data"].read()
     data = json.loads(data)
+    hash = utils.get_hash(data)
+    if IOSDataHashLog.objects.filter(hash=hash, connection=connection).exists():
+        print("Already processed this data")
+        return Response({"success": True}, status=200)
+    else:
+        IOSDataHashLog.objects.create(hash=hash, connection=connection)
     total = 0
     enabled_datatypes = app.enabled_data_types.all()
     max_last_sync = 0

@@ -125,3 +125,8 @@ class StravaWebhookLog(BaseModel):
     aspect_type = models.CharField(max_length=100)
     object_type = models.CharField(max_length=100)
     updates = models.JSONField()
+
+
+class IOSDataHashLog(BaseModel):
+    hash = models.CharField(max_length=100)
+    connection = models.ForeignKey(WatchConnection, on_delete=models.CASCADE)

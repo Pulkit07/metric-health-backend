@@ -1,3 +1,4 @@
+import hashlib
 import json
 from watch_sdk.data_providers.fitbit import FitbitAPIClient
 from watch_sdk.data_providers.google_fit import GoogleFitConnection
@@ -134,3 +135,7 @@ def verify_firebase_token(auth_token):
         return True
     except Exception:
         return False
+
+
+def get_hash(data):
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()
