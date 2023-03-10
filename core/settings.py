@@ -174,7 +174,12 @@ else:
             # This should be something else when not using gunicorn
             "gunicorn": {
                 "handlers": ["SysLog", "console"],
-                "level": "INFO",
+                "level": "DEBUG",
+                "propagate": True,
+            },
+            "django": {
+                "handlers": ["console", "SysLog"],
+                "level": "DEBUG",
                 "propagate": True,
             },
             "app-logger": {

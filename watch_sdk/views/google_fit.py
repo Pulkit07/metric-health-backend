@@ -1,3 +1,4 @@
+import logging
 from watch_sdk import utils
 from watch_sdk.data_providers.google_fit import GoogleFitConnection
 from rest_framework.decorators import api_view, permission_classes
@@ -29,7 +30,7 @@ def test_google_sync(request):
         google_fit_refresh_token__isnull=False,
     )
     for connection in connections:
-        print(f"\n\nSyncing for {connection.user_uuid}")
+        logging.info(f"\n\nSyncing for {connection.user_uuid}")
         with GoogleFitConnection(connection.app, connection) as gfc:
             gfc.test_sync()
 

@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import hmac
+import logging
 from rest_framework import viewsets, views, generics
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
@@ -39,7 +40,7 @@ class FitbitWebhook(generics.GenericAPIView):
                 platform__name="fitbit", user_app=app
             )
         except EnabledPlatform.DoesNotExist:
-            print("No enabled app found")
+            logging.error("No enabled app found for fitbit with id %s", app_id)
             return Response(status=404)
         data = request.data
         if not verify_fitbit_signature(
@@ -47,7 +48,7 @@ class FitbitWebhook(generics.GenericAPIView):
             request.body,
             request.headers["X-Fitbit-Signature"],
         ):
-            print("fitbit signature verification failed")
+            logging.error("fitbit signature verification failed")
             return Response(status=404)
         total = 0
         for entry in request.data:
@@ -60,7 +61,7 @@ class FitbitWebhook(generics.GenericAPIView):
                 subscription_id=entry["subscriptionId"],
             )
 
-        print(f"Received {total} notifications from fitbit")
+        logging.info(f"Received {total} notifications from fitbit")
         return Response(status=204)
 
 

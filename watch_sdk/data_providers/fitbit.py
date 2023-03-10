@@ -1,4 +1,5 @@
 import base64
+import logging
 import requests
 import uuid
 from watch_sdk.models import ConnectedPlatformMetadata, EnabledPlatform
@@ -71,15 +72,17 @@ class FitbitAPIClient(object):
         )
 
         if response.status_code == 200:
-            print("Fitbit subscription already exist with same user/subscription id")
+            logging.warn(
+                "Fitbit subscription already exist with same user/subscription id"
+            )
         elif response.status_code == 201:
-            print("Fitbit subscription created successfully")
+            logging.info("Fitbit subscription created successfully")
         elif response.status_code == 409:
-            print(
+            logging.warn(
                 "Fitbit subscription already exist with different user/subscription id"
             )
         else:
-            print(
+            logging.error(
                 "Error creating Fitbit subscription, status code: ",
                 response.status_code,
             )
@@ -92,4 +95,4 @@ class FitbitAPIClient(object):
                 "Authorization": "Bearer " + self._get_access_token(),
             },
         )
-        print("Fitbit subscription deleted successfully, response: ", response)
+        logging.info("Fitbit subscription deleted successfully, response: ", response)

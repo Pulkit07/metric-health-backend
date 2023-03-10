@@ -1,5 +1,6 @@
 import collections
 from datetime import datetime
+import logging
 import uuid
 
 try:
@@ -340,7 +341,7 @@ def analyze_webhook_data(request):
                 end_time = points["end_time"] / 1000
                 key = f"{start_time}-{end_time}"
                 if key in start_end_set:
-                    print(
+                    logging.warn(
                         f"Duplicate key {key} for {uuid} with value {points['value']}"
                     )
                 else:
@@ -355,10 +356,10 @@ def analyze_webhook_data(request):
                 hour_wise_map[datetime.strftime(date, "%Y-%m-%d")] += points["value"]
 
         # pretty print the hour wise data we have
-        print(f"total data points for {uuid} : {len(hour_wise_map)}")
+        logging.info(f"total data points for {uuid} : {len(hour_wise_map)}")
         for key, value in hour_wise_map.items():
-            print(f"{key} : {value}")
+            logging.debug(f"{key} : {value}")
 
-        print("\n\n")
+        logging.debug("\n\n")
 
     return Response({"success": True}, status=200)

@@ -1,3 +1,4 @@
+import logging
 import uuid
 import requests
 from datetime import datetime
@@ -59,7 +60,7 @@ class StravaAPIClient(object):
             self._access_token = response_data["access_token"]
             self.refresh_token = response_data["refresh_token"]
         else:
-            print("Error refreshing access token: ", response.status_code)
+            logging.error("Error refreshing access token: ", response.status_code)
             self.refresh_token = None
             # mark the connection as logged out as Strava requires user to re-authenticate
             self._platform_connection.logged_in = False
@@ -73,7 +74,7 @@ class StravaAPIClient(object):
         if response.status_code == 200:
             return response.json()
         else:
-            print("Error getting activity by id: ", response.status_code)
+            logging.error("Error getting activity by id: ", response.status_code)
             return None
 
     def get_activities_for_first_sync(self, before):
@@ -140,7 +141,7 @@ class StravaAPIClient(object):
                 )
             return activity_objects
         else:
-            print("Error getting activities: ", response.status_code)
+            logging.error("Error getting activities: ", response.status_code)
             return []
 
 
@@ -173,9 +174,11 @@ def create_strava_subscription(app):
         response_data = response.json()
         enabled_platform.webhook_id = response_data["id"]
         enabled_platform.save()
-        print("Created subscription")
+        logging.info("Created subscription")
     else:
-        print("Error creating subscription: ", response.status_code, response.json())
+        logging.error(
+            "Error creating subscription: ", response.status_code, response.json()
+        )
 
 
 def get_strava_subscriptions(app):
@@ -192,9 +195,11 @@ def get_strava_subscriptions(app):
 
     if response.status_code == 200:
         response_data = response.json()
-        print("Got subscriptions", response_data)
+        logging.debug("Got subscriptions", response_data)
     else:
-        print("Error getting subscriptions: ", response.status_code, response.json())
+        logging.error(
+            "Error getting subscriptions: ", response.status_code, response.json()
+        )
 
 
 def delete_strava_subscription(app):
@@ -215,6 +220,8 @@ def delete_strava_subscription(app):
         enabled_platform.webhook_id = None
         enabled_platform.webhook_verify_token = None
         enabled_platform.save()
-        print("Deleted subscription")
+        logging.info("Deleted subscription")
     else:
-        print("Error deleting subscription: ", response.status_code, response.json())
+        logging.error(
+            "Error deleting subscription: ", response.status_code, response.json()
+        )
