@@ -148,18 +148,51 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-sentry_logging = LoggingIntegration(
-    level=logging.DEBUG,
-    event_level=logging.ERROR,  # Send errors as events
-)
 
 if len(sys.argv) >= 2 and sys.argv[1] == "runserver":
     pass
 else:
+    LOGGING = {
+        "version": 1,
+        "handlers": {
+            "SysLog": {
+                "level": "INFO",
+                "class": "logging.handlers.SysLogHandler",
+                "formatter": "simple",
+                "address": ("logs.papertrailapp.com", 48889),
+            },
+            "console": {
+                "level": "DEBUG",
+                "class": "logging.StreamHandler",
+                "formatter": "simple",
+            },
+        },
+        "formatters": {
+            "simple": {
+                "format": "%(asctime)s HEKA_DEV DJANGO_SERVER: %(message)s",
+                "datefmt": "%Y-%m-%dT%H:%M:%S",
+            },
+        },
+        "loggers": {
+            "django": {
+                "handlers": ["SysLog", "console"],
+                "level": "INFO",
+                "propagate": True,
+            },
+            "app-logger": {
+                "handlers": ["console", "SysLog"],
+                "level": "CRITICAL",
+                "propagate": True,
+            },
+        },
+    }
+
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
     sentry_sdk.init(
         dsn="https://971ec680d8e542588af557b090d117ae@o4504701505175552.ingest.sentry.io/4504701524049920",
         integrations=[
-            sentry_logging,
             DjangoIntegration(),
         ],
         # Set traces_sample_rate to 1.0 to capture 100%
