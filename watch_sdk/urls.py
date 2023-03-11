@@ -65,6 +65,7 @@ urlpatterns = [
     path("check_watch_connection", watch_connection_exists),
     path("connect_platform_for_user", connect_platform_for_user),
     path("watch_connection", WatchConnectionListView.as_view()),
+    path("total_watch_connection/<str:pk>", TotalWatchConnectionsView.as_view()),
     path("watch_connection/<int:pk>", WatchConnectionUpdateView.as_view()),
     path("sync_google_fit_data", sync_from_google_fit),
     path("sync_strava", strava_cron_job),

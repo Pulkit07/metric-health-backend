@@ -1,6 +1,8 @@
 import collections
 from datetime import datetime
 import uuid
+from rest_framework.views import APIView
+from watch_sdk.models import WatchConnection
 
 try:
     from zoneinfo import ZoneInfo
@@ -197,7 +199,13 @@ class WatchConnectionListView(generics.ListAPIView):
     serializer_class = WatchConnectionSerializer
     permission_classes = [ValidKeyPermission | AdminPermission]
 
-
+class TotalWatchConnectionsView(APIView):
+    serializer_class = WatchConnectionSerializer
+    
+    def get(self,request,pk):
+        total_watch_connections=WatchConnection.objects.filter(app=pk).count()
+        return Response({"total_watch_connections":total_watch_connections})
+    
 @api_view(["POST"])
 @permission_classes([FirebaseAuthPermission | AdminPermission])
 def enable_platform_for_app(request):
