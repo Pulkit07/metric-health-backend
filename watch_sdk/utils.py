@@ -21,7 +21,7 @@ def google_fit_cron():
     for app_id in apps:
         app = UserApp.objects.get(id=app_id)
         if app.webhook_url is None:
-            logger.info("No webhook url for app %s", app)
+            logger.info("No webhook url specified for app %s", app)
             continue
         _sync_app_from_google_fit(app)
 
