@@ -23,10 +23,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-43p1j$+3268$upf$4^+q=4#zto-v^6=n)(qh7cbxlo5a+*aisl"
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", True)
+DEBUG = os.environ.get("DEBUG")
 
 ALLOWED_HOSTS = ["*"]
 
@@ -93,11 +93,11 @@ WSGI_APPLICATION = "core.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "hekadev",
-        "USER": "hekadmin@heka-dev",
-        "PASSWORD": "Goyal@2502!",
-        "HOST": "heka-dev.postgres.database.azure.com",
-        "PORT": "5432",
+        "NAME": os.environ.get("DB_NAME"),
+        "USER": os.environ.get("DB_USER"),
+        "PASSWORD": os.environ.get("DB_PASSWORD"),
+        "HOST": os.environ.get("DB_HOST"),
+        "PORT": os.environ.get("DB_PORT"),
         "OPTIONS": {"sslmode": "require"},
     }
 }
@@ -146,7 +146,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-if len(sys.argv) >= 2 and sys.argv[1] == "runserver":
+if DEBUG:
     pass
 else:
     LOGGING = {
@@ -172,7 +172,7 @@ else:
         },
         "loggers": {
             # This should be something else when not using gunicorn
-            "gunicorn": {
+            "daphne": {
                 "handlers": ["SysLog", "console"],
                 "level": "DEBUG",
                 "propagate": True,
