@@ -176,6 +176,11 @@ else:
                 "level": "DEBUG",
                 "propagate": True,
             },
+            "gunicorn": {
+                "handlers": ["SysLog", "console"],
+                "level": "DEBUG",
+                "propagate": True,
+            },
             "app-logger": {
                 "handlers": ["console", "SysLog"],
                 "level": "CRITICAL",
