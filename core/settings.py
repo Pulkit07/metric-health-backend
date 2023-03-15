@@ -181,6 +181,11 @@ else:
                 "level": "DEBUG",
                 "propagate": True,
             },
+            "uvicorn": {
+                "handlers": ["SysLog", "console"],
+                "level": "DEBUG",
+                "propagate": True,
+            },
             "app-logger": {
                 "handlers": ["console", "SysLog"],
                 "level": "CRITICAL",
