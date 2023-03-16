@@ -1,3 +1,4 @@
+from . import mail_utils
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -20,6 +21,7 @@ def enable_basic_platforms(sender, instance, created, **kwargs):
         user_app=instance,
     )
     apple_healthkit.save()
+    mail_utils.send_email_on_new_app.delay(instance.id)
 
 
 @receiver(post_save, sender="watch_sdk.UserApp")
