@@ -155,11 +155,9 @@ CELERY_REDIS_BACKEND_USE_SSL = {"ssl_cert_reqs": ssl.CERT_REQUIRED}
 CELERY_BROKER_URL_USE_SSL = {"ssl_cert_reqs": ssl.CERT_REQUIRED}
 
 if DEBUG or sys.argv[1] == "runserver":
-    print("debug mode")
     DEBUG_PROPAGATE_EXCEPTIONS = True
     pass
 else:
-    print("production mode")
     LOGGING = {
         "version": 1,
         "handlers": {
@@ -177,7 +175,7 @@ else:
         },
         "formatters": {
             "simple": {
-                "format": "%(asctime)s HEKA_DEV DJANGO_SERVER: %(message)s",
+                "format": "%(asctime)s %(name)s: %(message)s",
                 "datefmt": "%Y-%m-%dT%H:%M:%S",
             },
         },
