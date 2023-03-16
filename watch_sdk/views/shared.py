@@ -301,6 +301,21 @@ class UserAppViewSet(viewsets.ModelViewSet):
     filterset_fields = ["user"]
     permission_classes = [FirebaseAuthPermission | AdminPermission]
 
+    def update(self, request, *args, **kwargs):
+        if request.data.get("google_auth_client_id") is not None:
+            app = self.get_object()
+            enabled_platform = EnabledPlatform.objects.filter(
+                user_app=app, platform__name="google_fit"
+            )
+            print("we are in")
+            if enabled_platform.exists():
+                enabled_platform = enabled_platform.first()
+                enabled_platform.platform_app_id = request.data.get(
+                    "google_auth_client_id"
+                )
+                enabled_platform.save()
+        return super().update(request, *args, **kwargs)
+
 
 class DataTypeViewSet(viewsets.ModelViewSet):
     queryset = DataType.objects.all()
