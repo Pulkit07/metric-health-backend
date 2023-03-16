@@ -10,9 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
-import logging
 from pathlib import Path
 import os
+import ssl
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -147,10 +148,18 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Celery settings
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND")
+CELERY_REDIS_BACKEND_USE_SSL = {"ssl_cert_reqs": ssl.CERT_REQUIRED}
+CELERY_BROKER_URL_USE_SSL = {"ssl_cert_reqs": ssl.CERT_REQUIRED}
 
-if DEBUG:
+if DEBUG or sys.argv[1] == "runserver":
+    print("debug mode")
+    DEBUG_PROPAGATE_EXCEPTIONS = True
     pass
 else:
+    print("production mode")
     LOGGING = {
         "version": 1,
         "handlers": {
@@ -174,7 +183,7 @@ else:
         },
         "loggers": {
             # This should be something else when not using gunicorn
-            "daphne": {
+            "celery": {
                 "handlers": ["SysLog", "console"],
                 "level": "DEBUG",
                 "propagate": True,

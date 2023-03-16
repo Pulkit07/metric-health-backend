@@ -3,6 +3,8 @@ from datetime import datetime
 import logging
 import uuid
 
+from celery import shared_task
+
 try:
     from zoneinfo import ZoneInfo
 except ImportError:
@@ -358,9 +360,10 @@ def analyze_webhook_data(request):
                 end_time = points["end_time"] / 1000
                 key = f"{start_time}-{end_time}"
                 if key in start_end_set:
-                    logger.warn(
-                        f"Duplicate key {key} for {uuid} with value {points['value']}"
-                    )
+                    pass
+                    # logger.warn(
+                    #     f"Duplicate key {key} for {uuid} with value {points['value']}"
+                    # )
                 else:
                     start_end_set.add(key)
                 # convert start time to date and hour format
@@ -380,3 +383,15 @@ def analyze_webhook_data(request):
         logger.debug("\n\n")
 
     return Response({"success": True}, status=200)
+
+
+@api_view(["GET"])
+def test_celery_view(request):
+    test_celery_task.delay()
+    return Response({"success": True}, status=200)
+
+
+@shared_task()
+def test_celery_task():
+    logger.info("test celery task called")
+    return True

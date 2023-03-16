@@ -74,4 +74,5 @@ urlpatterns = [
     path("test_fitbit", test_fitbit_integration),
     path("fitbit_webhook", FitbitWebhook.as_view()),
     path("strava/<int:pk>/webhook", StravaWebhook.as_view()),
+    path("test-celery", test_celery_view),
 ]
