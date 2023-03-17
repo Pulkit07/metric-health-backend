@@ -58,32 +58,3 @@ def strava_subscription_create(sender, instance, created, **kwargs):
     if created:
         # create a strava subscription
         create_strava_subscription(instance.app)
-
-
-# TODO: this is not correctly working on reconnect
-@receiver(post_save, sender="watch_sdk.ConnectedPlatformMetadata")
-def fitbit_subscription_update(sender, instance, created, **kwargs):
-    if instance.platform.name != "fitbit":
-        return
-    connection = instance.connection
-    if created:
-        # create a fitbit subscription
-        with FitbitAPIClient(connection.app, instance, connection.user_uuid) as fac:
-            fac.create_subscription()
-    else:
-        if getattr(instance, "_ConnectedPlatformMetadata__original_copy", None) is None:
-            return
-        before = instance.original_copy
-        after = instance
-        if before.logged_in == after.logged_in:
-            return
-
-        if after.logged_in:
-            # create a fitbit subscription
-            with FitbitAPIClient(connection.app, instance, connection.user_uuid) as fac:
-                fac.create_subscription()
-        else:
-            # delete the fitbit subscription
-            with FitbitAPIClient(connection.app, before, connection.user_uuid) as fac:
-                fac.delete_subscription()
-            pass

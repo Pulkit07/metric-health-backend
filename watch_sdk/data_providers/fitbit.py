@@ -9,12 +9,14 @@ logger = logging.getLogger(__name__)
 
 
 class FitbitAPIClient(object):
-    def __init__(self, user_app, connection, user_uuid):
+    def __init__(self, user_app, connection, user_uuid, refresh_token=None):
         self.user_app = user_app
         self.connection: ConnectedPlatformMetadata = connection
         self.user_uuid = user_uuid
         self._access_token = None
-        self._refresh_token = connection.refresh_token
+        self._refresh_token = (
+            refresh_token if refresh_token else connection.refresh_token
+        )
         enabled_platform = EnabledPlatform.objects.get(
             user_app=user_app, platform__name="fitbit"
         )

@@ -4,6 +4,7 @@ import logging
 import uuid
 
 from celery import shared_task
+from watch_sdk import utils
 
 try:
     from zoneinfo import ZoneInfo
@@ -155,7 +156,13 @@ def connect_platform_for_user(request):
                 connected_platform_metadata.connected_device_uuids = (
                     connected_platform_metadata.connected_device_uuids or []
                 ) + ([device_id] if device_id else [])
+                connected_platform_metadata.save()
+                utils.on_connection_reconnect.delay(connected_platform_metadata.id)
             elif disconnect:
+                utils.on_connection_disconnect.delay(
+                    connected_platform_metadata.id,
+                    connected_platform_metadata.refresh_token,
+                )
                 connected_platform_metadata.refresh_token = None
                 connected_platform_metadata.email = None
                 connected_platform_metadata.logged_in = False
@@ -164,8 +171,7 @@ def connect_platform_for_user(request):
                     and device_id in connected_platform_metadata.connected_device_uuids
                 ):
                     connected_platform_metadata.connected_device_uuids.remove(device_id)
-
-            connected_platform_metadata.save()
+                connected_platform_metadata.save()
             return Response(
                 {
                     "success": True,
@@ -188,6 +194,7 @@ def connect_platform_for_user(request):
         connection=connection,
     )
     connected_platform_metadata.save()
+    utils.on_connection_create.delay(connected_platform_metadata.id)
 
     return Response(
         {"success": True, "data": PlatformBasedWatchConnection(connection).data},
