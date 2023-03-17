@@ -100,4 +100,6 @@ class FitbitAPIClient(object):
                 "Authorization": "Bearer " + self._get_access_token(),
             },
         )
-        logger.info("Fitbit subscription deleted successfully, response: ", response)
+        logger.info(
+            "Fitbit subscription deleted successfully, response: ", str(response)
+        )
