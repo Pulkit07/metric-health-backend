@@ -15,9 +15,9 @@ def get_hash(data):
 @shared_task
 def on_connection_create(connected_platform_id):
     connected_platform = ConnectedPlatformMetadata.objects.get(id=connected_platform_id)
-    if connected_platform.platform == "fitbit":
+    if connected_platform.platform.name == "fitbit":
         on_fitbit_connect(connected_platform)
-    elif connected_platform.platform == "google_fit":
+    elif connected_platform.platform.name == "google_fit":
         google_fit_utils.trigger_sync_on_connect(connected_platform)
 
 
@@ -27,14 +27,14 @@ def on_connection_disconnect(connected_platform_id, refresh_token):
     Refresh token is explicitly passed in because disconnect will set it as null
     """
     connected_platform = ConnectedPlatformMetadata.objects.get(id=connected_platform_id)
-    if connected_platform.platform == "fitbit":
+    if connected_platform.platform.name == "fitbit":
         on_fitbit_disconnect(connected_platform, refresh_token)
 
 
 @shared_task
 def on_connection_reconnect(connected_platform_id):
     connected_platform = ConnectedPlatformMetadata.objects.get(id=connected_platform_id)
-    if connected_platform.platform == "fitbit":
+    if connected_platform.platform.name == "fitbit":
         on_fitbit_connect(connected_platform)
-    elif connected_platform.platform == "google_fit":
+    elif connected_platform.platform.name == "google_fit":
         google_fit_utils.trigger_sync_on_connect(connected_platform)
