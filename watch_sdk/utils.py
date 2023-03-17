@@ -2,6 +2,7 @@ import hashlib
 import json
 from watch_sdk.data_providers.fitbit import FitbitAPIClient
 from watch_sdk.data_providers.google_fit import GoogleFitConnection
+from watch_sdk.mail_utils import send_email_on_webhook_error
 from .models import ConnectedPlatformMetadata, EnabledPlatform, UserApp, WatchConnection
 from .constants import google_fit
 import firebase_admin
@@ -79,8 +80,9 @@ def _sync_app_from_google_fit(user_app):
                 if fitness_data:
                     send_data_to_webhook(
                         fitness_data,
-                        user_app.webhook_url,
+                        user_app,
                         connection.user_uuid,
+                        "google_fit",
                         fit_connection,
                     )
             except Exception as e:
@@ -92,7 +94,14 @@ def _sync_app_from_google_fit(user_app):
                 continue
 
 
-def send_data_to_webhook(fitness_data, webhook_url, user_uuid, fit_connection=None):
+def send_data_to_webhook(
+    fitness_data,
+    user_app,
+    user_uuid,
+    platform,
+    fit_connection=None,
+):
+    webhook_url = user_app.webhook_url
     chunks = _split_data_into_chunks(fitness_data)
     logger.info("got chunks %s" % len(chunks))
     cur_chunk = 0
@@ -108,6 +117,15 @@ def send_data_to_webhook(fitness_data, webhook_url, user_uuid, fit_connection=No
             logger.error("Error in response, status code: %s" % response.status_code)
             if fit_connection:
                 fit_connection._update_last_sync = False
+
+            send_email_on_webhook_error.delay(
+                user_app.id,
+                platform,
+                user_uuid,
+                fitness_data,
+                str(response),
+                response.status_code,
+            )
             break
 
 

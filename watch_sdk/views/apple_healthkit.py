@@ -85,7 +85,7 @@ def upload_health_data_using_json_file(request):
                 f"sending {len(fitness_data)} data points to webhook from apple healthkit for {user_uuid}"
             )
             utils.send_data_to_webhook(
-                fitness_data, app.webhook_url, connection.user_uuid
+                fitness_data, app, connection.user_uuid, "apple_healthkit"
             )
     else:
         logger.warn("No webhook url found, skipping")
