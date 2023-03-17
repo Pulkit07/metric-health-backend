@@ -13,6 +13,9 @@ class User(BaseModel):
     company_name = models.CharField(max_length=400, blank=True, null=True)
     country = models.CharField(max_length=100, blank=True, null=True)
 
+    def __str__(self):
+        return f"{self.name} - {self.email}"
+
 
 # object for refering various platforms that we support
 class Platform(BaseModel):
@@ -60,6 +63,9 @@ class UserApp(BaseModel):
         default="free",
     )
     enabled_data_types = models.ManyToManyField(DataType, blank=True)
+
+    def __str__(self) -> str:
+        return f"{self.name} - {self.user.name} ({self.id})"
 
 
 class ConnectedPlatformMetadata(BaseModel):
