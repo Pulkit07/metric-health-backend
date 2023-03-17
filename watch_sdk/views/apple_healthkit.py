@@ -4,7 +4,7 @@ import json
 import logging
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from watch_sdk import utils
+from watch_sdk.utils import connection as connection_utils, webhook
 from watch_sdk.models import (
     ConnectedPlatformMetadata,
     IOSDataHashLog,
@@ -46,7 +46,7 @@ def upload_health_data_using_json_file(request):
         return Response({"error": "No data file found"}, status=400)
     data = request.FILES["data"].read()
     data = json.loads(data)
-    hash = utils.get_hash(data)
+    hash = connection_utils.get_hash(data)
     if IOSDataHashLog.objects.filter(hash=hash, connection=connection).exists():
         logger.warn("Already processed this data")
         return Response({"success": True}, status=200)
@@ -84,7 +84,7 @@ def upload_health_data_using_json_file(request):
             logger.info(
                 f"sending {len(fitness_data)} data points to webhook from apple healthkit for {user_uuid}"
             )
-            utils.send_data_to_webhook(
+            webhook.send_data_to_webhook(
                 fitness_data, app, connection.user_uuid, "apple_healthkit"
             )
     else:

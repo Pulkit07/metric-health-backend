@@ -1,6 +1,6 @@
 # permission classes for various views
 from rest_framework import permissions
-from watch_sdk import utils
+from watch_sdk.utils import firebase as firebase_utils
 
 from watch_sdk.models import UserApp
 
@@ -22,7 +22,7 @@ class FirebaseAuthPermission(permissions.BasePermission):
         auth_token = request.META.get("HTTP_AUTHORIZATION")
         if not auth_token:
             return False
-        return utils.verify_firebase_token(auth_token)
+        return firebase_utils.verify_firebase_token(auth_token)
 
 
 class AdminPermission(permissions.BasePermission):

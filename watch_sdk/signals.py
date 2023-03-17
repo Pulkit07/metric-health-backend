@@ -1,4 +1,4 @@
-from . import mail_utils
+from .utils import mail_utils
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
