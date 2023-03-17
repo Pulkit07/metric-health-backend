@@ -44,3 +44,6 @@ venv.bak/
 
 # system related files
 .DS_Store
+
+# celery beat schedule file
+celerybeat-schedule*

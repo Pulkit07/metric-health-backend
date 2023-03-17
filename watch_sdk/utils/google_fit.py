@@ -11,6 +11,7 @@ from watch_sdk.models import (
 from watch_sdk.utils.webhook import send_data_to_webhook
 from watch_sdk.constants import google_fit
 
+from celery import shared_task
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ def trigger_sync_on_connect(connected_platform: ConnectedPlatformMetadata):
     _sync_connection(connected_platform)
 
 
+@shared_task
 def google_fit_cron():
     apps = EnabledPlatform.objects.filter(platform__name="google_fit").values_list(
         "user_app", flat=True
