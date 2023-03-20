@@ -170,6 +170,15 @@ class GoogleFitConnection(object):
             params={"limit": 1000, "pageToken": nextPageToken},
         )
 
+        if response.status_code != 200:
+            # We occasionally gets 503 Service Unavailable from google fit
+            logger.debug(response.text)
+            logger.debug(
+                "Error while fetching data point changes, got status code %s"
+                % response.status_code
+            )
+            raise Exception("Error while fetching data point changes")
+
         points = []
         for point in response.json()["insertedDataPoint"]:
             points.append(
@@ -186,13 +195,19 @@ class GoogleFitConnection(object):
     def _get_all_point_changes(self, dataStreamId, valType="intVal"):
         res = []
         nextPageToken = None
-        while True:
-            points, nextPageToken = self._get_data_point_changes(
-                dataStreamId, nextPageToken, valType=valType
-            )
-            if not points:
-                break
-            res.extend(points)
+        try:
+            while True:
+                points, nextPageToken = self._get_data_point_changes(
+                    dataStreamId, nextPageToken, valType=valType
+                )
+                if not points:
+                    break
+                res.extend(points)
+        except Exception as e:
+            logger.debug(e)
+            logger.debug("Error while fetching data point changes")
+            # reset whatever data points we have received
+            res = []
 
         points = []
         for point in res:
