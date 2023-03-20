@@ -1,6 +1,7 @@
 import logging
 import requests
 import json
+from celery import shared_task
 
 from watch_sdk.utils.mail_utils import send_email_on_webhook_error
 
@@ -49,3 +50,16 @@ def send_data_to_webhook(
                 response.status_code,
             )
             break
+        else:
+            store_webhook_log.delay(user_app.id, user_uuid, chunk)
+
+
+@shared_task
+def store_webhook_log(app_id, uuid, data):
+    from watch_sdk.models import DebugWebhookLogs
+
+    DebugWebhookLogs.objects.create(
+        app_id=app_id,
+        uuid=uuid,
+        data=data,
+    )

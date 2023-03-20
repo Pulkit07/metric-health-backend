@@ -22,6 +22,7 @@ from watch_sdk.permissions import (
 from watch_sdk.models import (
     ConnectedPlatformMetadata,
     DataType,
+    DebugWebhookLogs,
     EnabledPlatform,
     Platform,
     TestWebhookData,
@@ -31,6 +32,7 @@ from watch_sdk.models import (
 )
 from watch_sdk.serializers import (
     DataTypeSerializer,
+    DebugWebhookLogsSerializer,
     PlatformBasedWatchConnection,
     PlatformSerializer,
     TestWebhookDataSerializer,
@@ -393,3 +395,9 @@ def analyze_webhook_data(request):
         logger.debug("\n\n")
 
     return Response({"success": True}, status=200)
+
+
+class DebugWebhookLogsViewSet(viewsets.ModelViewSet):
+    queryset = DebugWebhookLogs.objects.all()
+    serializer_class = DebugWebhookLogsSerializer
+    permission_classes = [AdminPermission]

@@ -136,3 +136,9 @@ class StravaWebhookLog(BaseModel):
 class IOSDataHashLog(BaseModel):
     hash = models.CharField(max_length=100)
     connection = models.ForeignKey(WatchConnection, on_delete=models.CASCADE)
+
+
+class DebugWebhookLogs(BaseModel):
+    app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
+    data = models.JSONField()
+    uuid = models.CharField(max_length=100, blank=True, null=True)

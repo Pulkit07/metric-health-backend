@@ -57,6 +57,7 @@ urlpatterns = [
         "test_webhook_data",
         WebhookDataViewSet.as_view({"get": "list"}),
     ),
+    path("debug_webhook_logs", DebugWebhookLogsViewSet.as_view({"get": "list"})),
     path("data_type", DataTypeViewSet.as_view({"get": "list", "post": "create"})),
     path(
         "fitbit_notification_log",

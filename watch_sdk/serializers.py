@@ -103,3 +103,9 @@ class FitbitNotificationLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = FitbitNotificationLog
         fields = "__all__"
+
+
+class DebugWebhookLogsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DebugWebhookLogs
+        fields = "__all__"
