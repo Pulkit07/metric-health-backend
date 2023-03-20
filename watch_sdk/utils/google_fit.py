@@ -28,35 +28,21 @@ def google_fit_cron():
     apps = EnabledPlatform.objects.filter(platform__name="google_fit").values_list(
         "user_app", flat=True
     )
-    for app_id in apps:
-        app = UserApp.objects.get(id=app_id)
-        if app.webhook_url is None:
-            logger.debug("No webhook url specified for app %s", app)
-            continue
-        _sync_app_from_google_fit(app)
-
-
-def _sync_app_from_google_fit(user_app):
-    connections = WatchConnection.objects.filter(
-        app=user_app,
+    google_fit_connections = ConnectedPlatformMetadata.objects.filter(
+        platform__name="google_fit",
+        logged_in=True,
+        connection__app__in=apps,
+        connection__app__webhook_url__isnull=False,
     )
-    for connection in connections:
-        try:
-            google_fit_connection = ConnectedPlatformMetadata.objects.get(
-                connection=connection, platform__name="google_fit"
-            )
-        except Exception:
-            continue
-        if not google_fit_connection.logged_in:
-            continue
-
-        _sync_connection(google_fit_connection)
+    logger.info(f"Syncing google_fit for {len(google_fit_connections)} connections")
+    for connection in google_fit_connections:
+        _sync_connection(connection)
 
 
 def _sync_connection(google_fit_connection: ConnectedPlatformMetadata):
     connection = google_fit_connection.connection
     user_app = connection.app
-    logger.info(f"\n\nSyncing google_fit for {connection.user_uuid}")
+    logger.info(f"Syncing google_fit for {connection.user_uuid} ({user_app.name})")
     with GoogleFitConnection(user_app, google_fit_connection) as fit_connection:
         fitness_data = collections.defaultdict(list)
         if fit_connection._access_token is None:
