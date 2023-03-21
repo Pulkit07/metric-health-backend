@@ -10,6 +10,8 @@ class FitnessDatatype:
     start_time: int
     # start time and endtime will be same in case of point datatype
     end_time: int
+    # whether this data was entered manually or not
+    manual_entry: bool
     # this is name of device that recorded this data, mostly used for apple_healthkit
     source_device: Optional[str]
 

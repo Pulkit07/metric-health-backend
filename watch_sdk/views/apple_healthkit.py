@@ -74,6 +74,10 @@ def upload_health_data_using_json_file(request):
                     end_time=end_time,
                     source="apple_healthkit",
                     source_device=d.get("source_name"),
+                    manual_entry=(
+                        d.get("source_name") == "Health"
+                        or d.get("source_id") == "com.apple.Health"
+                    ),
                 ).to_dict()
             )
             max_last_sync = max(max_last_sync, end_time)
