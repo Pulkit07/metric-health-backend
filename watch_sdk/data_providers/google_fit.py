@@ -91,7 +91,12 @@ class GoogleFitConnection(object):
         logger.debug("performing first sync")
         points = self._get_all_point_changes(dataStreamId, valType)
 
-        minimum_start_time = int(min(points, key=lambda x: int(x[1]))[1])
+        if points:
+            minimum_start_time = int(min(points, key=lambda x: int(x[1]))[1])
+        else:
+            minimum_start_time = int(
+                datetime.datetime.now().timestamp() * 1000 * 1000 * 1000
+            )
 
         historical_points = self._get_dataset_points(
             dataStreamId,
