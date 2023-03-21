@@ -231,10 +231,12 @@ def enable_platform_for_app(request):
     already_enabled = EnabledPlatform.objects.filter(user_app=app, platform=platform)
     if already_enabled.exists():
         if disable:
-            already_enabled.first().delete()
-            return Response(
-                {"success": True, "data": UserAppSerializer(app).data}, status=200
+            # we delete the enabled platform in a celery task post platform specific
+            # disabling is done
+            connection_utils.on_platform_disable.delay(
+                app.id, already_enabled.first().name
             )
+            return Response({"success": True}, status=200)
         else:
             return Response(
                 {"error": f"{platform.name} is already enabled for this app"},
@@ -247,7 +249,8 @@ def enable_platform_for_app(request):
         user_app=app,
     )
     enabled_platform.save()
-    return Response({"success": True, "data": UserAppSerializer(app).data}, status=200)
+    connection_utils.on_platform_enable.delay(app.id, enabled_platform.name)
+    return Response({"success": True}, status=200)
 
 
 @api_view(["POST"])

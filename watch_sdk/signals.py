@@ -42,19 +42,3 @@ def enable_basic_data_types(sender, instance, created, **kwargs):
     instance.enabled_data_types.add(steps)
     instance.enabled_data_types.add(calories)
     instance.save()
-
-
-# TODO: handle the case when a platform is disconnected
-@receiver(post_save, sender="watch_sdk.EnabledPlatform")
-def strava_subscription_create(sender, instance, created, **kwargs):
-    if instance.platform.name != "strava":
-        return
-
-    from watch_sdk.data_providers.strava import (
-        create_strava_subscription,
-        delete_strava_subscription,
-    )
-
-    if created:
-        # create a strava subscription
-        create_strava_subscription(instance.app)
