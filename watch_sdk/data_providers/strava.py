@@ -3,6 +3,7 @@ import logging
 import uuid
 import requests
 from datetime import datetime
+from dateutil.parser import parse
 
 from watch_sdk.dataclasses import StravaCycling
 from watch_sdk.models import EnabledPlatform
@@ -23,10 +24,17 @@ class StravaAPIClient(object):
         self._user_uuid = user_uuid
         self._access_token = None
         self.refresh_token = platform_connection.refresh_token
-        self._last_sync = platform_connection.last_sync
-        self.enabled_platform = user_app.enabled_platforms.get(platform__name="strava")
+        self._last_sync = (
+            platform_connection.last_sync.timestamp() * 1000
+            if platform_connection.last_sync
+            else 0
+        )
+        self.enabled_platform = EnabledPlatform.objects.get(
+            user_app=user_app, platform__name="strava"
+        )
         self._client_id = self.enabled_platform.platform_app_id
         self._client_secret = self.enabled_platform.platform_app_secret
+        self._update_last_sync = True
 
     def __enter__(self):
         self._get_access_token()
@@ -38,8 +46,10 @@ class StravaAPIClient(object):
             self._platform_connection.refresh_token = self.refresh_token
             self._platform_connection.save()
 
-        if self._last_sync != self._platform_connection.last_sync:
-            self._platform_connection.last_sync = self._last_sync
+        if self._update_last_sync:
+            self._platform_connection.last_sync = datetime.fromtimestamp(
+                self._last_sync / 1000
+            )
             self._platform_connection.save()
 
     def _get_access_token(self):
@@ -87,7 +97,7 @@ class StravaAPIClient(object):
             logger.error("Error getting activity by id: ", response.status_code)
             return None
 
-    def get_activities_since_last_sync(self, before):
+    def get_activities_since_last_sync(self):
         """
         Gets activities user did before the given timestamp
         for the first sync. For future data, we shall get it over webhook
@@ -144,10 +154,13 @@ class StravaAPIClient(object):
 
                 # TODO: make it generic
                 if activity["type"] == "Ride":
+
                     activity_objects["strava_cycling"].append(
                         SUPPORTED_TYPES[activity["type"]](
                             source="strava",
-                            start_time=activity["start_date"],
+                            start_time=parse(activity["start_date"]).timestamp() * 1000,
+                            # TODO: this should be calculated based on elapsed/moving time
+                            end_time=parse(activity["start_date"]).timestamp() * 1000,
                             distance=activity["distance"],
                             moving_time=activity["moving_time"],
                             total_elevation_gain=activity["total_elevation_gain"],
