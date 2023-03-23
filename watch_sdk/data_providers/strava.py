@@ -80,6 +80,7 @@ class StravaAPIClient(object):
             headers={"Authorization": f"Bearer {access_token}"},
         )
         if response.status_code == 200:
+            # TODO: convert to our dataclass and then return
             return response.json()
         else:
             logger.error("Error getting activity by id: ", response.status_code)
@@ -146,6 +147,7 @@ class StravaAPIClient(object):
                         max_speed=activity["max_speed"],
                         average_speed=activity["average_speed"],
                         source_device=None,
+                        manual_entry=activity["manual"],
                     )
                 )
             return activity_objects
