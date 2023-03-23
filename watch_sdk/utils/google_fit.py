@@ -63,7 +63,7 @@ def _sync_connection(google_fit_connection: ConnectedPlatformMetadata):
                             source="google_fit",
                             start_time=int(d.start_time) / 10**6,
                             end_time=int(d.end_time) / 10**6,
-                            manual_entry=False,
+                            manual_entry=d.manual_entry,
                             source_device=None,
                             value=d.value,
                         ).to_dict()

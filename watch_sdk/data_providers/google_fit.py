@@ -14,9 +14,7 @@ except ImportError:
 
 from watch_sdk.constants import google_fit
 
-SOURCE_MULTIPLIER = {
-    "user_input": -1,
-}
+MANUALLY_ENTERED_SOURCES = set(["user_input"])
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +22,13 @@ logger = logging.getLogger(__name__)
 @dataclass
 class GoogleFitPoint:
     value: float
+    # in nanoseconds
     start_time: int
+    # in nanoseconds
     end_time: int
+    # manually entered or not
+    manual_entry: bool
+    # in milliseconds
     modified_time: Optional[int] = None
 
 
@@ -94,13 +97,13 @@ class GoogleFitConnection(object):
             if response.status_code >= 400:
                 logger.error("Status code is more than 400")
 
-    def _perform_first_sync(self, dataStreamId, valType):
+    def _perform_first_sync(self, streamName, dataStreamId, valType):
         """
         Perform first sync for the connection
         """
         logger.debug("performing first sync")
         points: List[GoogleFitPoint] = self._get_all_point_changes(
-            dataStreamId, valType
+            streamName, dataStreamId, valType
         )
 
         if points:
@@ -158,15 +161,19 @@ class GoogleFitConnection(object):
             data_streams = google_fit.RANGE_DATA_TYPES_ATTRIBUTES[data_type]
             dataSources = self._get_specific_data_sources(data_type, data_streams)
             for name, streamId in dataSources.items():
+                # TODO: for now we are not syncing manually entered data
+                if name in MANUALLY_ENTERED_SOURCES:
+                    continue
                 if not self._last_modified or self._last_modified.get(streamId) is None:
-                    data_points[data_type].extend(
-                        self._perform_first_sync(
-                            streamId,
-                            google_fit.RANGE_DATA_TYPES_UNTS[data_type],
-                        )
+                    vals: List[GoogleFitPoint] = self._perform_first_sync(
+                        name,
+                        streamId,
+                        google_fit.RANGE_DATA_TYPES_UNTS[data_type],
                     )
+                    data_points[data_type].extend(vals)
                 else:
                     vals = self._get_all_point_changes(
+                        name,
                         streamId,
                         valType=google_fit.RANGE_DATA_TYPES_UNTS[data_type],
                     )
@@ -176,6 +183,7 @@ class GoogleFitConnection(object):
 
     def _get_data_point_changes(
         self,
+        streamName,
         dataStreamId,
         nextPageToken,
         valType="intVal",
@@ -205,19 +213,20 @@ class GoogleFitConnection(object):
                     point["value"][0][valType],
                     point["startTimeNanos"],
                     point["endTimeNanos"],
+                    streamName in MANUALLY_ENTERED_SOURCES,
                     point["modifiedTimeMillis"],
                 )
             )
 
         return (points, response.json()["nextPageToken"])
 
-    def _get_all_point_changes(self, dataStreamId, valType="intVal"):
+    def _get_all_point_changes(self, streamName, dataStreamId, valType="intVal"):
         res: List[GoogleFitPoint] = []
         nextPageToken = None
         try:
             while True:
                 points, nextPageToken = self._get_data_point_changes(
-                    dataStreamId, nextPageToken, valType=valType
+                    streamName, dataStreamId, nextPageToken, valType=valType
                 )
                 if not points:
                     break
@@ -239,6 +248,7 @@ class GoogleFitConnection(object):
                     point.value,
                     point.start_time,
                     point.end_time,
+                    point.manual_entry,
                 )
             )
             self._new_last_modified[dataStreamId] = max(
@@ -295,6 +305,9 @@ class GoogleFitConnection(object):
                     int(value.start_time) / 10**9, tz=ZoneInfo("Asia/Kolkata")
                 ).date()
                 date_wise_map[start_date] += value.value
+                if value.manual_entry:
+                    print(f"manually entered {value}")
+
         import pdb
 
         pdb.set_trace()

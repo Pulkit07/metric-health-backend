@@ -25,7 +25,7 @@ RANGE_DATA_TYPES = {
 
 RANGE_DATA_TYPES_ATTRIBUTES: typing.Dict[str, typing.List[str]] = {
     "com.google.active_minutes": ["merge_active_minutes", "user_input"],
-    "com.google.step_count.delta": ["estimated_steps"],
+    "com.google.step_count.delta": ["estimated_steps", "user_input"],
     "com.google.calories.expended": ["merge_calories_expended", "user_input"],
     "com.google.hydration": ["merged_hydration", "user_input"],
     "com.google.calories.bmr": ["merged"],
