@@ -61,11 +61,11 @@ def _sync_connection(google_fit_connection: ConnectedPlatformMetadata):
                     fitness_data[data_key].append(
                         dclass(
                             source="google_fit",
-                            start_time=int(d[1]) / 10**6,
-                            end_time=int(d[2]) / 10**6,
+                            start_time=int(d.start_time) / 10**6,
+                            end_time=int(d.end_time) / 10**6,
                             manual_entry=False,
                             source_device=None,
-                            value=d[0],
+                            value=d.value,
                         ).to_dict()
                     )
 

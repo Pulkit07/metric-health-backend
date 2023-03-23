@@ -1,6 +1,8 @@
 import collections
+from dataclasses import dataclass
 import datetime
 import logging
+from typing import List, Optional
 import requests
 
 from watch_sdk.models import ConnectedPlatformMetadata, EnabledPlatform
@@ -17,6 +19,14 @@ SOURCE_MULTIPLIER = {
 }
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class GoogleFitPoint:
+    value: float
+    start_time: int
+    end_time: int
+    modified_time: Optional[int] = None
 
 
 class GoogleFitConnection(object):
@@ -89,16 +99,20 @@ class GoogleFitConnection(object):
         Perform first sync for the connection
         """
         logger.debug("performing first sync")
-        points = self._get_all_point_changes(dataStreamId, valType)
+        points: List[GoogleFitPoint] = self._get_all_point_changes(
+            dataStreamId, valType
+        )
 
         if points:
-            minimum_start_time = int(min(points, key=lambda x: int(x[1]))[1])
+            minimum_start_time = int(
+                min(points, key=lambda x: int(x.start_time)).start_time
+            )
         else:
             minimum_start_time = int(
                 datetime.datetime.now().timestamp() * 1000 * 1000 * 1000
             )
 
-        historical_points = self._get_dataset_points(
+        historical_points: List[GoogleFitPoint] = self._get_dataset_points(
             dataStreamId,
             minimum_start_time - 120 * 24 * 60 * 60 * 1000 * 1000 * 1000,
             minimum_start_time,
@@ -184,10 +198,10 @@ class GoogleFitConnection(object):
             )
             raise Exception("Error while fetching data point changes")
 
-        points = []
+        points: List[GoogleFitPoint] = []
         for point in response.json()["insertedDataPoint"]:
             points.append(
-                (
+                GoogleFitPoint(
                     point["value"][0][valType],
                     point["startTimeNanos"],
                     point["endTimeNanos"],
@@ -198,7 +212,7 @@ class GoogleFitConnection(object):
         return (points, response.json()["nextPageToken"])
 
     def _get_all_point_changes(self, dataStreamId, valType="intVal"):
-        res = []
+        res: List[GoogleFitPoint] = []
         nextPageToken = None
         try:
             while True:
@@ -214,21 +228,21 @@ class GoogleFitConnection(object):
             # reset whatever data points we have received
             res = []
 
-        points = []
+        points: List[GoogleFitPoint] = []
         for point in res:
-            if self._last_modified and int(point[3]) <= self._last_modified.get(
-                dataStreamId, 0
-            ):
+            if self._last_modified and int(
+                point.modified_time
+            ) <= self._last_modified.get(dataStreamId, 0):
                 continue
             points.append(
-                (
-                    point[0],
-                    point[1],
-                    point[2],
+                GoogleFitPoint(
+                    point.value,
+                    point.start_time,
+                    point.end_time,
                 )
             )
             self._new_last_modified[dataStreamId] = max(
-                self._new_last_modified[dataStreamId], int(point[3])
+                self._new_last_modified[dataStreamId], int(point.modified_time)
             )
 
         return points
@@ -250,13 +264,14 @@ class GoogleFitConnection(object):
             },
             timeout=10,
         )
-        vals = []
+        vals: List[GoogleFitPoint] = []
         for point in response.json()["point"]:
             vals.append(
-                (
+                GoogleFitPoint(
                     point["value"][0][valType],
                     int(point["startTimeNanos"]),
                     int(point["endTimeNanos"]),
+                    None,
                 )
             )
             if valType == "unknown":
@@ -271,14 +286,15 @@ class GoogleFitConnection(object):
         """
         # start time should be start of yesterday in Asia/Kolkata timezone in millis
         self._update_last_sync = False
+        self._last_modified = {}
         data = self.get_data_since_last_sync()
         date_wise_map = collections.defaultdict(int)
         for key, values in data.items():
             for value in values:
                 start_date = datetime.datetime.fromtimestamp(
-                    int(value[1]) / 10**9, tz=ZoneInfo("Asia/Kolkata")
+                    int(value.start_time) / 10**9, tz=ZoneInfo("Asia/Kolkata")
                 ).date()
-                date_wise_map[start_date] += value[0]
+                date_wise_map[start_date] += value.value
         import pdb
 
         pdb.set_trace()
