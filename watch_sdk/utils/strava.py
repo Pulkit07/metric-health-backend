@@ -1,6 +1,8 @@
+import collections
 import logging
 from celery import shared_task
 
+from watch_sdk.utils import webhook
 from watch_sdk.data_providers.strava import StravaAPIClient
 from watch_sdk.models import ConnectedPlatformMetadata, StravaWebhookLog
 
@@ -18,13 +20,26 @@ def on_strava_disconnect(connected_platform, refresh_token):
 
 
 def on_strava_reconnect(connected_platform):
+    fitness_data = collections.defaultdict(list)
     with StravaAPIClient(
         connected_platform.connection.app,
         connected_platform,
         connected_platform.connection.user_uuid,
     ) as sac:
         activities = sac.get_activities_since_last_sync()
-        # TODO: sent this activities over webhook
+        for activity_type, acts in activities.items():
+            fitness_data[activity_type].extend(acts)
+
+    logger.info(f"total activities on strava sync: {len(activities)}")
+    logger.info(
+        f"sending strava data to webhook for {connected_platform.connection.user_uuid} and app {connected_platform.connection.app}"
+    )
+    webhook.send_data_to_webhook(
+        fitness_data,
+        connected_platform.connection.app,
+        connected_platform.connection.user_uuid,
+        "strava",
+    )
 
 
 @shared_task

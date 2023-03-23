@@ -1,3 +1,4 @@
+import collections
 import logging
 import uuid
 import requests
@@ -23,9 +24,9 @@ class StravaAPIClient(object):
         self._access_token = None
         self.refresh_token = platform_connection.refresh_token
         self._last_sync = platform_connection.last_sync
-        enabled_platform = user_app.enabled_platforms.get(platform__name="strava")
-        self._client_id = enabled_platform.platform_app_id
-        self._client_secret = enabled_platform.platform_app_secret
+        self.enabled_platform = user_app.enabled_platforms.get(platform__name="strava")
+        self._client_id = self.enabled_platform.platform_app_id
+        self._client_secret = self.enabled_platform.platform_app_secret
 
     def __enter__(self):
         self._get_access_token()
@@ -101,14 +102,15 @@ class StravaAPIClient(object):
             else before - 500 * 24 * 60 * 60
         )
 
-        activities = []
+        activities = collections.defaultdict(list)
         page_number = 1
         while True:
             acts = self._get_activities_before_after(before, after, page_number, 200)
-            for act in acts:
-                self._last_sync = max(act.end_time, self._last_sync)
-            activities.extend(acts)
-            if len(acts) < 200:
+            for act_type, act in acts.items():
+                activities[act_type].extend(act)
+                for a in act:
+                    self._last_sync = max(a.end_time, self._last_sync)
+            if sum([len(act) for act in acts.values()]) < 200:
                 # we got less entries then page size, it means there are no more entries
                 break
             page_number += 1
@@ -130,26 +132,32 @@ class StravaAPIClient(object):
             },
         )
 
-        activity_objects = []
+        activity_objects = collections.defaultdict(list)
         if response.status_code == 200:
             activities = response.json()
             for activity in activities:
                 if activity["type"] not in SUPPORTED_TYPES:
                     continue
 
-                activity_objects.append(
-                    SUPPORTED_TYPES[activity["type"]](
-                        source="strava",
-                        start_time=activity["start_date"],
-                        distance=activity["distance"],
-                        moving_time=activity["moving_time"],
-                        total_elevation_gain=activity["total_elevation_gain"],
-                        max_speed=activity["max_speed"],
-                        average_speed=activity["average_speed"],
-                        source_device=None,
-                        manual_entry=activity["manual"],
+                if activity["manual"] and not self.enabled_platform.sync_manual_entries:
+                    continue
+
+                # TODO: make it generic
+                if activity["type"] == "Ride":
+                    activity_objects["strava_cycling"].append(
+                        SUPPORTED_TYPES[activity["type"]](
+                            source="strava",
+                            start_time=activity["start_date"],
+                            distance=activity["distance"],
+                            moving_time=activity["moving_time"],
+                            total_elevation_gain=activity["total_elevation_gain"],
+                            max_speed=activity["max_speed"],
+                            average_speed=activity["average_speed"],
+                            source_device=None,
+                            manual_entry=activity["manual"],
+                        )
                     )
-                )
+
             return activity_objects
         else:
             logger.error("Error getting activities: ", response.status_code)
