@@ -47,9 +47,10 @@ class GoogleFitConnection(object):
         self._last_modified = None
         self._new_last_modified = collections.defaultdict(int)
         # find the google_fit enabled platform from app and get the client id
-        self._client_id = EnabledPlatform.objects.get(
+        self._enabled_platform = EnabledPlatform.objects.get(
             user_app=user_app, platform__name="google_fit"
-        ).platform_app_id
+        )
+        self._client_id = self._enabled_platform.platform_app_id
 
     @property
     def _data_sources(self):
@@ -161,8 +162,10 @@ class GoogleFitConnection(object):
             data_streams = google_fit.RANGE_DATA_TYPES_ATTRIBUTES[data_type]
             dataSources = self._get_specific_data_sources(data_type, data_streams)
             for name, streamId in dataSources.items():
-                # TODO: for now we are not syncing manually entered data
-                if name in MANUALLY_ENTERED_SOURCES:
+                if (
+                    name in MANUALLY_ENTERED_SOURCES
+                    and not self._enabled_platform.sync_manual_entries
+                ):
                     continue
                 if not self._last_modified or self._last_modified.get(streamId) is None:
                     vals: List[GoogleFitPoint] = self._perform_first_sync(

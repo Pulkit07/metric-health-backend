@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from watch_sdk.utils import connection as connection_utils, webhook
 from watch_sdk.models import (
     ConnectedPlatformMetadata,
+    EnabledPlatform,
     IOSDataHashLog,
     UserApp,
     WatchConnection,
@@ -27,8 +28,23 @@ def upload_health_data_using_json_file(request):
     app = UserApp.objects.get(key=key)
 
     try:
+        enabled_platform = EnabledPlatform.objects.get(
+            user_app=app, platform__name="apple_healthkit"
+        )
+    except:
+        logger.warn(
+            f"getting apple healthkit data for app {app} which is not enabled and user {user_uuid}"
+        )
+        return Response(
+            {"error": "Apple healthkit not enabled for this app"}, status=400
+        )
+
+    try:
         connection = WatchConnection.objects.get(app=app, user_uuid=user_uuid)
     except:
+        logger.warn(
+            f"getting apple healthkit data for user {user_uuid} which is not connected to app {app}"
+        )
         return Response({"error": "No connection exists for this user"}, status=400)
 
     try:
@@ -36,14 +52,19 @@ def upload_health_data_using_json_file(request):
             connection=connection, platform__name="apple_healthkit"
         )
     except:
+        logger.warn(
+            f"getting apple healthkit data for user {user_uuid} which is not connected to app {app}"
+        )
         return Response({"error": "No connection exists for this user"}, status=400)
 
     logger.info(f"Health data received for {user_uuid} using a json file of app {app}")
     fitness_data = collections.defaultdict(list)
-    # read over a json file passed with the request and build fitness_data
     if "data" not in request.FILES:
-        logger.error("No data file found")
+        logger.error(
+            f"No data file found for {user_uuid} and app {app} on upload for apple healthkit"
+        )
         return Response({"error": "No data file found"}, status=400)
+    # read over a json file passed with the request and build fitness_data
     data = request.FILES["data"].read()
     data = json.loads(data)
     hash = connection_utils.get_hash(data)
@@ -67,6 +88,12 @@ def upload_health_data_using_json_file(request):
             value = d["value"]
             start_time = d["date_from"]
             end_time = d["date_to"]
+            manual_entry = (
+                d.get("source_name") == "Health"
+                or d.get("source_id") == "com.apple.Health"
+            )
+            if manual_entry and not enabled_platform.sync_manual_entries:
+                continue
             fitness_data[key].append(
                 dclass(
                     value=value,
@@ -74,10 +101,7 @@ def upload_health_data_using_json_file(request):
                     end_time=end_time,
                     source="apple_healthkit",
                     source_device=d.get("source_name"),
-                    manual_entry=(
-                        d.get("source_name") == "Health"
-                        or d.get("source_id") == "com.apple.Health"
-                    ),
+                    manual_entry=manual_entry,
                 ).to_dict()
             )
             max_last_sync = max(max_last_sync, end_time)

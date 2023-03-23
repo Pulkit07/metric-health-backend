@@ -35,6 +35,8 @@ class EnabledPlatform(BaseModel):
     # only used for Strava as of now
     webhook_verify_token = models.CharField(max_length=200, null=True, blank=True)
     webhook_id = models.CharField(max_length=200, null=True, blank=True)
+    # whether to sync manual entry data or not
+    sync_manual_entries = models.BooleanField(default=False)
 
     @property
     def name(self):
