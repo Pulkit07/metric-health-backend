@@ -8,6 +8,12 @@ from watch_sdk.models import EnabledPlatform
 
 logger = logging.getLogger(__name__)
 
+SUPPORTED_TYPES = {
+    "Ride": StravaCycling,
+    # "Run": StravaRun,
+    # "Walk": StravaWalk,
+}
+
 
 class StravaAPIClient(object):
     def __init__(self, user_app, platform_connection, user_uuid):
@@ -79,14 +85,13 @@ class StravaAPIClient(object):
             logger.error("Error getting activity by id: ", response.status_code)
             return None
 
-    def get_activities_for_first_sync(self, before):
+    def get_activities_since_last_sync(self, before):
         """
         Gets activities user did before the given timestamp
         for the first sync. For future data, we shall get it over webhook
 
         Gets data for 500 days before the given timestamp
         """
-        access_token = self._get_access_token()
         before = datetime.now().timestamp()
         after = (
             self._last_sync.timestamp()
@@ -99,6 +104,8 @@ class StravaAPIClient(object):
         page_number = 1
         while True:
             acts = self._get_activities_before_after(before, after, page_number, 200)
+            for act in acts:
+                self._last_sync = max(act.end_time, self._last_sync)
             activities.extend(acts)
             if len(acts) < 200:
                 # we got less entries then page size, it means there are no more entries
@@ -126,11 +133,11 @@ class StravaAPIClient(object):
         if response.status_code == 200:
             activities = response.json()
             for activity in activities:
-                if activity["type"] != "Ride":
-                    # TODO: handle other types here
+                if activity["type"] not in SUPPORTED_TYPES:
                     continue
+
                 activity_objects.append(
-                    StravaCycling(
+                    SUPPORTED_TYPES[activity["type"]](
                         source="strava",
                         start_time=activity["start_date"],
                         distance=activity["distance"],

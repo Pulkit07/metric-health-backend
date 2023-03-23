@@ -7,6 +7,7 @@ from watch_sdk.models import (
     WatchConnection,
 )
 from watch_sdk.permissions import AdminPermission
+import watch_sdk.utils.strava as strava_utils
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import generics
@@ -36,38 +37,13 @@ class StravaWebhook(generics.GenericAPIView):
 
     def post(self, request, pk):
         data = request.json()
-        # if data.get("aspect_type") != "create":
-        #     # We ignore all other events except create for now
-        #     # TODO: we might be ignoring app deauthorization events too here
-        #     return Response(status=200)
-
-        # if data.get("object_type") != "activity":
-        #     # We only care about activity events
-        #     return Response(status=200)
-
-        connected_platform = ConnectedPlatformMetadata.objects.get(
-            platform__name="strava",
-            email=data["owner_id"],
-        )
-
-        # TODO: handle this object ID and get the relevant activity using Strava's REST API
-        object_id = data["object_id"]
-
-        StravaWebhookLog.objects.create(
-            object_id=object_id,
-            object_type=data["object_type"],
-            aspect_type=data["aspect_type"],
-            subscription_id=data["subscription_id"],
-            connected_platform=connected_platform,
-            updates=data["updates"],
-        )
-
+        strava_utils.handle_strava_webhook.delay(data, pk)
         return Response(status=200)
 
 
 @api_view(["POST"])
 @permission_classes([AdminPermission])
-def strava_cron_job(request):
+def debug_test_strava(request):
     apps = EnabledPlatform.objects.filter(platform__name="strava").values_list(
         "user_app", flat=True
     )
@@ -85,6 +61,9 @@ def strava_cron_job(request):
                 continue
 
             with StravaAPIClient(app, connected_platform, connection.user_uuid) as sac:
-                sac.get_activities_since_last_sync()
+                acts = sac.get_activities_since_last_sync()
+                import pdb
+
+                pdb.set_trace()
 
     return Response({"success": True}, status=200)
