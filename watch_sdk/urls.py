@@ -73,6 +73,6 @@ urlpatterns = [
     path("test_webhook", test_webhook_endpoint),
     path("analyze_webhook_data", analyze_webhook_data),
     path("test_fitbit", test_fitbit_integration),
-    path("fitbit_webhook", FitbitWebhook.as_view()),
+    path("fitbit/<int:pk>/webhook", FitbitWebhook.as_view()),
     path("strava/<int:pk>/webhook", StravaWebhook.as_view()),
 ]

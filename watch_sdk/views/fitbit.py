@@ -16,6 +16,7 @@ from watch_sdk.models import (
 )
 from watch_sdk.permissions import AdminPermission
 from watch_sdk.serializers import FitbitNotificationLogSerializer
+from watch_sdk.utils.fitbit import handle_fitbit_webhook
 
 
 logger = logging.getLogger(__name__)
@@ -30,41 +31,16 @@ class FitbitWebhook(generics.GenericAPIView):
             return Response(status=204)
         return Response(status=404)
 
-    def post(self, request):
-        app_id = request.query_params.get("app_id")
+    def post(self, request, pk):
         try:
-            app = UserApp.objects.get(id=app_id)
-        except Exception:
-            # TODO: log this
+            UserApp.objects.get(id=pk)
+        except UserApp.DoesNotExist:
+            logger.error(f"Received fitbit notification for non-existent app {pk}")
             return Response(status=404)
 
-        try:
-            enabled_app = EnabledPlatform.objects.get(
-                platform__name="fitbit", user_app=app
-            )
-        except EnabledPlatform.DoesNotExist:
-            logger.error("No enabled app found for fitbit with id %s", app_id)
-            return Response(status=404)
-        data = request.data
-        if not verify_fitbit_signature(
-            enabled_app.client_secret,
-            request.body,
-            request.headers["X-Fitbit-Signature"],
-        ):
-            logger.error("fitbit signature verification failed")
-            return Response(status=404)
-        total = 0
-        for entry in request.data:
-            total += 1
-            FitbitNotificationLog.objects.create(
-                collection_type=entry["collectionType"],
-                date=entry["date"],
-                owner_id=entry["ownerId"],
-                owner_type=entry["ownerType"],
-                subscription_id=entry["subscriptionId"],
-            )
-
-        logger.info(f"Received {total} notifications from fitbit")
+        handle_fitbit_webhook.delay(
+            request.body, request.data, pk, request.headers["X-Fitbit-Signature"]
+        )
         return Response(status=204)
 
 
