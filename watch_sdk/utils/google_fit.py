@@ -34,7 +34,9 @@ def google_fit_cron():
         connection__app__in=apps,
         connection__app__webhook_url__isnull=False,
     )
-    logger.info(f"Syncing google_fit for {len(google_fit_connections)} connections")
+    logger.info(
+        f"[CRON] Syncing google_fit for {len(google_fit_connections)} connections"
+    )
     for connection in google_fit_connections:
         _sync_connection(connection)
 
@@ -42,7 +44,6 @@ def google_fit_cron():
 def _sync_connection(google_fit_connection: ConnectedPlatformMetadata):
     connection = google_fit_connection.connection
     user_app = connection.app
-    logger.info(f"Syncing google_fit for {connection.user_uuid} ({user_app.name})")
     with GoogleFitConnection(user_app, google_fit_connection) as fit_connection:
         fitness_data = collections.defaultdict(list)
         if fit_connection._access_token is None:
@@ -70,6 +71,9 @@ def _sync_connection(google_fit_connection: ConnectedPlatformMetadata):
                     )
 
             if fitness_data:
+                logger.info(
+                    f"Sending google_fit data for {connection.user_uuid} ({user_app.name})"
+                )
                 send_data_to_webhook(
                     fitness_data,
                     user_app,
