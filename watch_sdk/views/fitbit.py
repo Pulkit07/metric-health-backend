@@ -1,6 +1,3 @@
-import base64
-import hashlib
-import hmac
 import logging
 from rest_framework import viewsets, views, generics
 from rest_framework.response import Response
@@ -72,15 +69,3 @@ def test_fitbit_integration(request):
                 pass
 
     return Response({"success": True}, status=200)
-
-
-def verify_fitbit_signature(client_secret, request_body, signature):
-    signing_key = client_secret + "&"
-    encoded_body = base64.b64encode(
-        hmac.new(
-            signing_key.encode("utf-8"),
-            request_body.encode("utf-8"),
-            hashlib.sha1,
-        ).digest()
-    )
-    return encoded_body.decode("utf-8") == signature
