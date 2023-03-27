@@ -1,5 +1,6 @@
 import collections
 import logging
+import os
 import uuid
 import requests
 from datetime import datetime
@@ -178,8 +179,7 @@ class StravaAPIClient(object):
 
 
 def _get_callback_url(app):
-    # TODO: fix this and get the host from env
-    return f"https://apidev.hekahealth.co/watch_sdk/strava/{app.id}/webhook"
+    return f"{os.getenv('HOST_URL')}/watch_sdk/strava/{app.id}/webhook"
 
 
 def create_strava_subscription(app):
