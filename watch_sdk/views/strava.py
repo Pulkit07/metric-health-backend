@@ -63,9 +63,11 @@ def debug_test_strava(request):
             with StravaAPIClient(app, connected_platform, connection.user_uuid) as sac:
                 sac._last_sync = 0
                 sac._update_last_sync = False
-                import pdb
-
-                pdb.set_trace()
                 acts = sac.get_activities_since_last_sync()
+                for key, value in acts.items():
+                    print("key: ", key)
+                    for val in value:
+                        print(val)
+                    print("")
 
     return Response({"success": True}, status=200)

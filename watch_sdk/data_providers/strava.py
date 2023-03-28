@@ -6,7 +6,7 @@ import requests
 from datetime import datetime
 from dateutil.parser import parse
 
-from watch_sdk.dataclasses import StravaCycling, StravaRun
+from watch_sdk.dataclasses import StravaCycling, StravaRun, StravaWalk
 from watch_sdk.models import EnabledPlatform
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 SUPPORTED_TYPES = {
     "Ride": ("strava_cycling", StravaCycling),
     "Run": ("strava_run", StravaRun),
-    # "Walk": StravaWalk,
+    "Walk": ("strava_walk", StravaWalk),
 }
 
 
@@ -147,6 +147,7 @@ class StravaAPIClient(object):
         if response.status_code == 200:
             activities = response.json()
             for activity in activities:
+                # TODO: add handling for app level enabled types too
                 if activity["type"] not in SUPPORTED_TYPES:
                     continue
 
