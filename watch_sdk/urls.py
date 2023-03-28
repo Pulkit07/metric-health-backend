@@ -34,6 +34,7 @@ urlpatterns = [
         "user/<int:pk>",
         UserViewSet.as_view({"get": "retrieve", "put": "update"}),
     ),
+    path("check_or_create_user", check_or_create_user),
     path(
         "user_app_from_key",
         UserAppFromKeyViewSet.as_view(),

@@ -300,6 +300,21 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [FirebaseAuthPermission | AdminPermission]
 
 
+@api_view(["POST"])
+@permission_classes([FirebaseAuthPermission | AdminPermission])
+def check_or_create_user(request):
+    email = request.data.get("email")
+    if not email:
+        return Response({"error": "email is required"}, status=400)
+    name = request.data.get("name")
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        user = User.objects.create(name=name, email=email)
+
+    return Response({"success": True, "data": UserSerializer(user).data}, status=200)
+
+
 class UserAppFromKeyViewSet(generics.RetrieveAPIView):
     queryset = UserApp.objects.all()
     serializer_class = UserAppSerializer
