@@ -7,7 +7,13 @@ from watch_sdk.models import UserApp
 
 class ValidKeyPermission(permissions.BasePermission):
     def has_permission(self, request, view):
-        key = request.query_params.get("key")
+        # TODO: remove the key from query params once all current users are migrated
+        # to passing it as headers
+        key = (
+            request.query_params.get("key")
+            if request.query_params.get("key")
+            else request.META.get("key")
+        )
         if not key:
             return False
         try:
