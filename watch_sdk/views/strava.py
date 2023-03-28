@@ -35,8 +35,7 @@ class StravaWebhook(generics.GenericAPIView):
         return Response(status=404)
 
     def post(self, request, pk):
-        data = request.json()
-        strava_utils.handle_strava_webhook.delay(data, pk)
+        strava_utils.handle_strava_webhook.delay(request.data, pk)
         return Response(status=200)
 
 
