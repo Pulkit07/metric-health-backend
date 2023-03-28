@@ -28,16 +28,31 @@ def send_data_to_webhook(
     chunks = _split_data_into_chunks(fitness_data)
     logger.info("got chunks %s" % len(chunks))
     cur_chunk = 0
+    request_succeeded = True
+    failure_msg = None
     for chunk in chunks:
-        response = requests.post(
-            webhook_url,
-            headers={"Content-Type": "application/json"},
-            data=json.dumps({"data": chunk, "uuid": user_uuid}),
-        )
-        logger.info(f"response for chunk {cur_chunk}: {response}, {webhook_url}")
-        cur_chunk += 1
-        if response.status_code > 202 or response.status_code < 200:
-            logger.error("Error in response, status code: %s" % response.status_code)
+        try:
+            response = requests.post(
+                webhook_url,
+                headers={"Content-Type": "application/json"},
+                data=json.dumps({"data": chunk, "uuid": user_uuid}),
+            )
+            logger.info(f"response for chunk {cur_chunk}: {response}, {webhook_url}")
+            cur_chunk += 1
+            if response.status_code > 202 or response.status_code < 200:
+                logger.error(
+                    "Error in response, status code: %s" % response.status_code
+                )
+                request_succeeded = False
+                failure_msg = str(response)
+        except Exception as e:
+            logger.error("Error while sending data to webhook: %s" % e)
+            request_succeeded = False
+            failure_msg = str(e)
+
+        if request_succeeded:
+            store_webhook_log.delay(user_app.id, user_uuid, chunk)
+        else:
             if fit_connection:
                 fit_connection._update_last_sync = False
 
@@ -46,12 +61,10 @@ def send_data_to_webhook(
                 platform,
                 user_uuid,
                 fitness_data,
-                str(response),
+                failure_msg,
                 response.status_code,
             )
             break
-        else:
-            store_webhook_log.delay(user_app.id, user_uuid, chunk)
 
 
 @shared_task
