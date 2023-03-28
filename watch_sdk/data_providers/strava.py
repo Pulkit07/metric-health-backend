@@ -6,14 +6,14 @@ import requests
 from datetime import datetime
 from dateutil.parser import parse
 
-from watch_sdk.dataclasses import StravaCycling
+from watch_sdk.dataclasses import StravaCycling, StravaRun
 from watch_sdk.models import EnabledPlatform
 
 logger = logging.getLogger(__name__)
 
 SUPPORTED_TYPES = {
-    "Ride": StravaCycling,
-    # "Run": StravaRun,
+    "Ride": ("strava_cycling", StravaCycling),
+    "Run": ("strava_run", StravaRun),
     # "Walk": StravaWalk,
 }
 
@@ -153,24 +153,22 @@ class StravaAPIClient(object):
                 if activity["manual"] and not self.enabled_platform.sync_manual_entries:
                     continue
 
-                # TODO: make it generic
-                if activity["type"] == "Ride":
-
-                    activity_objects["strava_cycling"].append(
-                        SUPPORTED_TYPES[activity["type"]](
-                            source="strava",
-                            start_time=parse(activity["start_date"]).timestamp() * 1000,
-                            # TODO: this should be calculated based on elapsed/moving time
-                            end_time=parse(activity["start_date"]).timestamp() * 1000,
-                            distance=activity["distance"],
-                            moving_time=activity["moving_time"],
-                            total_elevation_gain=activity["total_elevation_gain"],
-                            max_speed=activity["max_speed"],
-                            average_speed=activity["average_speed"],
-                            source_device=None,
-                            manual_entry=activity["manual"],
-                        )
+                activity_key, dclass = SUPPORTED_TYPES[activity["type"]]
+                activity_objects[activity_key].append(
+                    dclass(
+                        source="strava",
+                        start_time=parse(activity["start_date"]).timestamp() * 1000,
+                        # TODO: this should be calculated based on elapsed/moving time
+                        end_time=parse(activity["start_date"]).timestamp() * 1000,
+                        distance=activity["distance"],
+                        moving_time=activity["moving_time"],
+                        total_elevation_gain=activity["total_elevation_gain"],
+                        max_speed=activity["max_speed"],
+                        average_speed=activity["average_speed"],
+                        source_device=None,
+                        manual_entry=activity["manual"],
                     )
+                )
 
             return activity_objects
         else:
