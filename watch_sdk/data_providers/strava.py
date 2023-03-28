@@ -227,7 +227,7 @@ def get_strava_subscriptions(app):
 
     if response.status_code == 200:
         response_data = response.json()
-        logger.debug("Got subscriptions", response_data)
+        logger.debug("Got subscriptions", str(response_data))
     else:
         logger.error(
             "Error getting subscriptions: ", response.status_code, response.json()
