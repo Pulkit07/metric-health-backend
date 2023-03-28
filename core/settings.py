@@ -103,6 +103,8 @@ DATABASES = {
         "HOST": os.environ.get("DB_HOST"),
         "PORT": os.environ.get("DB_PORT"),
         "OPTIONS": {"sslmode": "require"},
+        "CONN_MAX_AGE": 3600,
+        "CONN_HEALTH_CHECKS": True,
     }
 }
 
