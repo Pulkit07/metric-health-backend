@@ -61,6 +61,8 @@ class Height(FitnessDatatype):
 @dataclass_json
 @dataclass
 class StravaCycling(FitnessDatatype):
+    # strava specific activity id
+    activity_id: int
     distance: float
     moving_time: int
     max_speed: float
@@ -71,6 +73,8 @@ class StravaCycling(FitnessDatatype):
 @dataclass_json
 @dataclass
 class StravaRun(FitnessDatatype):
+    # strava specific activity id
+    activity_id: int
     distance: float
     moving_time: int
     max_speed: float
@@ -81,6 +85,8 @@ class StravaRun(FitnessDatatype):
 @dataclass_json
 @dataclass
 class StravaWalk(FitnessDatatype):
+    # strava specific activity id
+    activity_id: int
     distance: float
     moving_time: int
     max_speed: float

@@ -145,6 +145,7 @@ class StravaAPIClient(object):
                         start_time=start_time,
                         # TODO: this should be calculated based on elapsed/moving time
                         end_time=start_time,
+                        activity_id=activity["id"],
                         distance=activity["distance"],
                         moving_time=activity["moving_time"],
                         total_elevation_gain=activity["total_elevation_gain"],
