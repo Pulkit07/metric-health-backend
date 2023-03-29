@@ -3,8 +3,12 @@ import logging
 from celery import shared_task
 
 from watch_sdk.utils import webhook
-from watch_sdk.data_providers.strava import StravaAPIClient
-from watch_sdk.models import ConnectedPlatformMetadata, StravaWebhookLog
+from watch_sdk.data_providers.strava import StravaAPIClient, SUPPORTED_TYPES
+from watch_sdk.models import (
+    ConnectedPlatformMetadata,
+    EnabledPlatform,
+    StravaWebhookLog,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -28,7 +32,8 @@ def on_strava_reconnect(connected_platform):
     ) as sac:
         activities = sac.get_activities_since_last_sync()
         for activity_type, acts in activities.items():
-            fitness_data[activity_type].extend(acts)
+            for act in acts:
+                fitness_data[activity_type].append(act.to_dict())
 
     logger.info(f"total activities on strava sync: {len(activities)}")
     logger.info(
@@ -44,7 +49,6 @@ def on_strava_reconnect(connected_platform):
 
 @shared_task
 def handle_strava_webhook(data, app_id):
-    # TODO: handle this object ID and get the relevant activity using Strava's REST API
     object_id = data["object_id"]
     connected_platform = ConnectedPlatformMetadata.objects.get(
         platform__name="strava",
@@ -60,18 +64,57 @@ def handle_strava_webhook(data, app_id):
     )
 
     assert connected_platform.connection.app.id == app_id
-    # if data.get("aspect_type") != "create":
-    #     # We ignore all other events except create for now
-    #     # TODO: we might be ignoring app deauthorization events too here
-    #     return Response(status=200)
 
-    # if data.get("object_type") != "activity":
-    #     # We only care about activity events
-    #     return Response(status=200)
+    if data.get("object_type") != "activity":
+        # We only care about activity events
+        return
 
-    # with StravaAPIClient(
-    #     connected_platform.connection.app,
-    #     connected_platform,
-    #     connected_platform.connection.user_uuid,
-    # ) as sac:
-    #     pass
+    if data.get("aspect_type") == "create":
+        with StravaAPIClient(
+            connected_platform.connection.app,
+            connected_platform,
+            connected_platform.connection.user_uuid,
+        ) as sac:
+            activity = sac.get_activity(object_id)
+            if activity is None:
+                return
+            if activity["type"] not in SUPPORTED_TYPES:
+                logger.info(
+                    f"got strava activity over webhook of unsupported type {activity['type']}"
+                )
+                return
+            activity_type, activity_class = SUPPORTED_TYPES[activity["type"]]
+            if (
+                activity_type
+                not in connected_platform.connection.app.enabled_data_types.values_list(
+                    "name", flat=True
+                )
+            ):
+                logger.info(
+                    f"got strava activity over webhook of disabled type {activity_type}"
+                )
+                return
+
+            enabled_platform = EnabledPlatform.objects.get(
+                user_app=connected_platform.connection.app,
+                platform__name="strava",
+            )
+            # Filter manual entry if not enabled
+            if activity["manual"] and not enabled_platform.sync_manual_entries:
+                return
+
+            fitness_data = collections.defaultdict(list)
+            fitness_data[activity_type].append(activity_class(activity).to_dict())
+            # send fitness data over webhook
+            webhook.send_data_to_webhook(
+                fitness_data,
+                connected_platform.connection.app,
+                connected_platform.connection.user_uuid,
+                "strava",
+            )
+
+    elif data.get("aspect_type") == "delete":
+        pass
+    elif data.get("aspect_type") == "update":
+        # TODO: handle app deauthorization
+        pass
