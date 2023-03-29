@@ -419,3 +419,4 @@ class DebugWebhookLogsViewSet(viewsets.ModelViewSet):
     queryset = DebugWebhookLogs.objects.all()
     serializer_class = DebugWebhookLogsSerializer
     permission_classes = [AdminPermission]
+    filterset_fields = ["uuid", "app"]
