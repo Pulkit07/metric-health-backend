@@ -87,7 +87,7 @@ def handle_strava_webhook(data, app_id):
             connected_platform,
             connected_platform.connection.user_uuid,
         ) as sac:
-            activity = sac.get_activity(object_id)
+            activity = sac.get_activity_by_id(object_id)
             if activity is None:
                 return
             start_time = parse(activity["start_date"]).timestamp() * 1000
