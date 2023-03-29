@@ -33,6 +33,9 @@ class StravaAPIClient(object):
         self.enabled_platform = EnabledPlatform.objects.get(
             user_app=user_app, platform__name="strava"
         )
+        self.enabled_data_types = user_app.enabled_data_types.values_list(
+            "name", flat=True
+        )
         self._client_id = self.enabled_platform.platform_app_id
         self._client_secret = self.enabled_platform.platform_app_secret
         self._update_last_sync = True
@@ -103,7 +106,7 @@ class StravaAPIClient(object):
         Gets activities user did before the given timestamp
         for the first sync. For future data, we shall get it over webhook
 
-        Gets data for 500 days before the given timestamp
+        Gets data for 500 days before the given timestamp in case of first sync
         """
         before = datetime.now().timestamp()
         after = (
@@ -116,12 +119,44 @@ class StravaAPIClient(object):
         activities = collections.defaultdict(list)
         page_number = 1
         while True:
-            acts = self._get_activities_before_after(before, after, page_number, 200)
-            for act_type, act in acts.items():
-                activities[act_type].extend(act)
-                for a in act:
-                    self._last_sync = max(a.end_time, self._last_sync)
-            if sum([len(act) for act in acts.values()]) < 200:
+            all_activities = self._get_activities_before_after(
+                before, after, page_number, 200
+            )
+
+            for activity in all_activities:
+                # We don't support this type of activity
+                if activity["type"] not in SUPPORTED_TYPES:
+                    continue
+
+                # This is a manual entry and it's syncing is turned off
+                if activity["manual"] and not self.enabled_platform.sync_manual_entries:
+                    continue
+
+                activity_key, dclass = SUPPORTED_TYPES[activity["type"]]
+                # This activity type is not enabled by the user
+                if activity_key not in self.enabled_data_types:
+                    continue
+
+                start_time = parse(activity["start_date"]).timestamp() * 1000
+
+                activities[activity_key].append(
+                    dclass(
+                        source="strava",
+                        start_time=start_time,
+                        # TODO: this should be calculated based on elapsed/moving time
+                        end_time=start_time,
+                        distance=activity["distance"],
+                        moving_time=activity["moving_time"],
+                        total_elevation_gain=activity["total_elevation_gain"],
+                        max_speed=activity["max_speed"],
+                        average_speed=activity["average_speed"],
+                        source_device=None,
+                        manual_entry=activity["manual"],
+                    )
+                )
+                self._last_sync = max(start_time, self._last_sync)
+
+            if len(all_activities) < 200:
                 # we got less entries then page size, it means there are no more entries
                 break
             page_number += 1
@@ -143,35 +178,8 @@ class StravaAPIClient(object):
             },
         )
 
-        activity_objects = collections.defaultdict(list)
         if response.status_code == 200:
-            activities = response.json()
-            for activity in activities:
-                # TODO: add handling for app level enabled types too
-                if activity["type"] not in SUPPORTED_TYPES:
-                    continue
-
-                if activity["manual"] and not self.enabled_platform.sync_manual_entries:
-                    continue
-
-                activity_key, dclass = SUPPORTED_TYPES[activity["type"]]
-                activity_objects[activity_key].append(
-                    dclass(
-                        source="strava",
-                        start_time=parse(activity["start_date"]).timestamp() * 1000,
-                        # TODO: this should be calculated based on elapsed/moving time
-                        end_time=parse(activity["start_date"]).timestamp() * 1000,
-                        distance=activity["distance"],
-                        moving_time=activity["moving_time"],
-                        total_elevation_gain=activity["total_elevation_gain"],
-                        max_speed=activity["max_speed"],
-                        average_speed=activity["average_speed"],
-                        source_device=None,
-                        manual_entry=activity["manual"],
-                    )
-                )
-
-            return activity_objects
+            return response.json()
         else:
             logger.error("Error getting activities: ", response.status_code)
             return []
