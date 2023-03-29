@@ -65,8 +65,9 @@ def generate_key(request):
 def watch_connection_exists(request):
     key = request.query_params.get("key")
     user_uuid = request.query_params.get("user_uuid")
-    app = UserApp.objects.get(key=key)
-    connection_filter = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
+    connection_filter = WatchConnection.objects.filter(
+        app__key=key, user_uuid=user_uuid
+    )
     if connection_filter.exists():
         return Response(
             {
