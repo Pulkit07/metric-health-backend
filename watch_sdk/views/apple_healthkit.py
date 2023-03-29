@@ -78,6 +78,9 @@ def upload_health_data_using_json_file(request):
     max_last_sync = 0
     for enabled in enabled_datatypes:
         data_type = apple_healthkit.DB_DATA_TYPE_KEY_MAP.get(enabled.name)
+        if data_type is None:
+            # skip this data type as it's not supported on apple
+            continue
         key, dclass = apple_healthkit.DATATYPE_NAME_CLASS_MAP.get(
             data_type, (None, None)
         )

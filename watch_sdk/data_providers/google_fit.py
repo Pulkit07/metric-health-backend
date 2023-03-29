@@ -153,7 +153,9 @@ class GoogleFitConnection(object):
     def _get_enabled_data_types(self):
         enabled_data_types = set()
         for source in self.user_app.enabled_data_types.all():
-            enabled_data_types.add(google_fit.DB_DATA_TYPE_KEY_MAP[source.name])
+            # make sure data type is supported on google fit
+            if source.name in google_fit.DB_DATA_TYPE_KEY_MAP:
+                enabled_data_types.add(google_fit.DB_DATA_TYPE_KEY_MAP[source.name])
         return enabled_data_types
 
     def get_data_since_last_sync(self):
