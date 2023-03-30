@@ -1,8 +1,10 @@
+import datetime
 import logging
 import requests
 import json
 from celery import shared_task
 
+from watch_sdk.models import DebugWebhookLogs
 from watch_sdk.utils.mail_utils import send_email_on_webhook_error
 
 logger = logging.getLogger(__name__)
@@ -69,10 +71,18 @@ def send_data_to_webhook(
 
 @shared_task
 def store_webhook_log(app_id, uuid, data):
-    from watch_sdk.models import DebugWebhookLogs
-
     DebugWebhookLogs.objects.create(
         app_id=app_id,
         uuid=uuid,
         data=data,
     )
+
+
+@shared_task
+def logs_delete():
+    """
+    Delete webhook logs older than 2 days
+    """
+    DebugWebhookLogs.objects.filter(
+        created_at__lt=datetime.datetime.now() - datetime.timedelta(days=2)
+    ).delete()
