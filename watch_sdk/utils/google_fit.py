@@ -21,7 +21,7 @@ def trigger_sync_on_connect(connected_platform: ConnectedPlatformMetadata):
     logger.info(
         f"Triggering google_fit sync on connect for {connected_platform.connection.user_uuid} and app {connected_platform.connection.app}"
     )
-    _sync_connection(connected_platform)
+    _sync_connection(connected_platform.id)
 
 
 @shared_task
@@ -39,17 +39,20 @@ def google_fit_cron():
         f"[CRON] Syncing google_fit for {len(google_fit_connections)} connections"
     )
     for connection in google_fit_connections:
-        _sync_connection(connection)
+        _sync_connection(connection.id)
 
 
-def _sync_connection(google_fit_connection: ConnectedPlatformMetadata):
+def _sync_connection(google_fit_connection_id: int):
     # Multiple syncs can happen for a same connection at once because of cron job, on connect trigger
     # reconnect trigger etc.
     # We need to make sure that only one sync happens at a time for a connection to prevent deduplication
     # Hence we use a redis distributed named lock
-    with cache.lock(
-        f"google_fit_sync_{google_fit_connection.connection.user_uuid}_{google_fit_connection.connection.app.id}"
-    ):
+    with cache.lock(f"google_fit_sync_{google_fit_connection_id}"):
+        # load the connection object after the lock has been acquired
+        # to make sure we have the latest data
+        google_fit_connection = ConnectedPlatformMetadata.objects.get(
+            id=google_fit_connection_id
+        )
         _perform_sync_connection(google_fit_connection)
 
 
