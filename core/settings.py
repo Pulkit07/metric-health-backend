@@ -157,6 +157,20 @@ CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND")
 CELERY_REDIS_BACKEND_USE_SSL = {"ssl_cert_reqs": ssl.CERT_REQUIRED}
 CELERY_BROKER_URL_USE_SSL = {"ssl_cert_reqs": ssl.CERT_REQUIRED}
 
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ.get("REDIS_CACHE_URL"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "SSL": True,
+            "SSL_CERT_REQS": ssl.CERT_REQUIRED,
+        },
+        "KEY_PREFIX": "cache",
+    }
+}
+
 if DEBUG or sys.argv[1] == "runserver":
     DEBUG_PROPAGATE_EXCEPTIONS = True
     pass
