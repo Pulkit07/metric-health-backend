@@ -12,6 +12,7 @@ from watch_sdk.utils.webhook import send_data_to_webhook
 from watch_sdk.constants import google_fit
 
 from celery import shared_task
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,17 @@ def google_fit_cron():
 
 
 def _sync_connection(google_fit_connection: ConnectedPlatformMetadata):
+    # Multiple syncs can happen for a same connection at once because of cron job, on connect trigger
+    # reconnect trigger etc.
+    # We need to make sure that only one sync happens at a time for a connection to prevent deduplication
+    # Hence we use a redis distributed named lock
+    with cache.lock(
+        f"google_fit_sync_{google_fit_connection.connection.user_uuid}_{google_fit_connection.connection.app.id}"
+    ):
+        _perform_sync_connection(google_fit_connection)
+
+
+def _perform_sync_connection(google_fit_connection: ConnectedPlatformMetadata):
     connection = google_fit_connection.connection
     user_app = connection.app
     with GoogleFitConnection(user_app, google_fit_connection) as fit_connection:
