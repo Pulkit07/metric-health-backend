@@ -1,25 +1,15 @@
-import base64
-import hashlib
-import hmac
 import logging
 from watch_sdk.data_providers.fitbit import FitbitAPIClient
 from celery import shared_task
 from watch_sdk.models import EnabledPlatform, FitbitNotificationLog
+from watch_sdk.utils.hash_utils import get_webhook_signature
 
 
 logger = logging.getLogger(__name__)
 
 
 def verify_fitbit_signature(client_secret, request_body, signature):
-    signing_key = client_secret + "&"
-    encoded_body = base64.b64encode(
-        hmac.new(
-            signing_key.encode("utf-8"),
-            request_body.encode("utf-8"),
-            hashlib.sha1,
-        ).digest()
-    )
-    return encoded_body.decode("utf-8") == signature
+    return get_webhook_signature(request_body, client_secret) == signature
 
 
 def on_fitbit_connect(connected_platform):

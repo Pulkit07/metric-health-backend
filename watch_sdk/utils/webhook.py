@@ -5,6 +5,7 @@ import json
 from celery import shared_task
 
 from watch_sdk.models import DebugWebhookLogs
+from watch_sdk.utils.hash_utils import get_webhook_signature
 from watch_sdk.utils.mail_utils import send_email_on_webhook_error
 
 logger = logging.getLogger(__name__)
@@ -34,10 +35,15 @@ def send_data_to_webhook(
     failure_msg = None
     for chunk in chunks:
         try:
+            body = json.dumps({"data": chunk, "uuid": user_uuid})
+            signature = get_webhook_signature(body, user_app.key)
             response = requests.post(
                 webhook_url,
-                headers={"Content-Type": "application/json"},
-                data=json.dumps({"data": chunk, "uuid": user_uuid}),
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Heka-Signature": signature,
+                },
+                data=body,
             )
             logger.info(f"response for chunk {cur_chunk}: {response}, {webhook_url}")
             cur_chunk += 1
