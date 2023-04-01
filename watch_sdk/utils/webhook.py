@@ -59,7 +59,8 @@ def send_data_to_webhook(
             failure_msg = str(e)
 
         if request_succeeded:
-            store_webhook_log.delay(user_app.id, user_uuid, chunk)
+            if user_app.debug_store_webhook_logs:
+                store_webhook_log.delay(user_app.id, user_uuid, chunk)
         else:
             if fit_connection:
                 fit_connection._update_last_sync = False

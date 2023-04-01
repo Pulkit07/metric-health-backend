@@ -65,6 +65,8 @@ class UserApp(BaseModel):
         default="free",
     )
     enabled_data_types = models.ManyToManyField(DataType, blank=True)
+    # whether to store the data we sent over webhook for debugging purposes
+    debug_store_webhook_logs = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return f"{self.name} - {self.user.name} ({self.id})"
