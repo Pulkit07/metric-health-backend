@@ -15,6 +15,7 @@ from watch_sdk.models import (
 
 from watch_sdk.permissions import ValidKeyPermission
 from watch_sdk.constants import apple_healthkit
+from watch_sdk.utils.hash_utils import get_hash
 
 
 logger = logging.getLogger(__name__)
@@ -67,7 +68,7 @@ def upload_health_data_using_json_file(request):
     # read over a json file passed with the request and build fitness_data
     data = request.FILES["data"].read()
     data = json.loads(data)
-    hash = connection_utils.get_hash(data)
+    hash = get_hash(data)
     if IOSDataHashLog.objects.filter(hash=hash, connection=connection).exists():
         logger.warn("Already processed this data")
         return Response({"success": True}, status=200)

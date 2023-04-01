@@ -135,6 +135,13 @@ class StravaWebhookLog(BaseModel):
     updates = models.JSONField()
 
 
+# store the hash of data we have received over webhook from strava
+# so that we don't process the same data again
+class StravaWebhookSubscriptionLog(BaseModel):
+    app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
+    hash = models.CharField(max_length=100)
+
+
 class IOSDataHashLog(BaseModel):
     hash = models.CharField(max_length=100)
     connection = models.ForeignKey(WatchConnection, on_delete=models.CASCADE)

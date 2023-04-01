@@ -9,7 +9,9 @@ from watch_sdk.models import (
     ConnectedPlatformMetadata,
     EnabledPlatform,
     StravaWebhookLog,
+    StravaWebhookSubscriptionLog,
 )
+from watch_sdk.utils.hash_utils import get_hash
 
 
 logger = logging.getLogger(__name__)
@@ -55,6 +57,24 @@ def handle_strava_webhook(data, app_id):
         platform__name="strava",
         email=data["owner_id"],
     )
+
+    # we don't hash the whole data since it contains event_time and that changes even for duplicate
+    # events
+    data_hash = get_hash(
+        f"{object_id}{data['object_type']}{data['aspect_type']}{data['subscription_id']}{data['owner_id']}"
+    )
+    if StravaWebhookSubscriptionLog.objects.filter(
+        app_id=app_id,
+        hash=data_hash,
+    ).exists():
+        logger.info("duplicate event received over strava webhook, ignoring")
+        return
+    else:
+        StravaWebhookSubscriptionLog.objects.create(
+            app_id=app_id,
+            hash=data_hash,
+        )
+
     StravaWebhookLog.objects.create(
         object_id=object_id,
         object_type=data["object_type"],

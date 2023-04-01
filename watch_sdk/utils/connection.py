@@ -1,4 +1,3 @@
-import hashlib
 import logging
 from celery import shared_task
 from watch_sdk.data_providers.strava import (
@@ -15,10 +14,6 @@ from watch_sdk.utils.strava import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def get_hash(data):
-    return hashlib.sha256(str(data).encode("utf-8")).hexdigest()
 
 
 @shared_task
