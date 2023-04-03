@@ -25,11 +25,12 @@ def send_data_to_webhook(
     user_app,
     user_uuid,
     platform,
-    fit_connection=None,
 ):
     webhook_url = user_app.webhook_url
     chunks = _split_data_into_chunks(fitness_data)
-    logger.info("got chunks %s" % len(chunks))
+    logger.info(
+        f"got {len(chunks)} chunks to send to webhook for {user_uuid} and app {user_app} on platform {platform}"
+    )
     cur_chunk = 0
     request_succeeded = True
     failure_msg = None
@@ -62,9 +63,6 @@ def send_data_to_webhook(
             if user_app.debug_store_webhook_logs:
                 store_webhook_log.delay(user_app.id, user_uuid, chunk)
         else:
-            if fit_connection:
-                fit_connection._update_last_sync = False
-
             send_email_on_webhook_error.delay(
                 user_app.id,
                 platform,
@@ -74,6 +72,8 @@ def send_data_to_webhook(
                 response.status_code,
             )
             break
+
+    return request_succeeded
 
 
 @shared_task
