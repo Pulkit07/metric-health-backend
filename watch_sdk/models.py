@@ -153,3 +153,8 @@ class DebugWebhookLogs(BaseModel):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
     data = models.JSONField()
     uuid = models.CharField(max_length=100, blank=True, null=True)
+
+
+class DebugIosData(BaseModel):
+    data = models.JSONField()
+    uuid = models.CharField(max_length=100, blank=True, null=True)

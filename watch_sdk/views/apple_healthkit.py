@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from watch_sdk.utils import connection as connection_utils, webhook
 from watch_sdk.models import (
     ConnectedPlatformMetadata,
+    DebugIosData,
     EnabledPlatform,
     IOSDataHashLog,
     UserApp,
@@ -68,6 +69,11 @@ def upload_health_data_using_json_file(request):
     # read over a json file passed with the request and build fitness_data
     data = request.FILES["data"].read()
     data = json.loads(data)
+    if app.id == 8:
+        DebugIosData.objects.create(
+            uuid=user_uuid,
+            data=data,
+        )
     hash = get_hash(data)
     if IOSDataHashLog.objects.filter(hash=hash, connection=connection).exists():
         logger.warn("Already processed this data")
