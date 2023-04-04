@@ -70,6 +70,8 @@ class UserApp(BaseModel):
     # list of tech stack the app will be used on
     # this is used to show the right SDKs on the dashboard
     tech_stack = ArrayField(models.CharField(max_length=200), blank=True, null=True)
+    # list of users who have access to this app
+    access_users = models.ManyToManyField(User, blank=True, related_name="access_users")
 
     def __str__(self) -> str:
         return f"{self.name} - {self.user.name} ({self.id})"
