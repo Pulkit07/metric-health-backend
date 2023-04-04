@@ -63,6 +63,9 @@ class FitbitAPIClient(object):
             self._access_token = response_data["access_token"]
             self._refresh_token = response_data["refresh_token"]
         elif response.status_code == 401:
+            logger.warn(
+                f"Fitbit refresh token expired, logging out user {self.user_uuid} for app {self.user_app}"
+            )
             self._refresh_token = None
             # mark the connection as logged out as Fitbit requires user to re-authenticate
             self.connection.logged_in = False
