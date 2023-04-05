@@ -54,6 +54,7 @@ urlpatterns = [
     ),
     path("enable_platform", enable_platform_for_app),
     path("enable_datatype", enable_datatype_for_app),
+    path("set_webhook_url", set_webhook_url_for_app),
     path(
         "test_webhook_data",
         WebhookDataViewSet.as_view({"get": "list"}),

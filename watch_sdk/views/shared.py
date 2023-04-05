@@ -317,6 +317,19 @@ def check_or_create_user(request):
     return Response({"success": True, "data": UserSerializer(user).data}, status=200)
 
 
+@api_view(["POST"])
+@permission_classes([FirebaseAuthPermission | AdminPermission])
+def set_webhook_url_for_app(request):
+    try:
+        app = UserApp.objects.get(id=request.query_params.get("app_id"))
+    except:
+        return Response({"error": "Invalid app id"}, status=400)
+    # TODO: validate webhook url
+    app.webhook_url = request.data.get("webhook_url")
+    app.save()
+    return Response({"success": True, "data": UserAppSerializer(app).data}, status=200)
+
+
 class UserAppFromKeyViewSet(generics.RetrieveAPIView):
     queryset = UserApp.objects.all()
     serializer_class = UserAppSerializer
