@@ -220,38 +220,50 @@ class WatchConnectionListView(generics.ListAPIView):
 @api_view(["POST"])
 @permission_classes([FirebaseAuthPermission | AdminPermission])
 def enable_platform_for_app(request):
-    disable = request.data.get("disable", False)
     try:
         app = UserApp.objects.get(id=request.query_params.get("app_id"))
     except:
         return Response({"error": "Invalid app id"}, status=400)
-    try:
-        platform = Platform.objects.get(name=request.data.get("platform"))
-    except:
-        return Response({"error": "Invalid platform"}, status=400)
 
-    already_enabled = EnabledPlatform.objects.filter(user_app=app, platform=platform)
-    if already_enabled.exists():
-        if disable:
+    for platform, data in request.data.items():
+        try:
+            platform = Platform.objects.get(name=platform)
+        except:
+            return Response({"error": "Invalid platform"}, status=400)
+
+        enabled = data.get("enabled", False)
+        already_enabled = EnabledPlatform.objects.filter(
+            user_app=app, platform=platform
+        )
+        if already_enabled.exists() and not enabled:
+            # Delete the enabled platform
             # we delete the enabled platform in a celery task post platform specific
             # disabling is done
             connection_utils.on_platform_disable.delay(
                 app.id, already_enabled.first().name
             )
-            return Response({"success": True}, status=200)
-        else:
-            return Response(
-                {"error": f"{platform.name} is already enabled for this app"},
-                status=400,
+        elif enabled and not already_enabled.exists():
+            # Create a new enabled platform
+            enabled_platform = EnabledPlatform(
+                platform=platform,
+                platform_app_id=data.get("platform_app_id"),
+                platform_app_secret=data.get("platform_app_secret"),
+                user_app=app,
+                sync_manual_entries=data.get("sync_manual_entries", False),
             )
-    enabled_platform = EnabledPlatform(
-        platform=platform,
-        platform_app_id=request.data.get("platform_app_id"),
-        platform_app_secret=request.data.get("platform_app_secret"),
-        user_app=app,
-    )
-    enabled_platform.save()
-    connection_utils.on_platform_enable.delay(app.id, enabled_platform.name)
+            enabled_platform.save()
+            connection_utils.on_platform_enable.delay(app.id, enabled_platform.name)
+        elif enabled and already_enabled.exists():
+            # Update an already enabled platform
+            enabled_platform = already_enabled.first()
+            enabled_platform.platform_app_id = data.get("platform_app_id")
+            enabled_platform.platform_app_secret = data.get("platform_app_secret")
+            enabled_platform.sync_manual_entries = data.get(
+                "sync_manual_entries", False
+            )
+            enabled_platform.save()
+            connection_utils.on_platform_enable.delay(app.id, enabled_platform.name)
+
     return Response({"success": True}, status=200)
 
 
