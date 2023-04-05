@@ -262,7 +262,7 @@ def enable_platform_for_app(request):
                 "sync_manual_entries", False
             )
             enabled_platform.save()
-            connection_utils.on_platform_enable.delay(app.id, enabled_platform.name)
+            # TODO: should we try create a subscription here?
 
     return Response({"success": True}, status=200)
 
