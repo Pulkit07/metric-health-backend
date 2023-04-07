@@ -37,6 +37,7 @@ class EnabledPlatform(BaseModel):
     webhook_id = models.CharField(max_length=200, null=True, blank=True)
     # whether to sync manual entry data or not
     sync_manual_entries = models.BooleanField(default=False)
+    enabled_scopes = ArrayField(models.CharField(max_length=200), blank=True, null=True)
 
     @property
     def name(self):
