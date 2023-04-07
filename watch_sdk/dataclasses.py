@@ -60,6 +60,18 @@ class Height(FitnessDatatype):
 
 @dataclass_json
 @dataclass
+class BloodOxygen(FitnessDatatype):
+    value: float
+
+
+@dataclass_json
+@dataclass
+class HeartRate(FitnessDatatype):
+    value: float
+
+
+@dataclass_json
+@dataclass
 class StravaCycling(FitnessDatatype):
     # strava specific activity id
     activity_id: int
