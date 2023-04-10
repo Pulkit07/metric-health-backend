@@ -11,7 +11,7 @@ except ImportError:
     from backports.zoneinfo import ZoneInfo
 
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, APIView
 from rest_framework import viewsets, views, generics
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
@@ -33,6 +33,7 @@ from watch_sdk.models import (
     WatchConnection,
 )
 from watch_sdk.serializers import (
+    ConnectedPlatformMetadataSerializer,
     DataTypeSerializer,
     DebugWebhookLogsSerializer,
     PlatformBasedWatchConnection,
@@ -449,3 +450,17 @@ class DebugWebhookLogsViewSet(viewsets.ModelViewSet):
     serializer_class = DebugWebhookLogsSerializer
     permission_classes = [AdminPermission]
     filterset_fields = ["uuid", "app"]
+
+
+class TotalDisconnectedWatchConnectionsView(APIView):
+    serializer_class = ConnectedPlatformMetadataSerializer
+
+    def get(self, request, pk):
+        total_disconnected_watch_connections = WatchConnection.objects.filter(
+            platform=pk, logged_in=False
+        ).count()
+        return Response(
+            {
+                "total_disconnected_watch_connections": total_disconnected_watch_connections
+            }
+        )
