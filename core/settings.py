@@ -85,7 +85,10 @@ TEMPLATES = [
 ]
 
 REST_FRAMEWORK = {
-    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"]
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    # A very small page size to prevent load on the server
+    "PAGE_SIZE": 10,
 }
 
 WSGI_APPLICATION = "core.wsgi.application"
