@@ -38,6 +38,7 @@ from watch_sdk.serializers import (
     PlatformBasedWatchConnection,
     PlatformSerializer,
     TestWebhookDataSerializer,
+    UserAppMinimalSerializer,
     UserAppSerializer,
     UserSerializer,
     WatchConnectionSerializer,
@@ -321,12 +322,23 @@ def check_or_create_user(request):
     if not email:
         return Response({"error": "email is required"}, status=400)
     name = request.data.get("name")
+    app = None
     try:
         user = User.objects.get(email=email)
+        app = UserApp.objects.filter(user=user).first()
     except User.DoesNotExist:
         user = User.objects.create(name=name, email=email)
 
-    return Response({"success": True, "data": UserSerializer(user).data}, status=200)
+    return Response(
+        {
+            "success": True,
+            "data": {
+                "user": UserSerializer(user).data,
+                "app": UserAppMinimalSerializer(app).data if app else None,
+            },
+        },
+        status=200,
+    )
 
 
 @api_view(["POST"])
