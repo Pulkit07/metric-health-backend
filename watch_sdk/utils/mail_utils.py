@@ -8,20 +8,24 @@ client = EmailClient.from_connection_string(connection_string)
 
 welcome_user_email_body = """
 Dear {name},
-
+\n\n
 Thank you for signing up for Heka! We are excited to have you on board and look forward to supporting your journey toward better health and fitness.
-
+\n\n
 Our platform offers a powerful SDK that can be integrated with any available health and fitness data source, including Google Fit, Apple HealthKit, Strava, and Fitbit. With our SDK, you can easily collect and analyze your health data in one place, allowing you to make informed decisions about your health and fitness goals.
 
+\n\n
 Our team is committed to providing you with the best possible experience and support as you use our platform. Whether you are an individual looking to improve your health and wellness, or a healthcare provider seeking to leverage the power of data to improve patient outcomes, we are here to help.
 
+\n\n
 If you have any questions or need assistance getting started, I will be happy to help.
 
+\n\n
 Once again, thank you for joining our community. We look forward to helping you and your users achieve their health and fitness goals!
 
-Best regards,
-Pulkit Goyal
-Founder, Heka
+\n\n
+Best regards,\n
+Pulkit Goyal\n
+Founder, Heka\n
 """
 
 
@@ -67,11 +71,14 @@ def send_email_on_new_user(user_id):
         body=f"New user has been created: {user.email} {user.email} {user.company_name} {user.country}",
     )
 
-    send_email.delay(
-        to=(user.email,),
-        subject="Welcome to Heka!",
-        body=welcome_user_email_body.format(name=user.name),
-        senderEmail=os.getenv("AZURE_COMMUNICATION_SERVICES_ADMIN_SENDER_EMAIL"),
+    send_email.apply_async(
+        kwargs={
+            "to": (user.email,),
+            "subject": "Welcome to Heka!",
+            "body": welcome_user_email_body.format(name=user.name),
+            "senderEmail": os.getenv("AZURE_COMMUNICATION_SERVICES_ADMIN_SENDER_EMAIL"),
+        },
+        countdown=300,
     )
 
 
@@ -91,7 +98,6 @@ def send_email(to, subject, body, cc=None, senderEmail=None):
         "content": {
             "subject": subject,
             "plainText": body,
-            "html": body,
         },
         "recipients": {
             "to": [{"address": t, "displayName": t} for t in to],
