@@ -8,21 +8,17 @@ client = EmailClient.from_connection_string(connection_string)
 
 welcome_user_email_body = """
 Dear {name},
-\n\n
+\n
 Thank you for signing up for Heka! We are excited to have you on board and look forward to supporting your journey toward better health and fitness.
-\n\n
+\n
 Our platform offers a powerful SDK that can be integrated with any available health and fitness data source, including Google Fit, Apple HealthKit, Strava, and Fitbit. With our SDK, you can easily collect and analyze your health data in one place, allowing you to make informed decisions about your health and fitness goals.
-
-\n\n
+\n
 Our team is committed to providing you with the best possible experience and support as you use our platform. Whether you are an individual looking to improve your health and wellness, or a healthcare provider seeking to leverage the power of data to improve patient outcomes, we are here to help.
-
-\n\n
+\n
 If you have any questions or need assistance getting started, I will be happy to help.
-
-\n\n
+\n
 Once again, thank you for joining our community. We look forward to helping you and your users achieve their health and fitness goals!
-
-\n\n
+\n
 Best regards,\n
 Pulkit Goyal\n
 Founder, Heka\n
