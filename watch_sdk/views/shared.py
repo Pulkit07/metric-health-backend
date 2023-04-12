@@ -452,15 +452,19 @@ class DebugWebhookLogsViewSet(viewsets.ModelViewSet):
     filterset_fields = ["uuid", "app"]
 
 
-class TotalDisconnectedWatchConnectionsView(APIView):
+class WatchConnectionStatusView(APIView):
     serializer_class = ConnectedPlatformMetadataSerializer
 
     def get(self, request, pk):
-        total_disconnected_watch_connections = WatchConnection.objects.filter(
+        total_connected_watch_connections = ConnectedPlatformMetadata.objects.filter(
+            platform=pk, logged_in=True
+        ).count()
+        total_disconnected_watch_connections = ConnectedPlatformMetadata.objects.filter(
             platform=pk, logged_in=False
         ).count()
         return Response(
             {
-                "total_disconnected_watch_connections": total_disconnected_watch_connections
+                "total_connected_watch_connections": total_connected_watch_connections,
+                "total_disconnected_watch_connections": total_disconnected_watch_connections,
             }
         )
