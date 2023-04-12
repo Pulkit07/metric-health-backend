@@ -40,6 +40,7 @@ def send_data_to_webhook(
     cur_chunk = 0
     request_succeeded = True
     failure_msg = None
+    response = None
     for chunk in chunks:
         try:
             body = json.dumps({"data": chunk, "uuid": user_uuid})
@@ -75,7 +76,7 @@ def send_data_to_webhook(
                 user_uuid,
                 fitness_data,
                 failure_msg,
-                response.status_code,
+                response.status_code if response else None,
             )
             break
 
