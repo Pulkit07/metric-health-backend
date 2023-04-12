@@ -15,6 +15,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework import viewsets, views, generics
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
+from django.db.models import Count
 
 from watch_sdk.permissions import (
     AdminPermission,
@@ -461,3 +462,56 @@ class DebugWebhookLogsViewSet(viewsets.ModelViewSet):
     serializer_class = DebugWebhookLogsSerializer
     permission_classes = [AdminPermission]
     filterset_fields = ["uuid", "app"]
+
+
+class DashboardView(views.APIView):
+    permission_classes = [FirebaseAuthPermission | AdminPermission]
+
+    def get(self, request, pk):
+        try:
+            user = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return Response({"error": "Invalid user id"}, status=400)
+
+        # get the app for this user
+        app = UserApp.objects.filter(user=user).first()
+
+        if not app:
+            return Response({"error": "App not found for this user"}, status=400)
+
+        # get total unique watch connections for this app
+        total_unique_users = WatchConnection.objects.filter(app=app).count()
+
+        # get total number of active connections for each platform
+        total_active_connections_per_platform = (
+            ConnectedPlatformMetadata.objects.filter(
+                connection__app=app,
+                logged_in=True,
+            )
+            .values("platform__name")
+            .annotate(total=Count("platform__name"))
+        )
+
+        # get total number of active connections
+        total_active_connections = sum(
+            [x["total"] for x in total_active_connections_per_platform]
+        )
+
+        total_disconnected_connections = ConnectedPlatformMetadata.objects.filter(
+            connection__app=app,
+            logged_in=False,
+        ).count()
+
+        return Response(
+            {
+                "success": True,
+                "data": {
+                    "app_name": app.name,
+                    "total_unique_users": total_unique_users,
+                    "total_active_connections": total_active_connections,
+                    "total_disconnected_connections": total_disconnected_connections,
+                    "total_active_connections_per_platform": total_active_connections_per_platform,
+                },
+            },
+            status=200,
+        )
