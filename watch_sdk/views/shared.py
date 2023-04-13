@@ -272,7 +272,6 @@ def enable_platform_for_app(request):
 @api_view(["POST"])
 @permission_classes([FirebaseAuthPermission | AdminPermission])
 def enable_datatype_for_app(request):
-    disable_list = request.data.get("disable", [])
     enable_list = request.data.get("enable", [])
     try:
         app = UserApp.objects.get(id=request.query_params.get("app_id"))
@@ -281,17 +280,13 @@ def enable_datatype_for_app(request):
 
     for enable in enable_list:
         try:
-            datatype = DataType.objects.get(name=enable)
-        except:
+            DataType.objects.get(name=enable)
+        except DataType.DoesNotExist:
             return Response({"error": f"Invalid datatype {enable}"}, status=400)
-        app.enabled_data_types.add(datatype)
-    for disable in disable_list:
-        try:
-            datatype = DataType.objects.get(name=disable)
-        except:
-            return Response({"error": f"Invalid datatype {disable}"}, status=400)
-        app.enabled_data_types.remove(datatype)
 
+    app.enabled_data_types.set(
+        DataType.objects.filter(name__in=enable_list), clear=True
+    )
     app.save()
     return Response({"success": True, "data": UserAppSerializer(app).data}, status=200)
 
