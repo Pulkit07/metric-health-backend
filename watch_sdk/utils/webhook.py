@@ -27,6 +27,12 @@ def send_data_to_webhook(
     platform,
 ):
     webhook_url = user_app.webhook_url
+    # TODO: we can add a check here to see if the webhook url is valid
+    if not webhook_url:
+        logger.warn(
+            f"Webhook url is not set for app {user_app} and user {user_uuid} on platform {platform}"
+        )
+        return False
     chunks = _split_data_into_chunks(fitness_data)
     logger.info(
         f"got {len(chunks)} chunks to send to webhook for {user_uuid} and app {user_app} on platform {platform}"
@@ -34,6 +40,7 @@ def send_data_to_webhook(
     cur_chunk = 0
     request_succeeded = True
     failure_msg = None
+    response = None
     for chunk in chunks:
         try:
             body = json.dumps({"data": chunk, "uuid": user_uuid})
@@ -69,7 +76,7 @@ def send_data_to_webhook(
                 user_uuid,
                 fitness_data,
                 failure_msg,
-                response.status_code,
+                response.status_code if response else None,
             )
             break
 

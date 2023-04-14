@@ -72,6 +72,16 @@ class HeartRate(FitnessDatatype):
 
 @dataclass_json
 @dataclass
+class Sleep(FitnessDatatype):
+    # sleep_type can be one of the following:
+    # "awake", "core", "deep", "rem"
+    sleep_type: str
+    # duration in milliseconds
+    value: int
+
+
+@dataclass_json
+@dataclass
 class StravaCycling(FitnessDatatype):
     # strava specific activity id
     activity_id: int

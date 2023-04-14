@@ -21,6 +21,23 @@ from watch_sdk.utils.hash_utils import get_hash
 
 logger = logging.getLogger(__name__)
 
+SYNC_SLEEP_TYPES = set(["awake", "core", "deep", "rem"])
+
+
+def _get_sleep_type(d):
+    if d["value"] == 0:
+        return "in_bed"
+    if d["value"] == 1:
+        return "asleep"
+    if d["value"] == 2:
+        return "awake"
+    if d["value"] == 3:
+        return "core"
+    if d["value"] == 4:
+        return "deep"
+    if d["value"] == 5:
+        return "rem"
+
 
 @api_view(["POST"])
 @permission_classes([ValidKeyPermission])
@@ -69,7 +86,7 @@ def upload_health_data_using_json_file(request):
     # read over a json file passed with the request and build fitness_data
     data = request.FILES["data"].read()
     data = json.loads(data)
-    if app.id == 8:
+    if app.id == 40:
         DebugIosData.objects.create(
             uuid=user_uuid,
             data=data,
@@ -95,7 +112,6 @@ def upload_health_data_using_json_file(request):
             continue
         for d in data.get(data_type, []):
             total += 1
-            value = d["value"]
             start_time = d["date_from"]
             end_time = d["date_to"]
             manual_entry = (
@@ -104,16 +120,35 @@ def upload_health_data_using_json_file(request):
             )
             if manual_entry and not enabled_platform.sync_manual_entries:
                 continue
-            fitness_data[key].append(
-                dclass(
-                    value=value,
-                    start_time=start_time,
-                    end_time=end_time,
-                    source="apple_healthkit",
-                    source_device=d.get("source_name"),
-                    manual_entry=manual_entry,
-                ).to_dict()
-            )
+            if data_type == "sleep_analysis":
+                value = d["date_to"] - d["date_from"]
+                sleep_type = _get_sleep_type(d)
+                if sleep_type not in SYNC_SLEEP_TYPES:
+                    continue
+                fitness_data[key].append(
+                    dclass(
+                        value=value,
+                        start_time=start_time,
+                        end_time=end_time,
+                        source="apple_healthkit",
+                        source_device=d.get("source_name"),
+                        manual_entry=manual_entry,
+                        sleep_type=sleep_type,
+                    ).to_dict()
+                )
+            else:
+                value = d["value"]
+                fitness_data[key].append(
+                    dclass(
+                        value=value,
+                        start_time=start_time,
+                        end_time=end_time,
+                        source="apple_healthkit",
+                        source_device=d.get("source_name"),
+                        manual_entry=manual_entry,
+                    ).to_dict()
+                )
+
             max_last_sync = max(max_last_sync, end_time)
 
     logger.info(f"Total data points received: {total}")

@@ -110,7 +110,7 @@ class StravaAPIClient(object):
         """
         before = datetime.now().timestamp()
         after = (
-            self._last_sync.timestamp()
+            self._last_sync
             if self._last_sync
             # set it to 120 days before current time
             else before - 500 * 24 * 60 * 60

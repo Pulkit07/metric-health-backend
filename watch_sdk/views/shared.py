@@ -15,6 +15,7 @@ from rest_framework.decorators import api_view, permission_classes, APIView
 from rest_framework import viewsets, views, generics
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
+from django.db.models import Count
 
 from watch_sdk.permissions import (
     AdminPermission,
@@ -39,6 +40,7 @@ from watch_sdk.serializers import (
     PlatformBasedWatchConnection,
     PlatformSerializer,
     TestWebhookDataSerializer,
+    UserAppMinimalSerializer,
     UserAppSerializer,
     UserSerializer,
     WatchConnectionSerializer,
@@ -271,7 +273,6 @@ def enable_platform_for_app(request):
 @api_view(["POST"])
 @permission_classes([FirebaseAuthPermission | AdminPermission])
 def enable_datatype_for_app(request):
-    disable_list = request.data.get("disable", [])
     enable_list = request.data.get("enable", [])
     try:
         app = UserApp.objects.get(id=request.query_params.get("app_id"))
@@ -280,17 +281,13 @@ def enable_datatype_for_app(request):
 
     for enable in enable_list:
         try:
-            datatype = DataType.objects.get(name=enable)
-        except:
+            DataType.objects.get(name=enable)
+        except DataType.DoesNotExist:
             return Response({"error": f"Invalid datatype {enable}"}, status=400)
-        app.enabled_data_types.add(datatype)
-    for disable in disable_list:
-        try:
-            datatype = DataType.objects.get(name=disable)
-        except:
-            return Response({"error": f"Invalid datatype {disable}"}, status=400)
-        app.enabled_data_types.remove(datatype)
 
+    app.enabled_data_types.set(
+        DataType.objects.filter(name__in=enable_list), clear=True
+    )
     app.save()
     return Response({"success": True, "data": UserAppSerializer(app).data}, status=200)
 
@@ -322,12 +319,23 @@ def check_or_create_user(request):
     if not email:
         return Response({"error": "email is required"}, status=400)
     name = request.data.get("name")
+    app = None
     try:
         user = User.objects.get(email=email)
+        app = UserApp.objects.filter(user=user).first()
     except User.DoesNotExist:
         user = User.objects.create(name=name, email=email)
 
-    return Response({"success": True, "data": UserSerializer(user).data}, status=200)
+    return Response(
+        {
+            "success": True,
+            "data": {
+                "user": UserSerializer(user).data,
+                "app": UserAppMinimalSerializer(app).data if app else None,
+            },
+        },
+        status=200,
+    )
 
 
 @api_view(["POST"])
@@ -470,3 +478,56 @@ class WatchConnectionStatusView(APIView):
                 "total_disconnected_watch_connections": total_disconnected_watch_connections,
             }
         return Response(platform_data)
+
+class DashboardView(views.APIView):
+    permission_classes = [FirebaseAuthPermission | AdminPermission]
+
+    def get(self, request, pk):
+        try:
+            user = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return Response({"error": "Invalid user id"}, status=400)
+
+        # get the app for this user
+        app = UserApp.objects.filter(user=user).first()
+
+        if not app:
+            return Response({"error": "App not found for this user"}, status=400)
+
+        # get total unique watch connections for this app
+        total_unique_users = WatchConnection.objects.filter(app=app).count()
+
+        # get total number of active connections for each platform
+        total_active_connections_per_platform = (
+            ConnectedPlatformMetadata.objects.filter(
+                connection__app=app,
+                logged_in=True,
+            )
+            .values("platform__name")
+            .annotate(total=Count("platform__name"))
+        )
+
+        # get total number of active connections
+        total_active_connections = sum(
+            [x["total"] for x in total_active_connections_per_platform]
+        )
+
+        total_disconnected_connections = ConnectedPlatformMetadata.objects.filter(
+            connection__app=app,
+            logged_in=False,
+        ).count()
+
+        return Response(
+            {
+                "success": True,
+                "data": {
+                    "app_name": app.name,
+                    "total_unique_users": total_unique_users,
+                    "total_active_connections": total_active_connections,
+                    "total_disconnected_connections": total_disconnected_connections,
+                    "total_active_connections_per_platform": total_active_connections_per_platform,
+                },
+            },
+            status=200,
+        )
+

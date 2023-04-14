@@ -39,6 +39,8 @@ def on_strava_reconnect(connected_platform):
                 fitness_data[activity_type].append(act.to_dict())
 
     logger.info(f"total activities on strava sync: {len(activities)}")
+    if not fitness_data:
+        return
     logger.info(
         f"sending strava data to webhook for {connected_platform.connection.user_uuid} and app {connected_platform.connection.app}"
     )

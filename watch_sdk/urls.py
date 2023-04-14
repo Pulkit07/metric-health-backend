@@ -52,6 +52,7 @@ urlpatterns = [
         "platform/<int:pk>",
         PlatformViewSet.as_view({"get": "retrieve", "put": "update"}),
     ),
+    path("dashboard/<int:pk>", DashboardView.as_view()),
     path("enable_platform", enable_platform_for_app),
     path("enable_datatype", enable_datatype_for_app),
     path("set_webhook_url", set_webhook_url_for_app),

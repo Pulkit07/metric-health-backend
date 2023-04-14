@@ -50,6 +50,12 @@ class UserAppSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UserAppMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserApp
+        fields = ["id", "name"]
+
+
 class ConnectedPlatformMetadataSerializer(serializers.ModelSerializer):
     platform_name = serializers.SerializerMethodField()
 
