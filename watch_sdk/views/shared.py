@@ -455,16 +455,18 @@ class DebugWebhookLogsViewSet(viewsets.ModelViewSet):
 class WatchConnectionStatusView(APIView):
     serializer_class = ConnectedPlatformMetadataSerializer
 
-    def get(self, request, pk):
+    def get(self, request):
+        platforms = ConnectedPlatformMetadata.objects.all()
         total_connected_watch_connections = ConnectedPlatformMetadata.objects.filter(
-            platform=pk, logged_in=True
+            logged_in=True
         ).count()
         total_disconnected_watch_connections = ConnectedPlatformMetadata.objects.filter(
-            platform=pk, logged_in=False
+            logged_in=False
         ).count()
-        return Response(
-            {
+        platform_data = {}
+        for enabled_platform in platforms:
+            platform_data[enabled_platform.platform] = {
                 "total_connected_watch_connections": total_connected_watch_connections,
                 "total_disconnected_watch_connections": total_disconnected_watch_connections,
             }
-        )
+        return Response(platform_data)
