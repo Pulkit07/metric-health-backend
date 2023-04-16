@@ -465,19 +465,24 @@ class WatchConnectionStatusView(APIView):
 
     def get(self, request):
         platforms = ConnectedPlatformMetadata.objects.all()
-        total_connected_watch_connections = ConnectedPlatformMetadata.objects.filter(
-            logged_in=True
-        ).count()
-        total_disconnected_watch_connections = ConnectedPlatformMetadata.objects.filter(
-            logged_in=False
-        ).count()
         platform_data = {}
         for enabled_platform in platforms:
+            total_connected_watch_connections_by_platform = (
+                ConnectedPlatformMetadata.objects.filter(
+                    platform=enabled_platform, logged_in=True
+                ).count()
+            )
+            total_disconnected_watch_connections_by_platform = (
+                ConnectedPlatformMetadata.objects.filter(
+                    platform=enabled_platform, logged_in=False
+                ).count()
+            )
             platform_data[enabled_platform.platform] = {
-                "total_connected_watch_connections": total_connected_watch_connections,
-                "total_disconnected_watch_connections": total_disconnected_watch_connections,
+                "total_connected_watch_connections": total_connected_watch_connections_by_platform,
+                "total_disconnected_watch_connections": total_disconnected_watch_connections_by_platform,
             }
         return Response(platform_data)
+
 
 class DashboardView(views.APIView):
     permission_classes = [FirebaseAuthPermission | AdminPermission]
@@ -530,4 +535,3 @@ class DashboardView(views.APIView):
             },
             status=200,
         )
-
