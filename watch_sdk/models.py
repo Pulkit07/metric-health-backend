@@ -170,3 +170,9 @@ class DebugWebhookLogs(BaseModel):
 class DebugIosData(BaseModel):
     data = models.JSONField()
     uuid = models.CharField(max_length=100, blank=True, null=True)
+
+
+class UnprocessedData(BaseModel):
+    data = models.JSONField()
+    connection = models.ForeignKey(WatchConnection, on_delete=models.CASCADE)
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE)

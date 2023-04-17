@@ -10,6 +10,8 @@ from watch_sdk.models import (
     DebugIosData,
     EnabledPlatform,
     IOSDataHashLog,
+    Platform,
+    UnprocessedData,
     UserApp,
     WatchConnection,
 )
@@ -37,6 +39,30 @@ def _get_sleep_type(d):
         return "deep"
     if d["value"] == 5:
         return "rem"
+
+
+def _store_unprocessed_data(connection, platform, data):
+    """
+    Stores the data that was not processed by the webhook due to either of following:
+
+    * The webhook was down
+    * The webhook was not set up for the app
+    """
+    UnprocessedData.objects.create(
+        data=data,
+        connection=connection,
+        platform=platform,
+    )
+
+
+def _get_unprocessed_data(connection, platform):
+    """
+    Returns the unprocessed data for the given connection and platform
+    """
+    unprocessed_data = UnprocessedData.objects.filter(
+        connection=connection, platform=platform
+    )
+    return [x.data for x in unprocessed_data]
 
 
 @api_view(["POST"])
@@ -152,16 +178,27 @@ def upload_health_data_using_json_file(request):
             max_last_sync = max(max_last_sync, end_time)
 
     logger.info(f"Total data points received: {total}")
+    unprocessed = False
     if app.webhook_url:
         if fitness_data:
             logger.info(
                 f"sending {len(fitness_data)} data points to webhook from apple healthkit for {user_uuid}"
             )
-            webhook.send_data_to_webhook(
+            request_succeeded = webhook.send_data_to_webhook(
                 fitness_data, app, connection.user_uuid, "apple_healthkit"
             )
+            if not request_succeeded:
+                unprocessed = True
     else:
+        unprocessed = True
         logger.warn("No webhook url found, skipping")
+
+    if unprocessed:
+        _store_unprocessed_data(
+            connection,
+            Platform.objects.get(name="apple_healthkit"),
+            fitness_data,
+        )
 
     # update last sync time on server
     # TODO: we should rather update data type wise last sync
