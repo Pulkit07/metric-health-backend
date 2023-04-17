@@ -34,6 +34,7 @@ class EnabledPlatformSerializer(serializers.ModelSerializer):
             "id",
             "platform_app_secret",
             "enabled_scopes",
+            "sync_manual_entries",
         ]
 
 
