@@ -59,6 +59,12 @@ def _sync_connection(google_fit_connection_id: int):
 def _perform_sync_connection(google_fit_connection: ConnectedPlatformMetadata):
     connection = google_fit_connection.connection
     user_app = connection.app
+    # Double check that the webhook url is set
+    if user_app.webhook_url is None:
+        logger.info(
+            f"Webhook url is not set for app {user_app} and user {connection.user_uuid} on platform {google_fit_connection.platform}, skipping"
+        )
+        return
     with GoogleFitConnection(user_app, google_fit_connection) as fit_connection:
         fitness_data = collections.defaultdict(list)
         if fit_connection._access_token is None:

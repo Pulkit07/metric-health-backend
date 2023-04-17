@@ -191,7 +191,7 @@ def upload_health_data_using_json_file(request):
                 unprocessed = True
     else:
         unprocessed = True
-        logger.warn("No webhook url found, skipping")
+        logger.warn("No webhook url found, skipping and storing data locally")
 
     if unprocessed:
         _store_unprocessed_data(
