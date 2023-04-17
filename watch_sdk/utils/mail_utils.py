@@ -30,8 +30,9 @@ def send_email_on_webhook_error(
     app_id, platform, user_uuid, fitness_data, response, status_code
 ):
     app = UserApp.objects.get(id=app_id)
+    access_users = app.access_users.all().values_list("email", flat=True)
     subject = f"[HEKA BACKEND] Webhook error for {app.name}: Received {status_code} from {app.webhook_url}"
-    to = (app.user.email,)
+    to = [app.user.email, *access_users]
     body = f"""
     Dear {app.user.name},
 
