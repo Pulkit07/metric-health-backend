@@ -5,9 +5,8 @@ from watch_sdk.data_providers.google_fit import GoogleFitConnection
 from watch_sdk.models import (
     ConnectedPlatformMetadata,
     EnabledPlatform,
-    UserApp,
-    WatchConnection,
 )
+from watch_sdk.utils.celery_utils import single_instance_task
 from watch_sdk.utils.webhook import send_data_to_webhook
 from watch_sdk.constants import google_fit
 
@@ -25,6 +24,7 @@ def trigger_sync_on_connect(connected_platform: ConnectedPlatformMetadata):
 
 
 @shared_task
+@single_instance_task(timeout=60 * 5)
 def google_fit_cron():
     apps = EnabledPlatform.objects.filter(platform__name="google_fit").values_list(
         "user_app", flat=True
