@@ -8,10 +8,10 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
 app.conf.beat_schedule = {
-    "google-fit-data-sync": {
-        "task": "watch_sdk.utils.google_fit.google_fit_cron",
-        "schedule": crontab(minute="*/15"),
-    },
+    # "google-fit-data-sync": {
+    #     "task": "watch_sdk.utils.google_fit.google_fit_cron",
+    #     "schedule": crontab(minute="*/15"),
+    # },
     "webhook-logs-delete": {
         "task": "watch_sdk.utils.webhook.logs_delete",
         "schedule": crontab(hour=0, minute=0),
