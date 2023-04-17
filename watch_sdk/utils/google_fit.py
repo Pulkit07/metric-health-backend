@@ -24,7 +24,7 @@ def trigger_sync_on_connect(connected_platform: ConnectedPlatformMetadata):
 
 
 @shared_task
-@single_instance_task(timeout=60 * 5)
+@single_instance_task(timeout=60 * 20)
 def google_fit_cron():
     apps = EnabledPlatform.objects.filter(platform__name="google_fit").values_list(
         "user_app", flat=True
