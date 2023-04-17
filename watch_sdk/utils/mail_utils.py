@@ -42,7 +42,6 @@ def send_email_on_webhook_error(
     <p>Received {status_code} from {app.webhook_url}</p>
     <p>Platform: {platform}</p>
     <p>User UUID: {user_uuid}</p>
-    <p>Fitness data: {fitness_data}</p>
     <p>Response: {response}</p>
 
     If you feel that the request was processed correctly, please make sure that you return a 200 status code.
