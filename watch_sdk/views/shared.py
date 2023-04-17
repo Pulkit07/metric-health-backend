@@ -4,6 +4,7 @@ import logging
 import uuid
 
 from celery import shared_task
+from watch_sdk.utils.app import get_user_app
 
 try:
     from zoneinfo import ZoneInfo
@@ -321,7 +322,7 @@ def check_or_create_user(request):
     app = None
     try:
         user = User.objects.get(email=email)
-        app = UserApp.objects.filter(user=user).first()
+        app = get_user_app(user)
     except User.DoesNotExist:
         user = User.objects.create(name=name, email=email)
 
@@ -469,7 +470,7 @@ class DashboardView(views.APIView):
             return Response({"error": "Invalid user id"}, status=400)
 
         # get the app for this user
-        app = UserApp.objects.filter(user=user).first()
+        app = get_user_app(user)
 
         if not app:
             return Response({"error": "App not found for this user"}, status=400)
