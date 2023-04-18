@@ -1,5 +1,8 @@
 import functools
 from django.core.cache import cache
+from celery import shared_task
+from watch_sdk.models import UnprocessedData
+from watch_sdk.utils.webhook import send_data_to_webhook
 
 
 def single_instance_task(timeout):
@@ -22,3 +25,21 @@ def single_instance_task(timeout):
         return wrapper
 
     return task_exc
+
+
+@shared_task
+@single_instance_task(timeout=60 * 60)
+def sync_unprocessed_data():
+    for entry in list(UnprocessedData.objects.all()):
+        if not entry.connection.app.webhook_url:
+            continue
+
+        success = send_data_to_webhook(
+            entry.data,
+            entry.connection.app,
+            entry.connection.user_uuid,
+            entry.platform.name,
+        )
+
+        if success:
+            entry.delete()
