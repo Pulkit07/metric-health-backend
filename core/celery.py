@@ -18,6 +18,6 @@ app.conf.beat_schedule = {
     },
     "sync-unprocessed-data": {
         "task": "watch_sdk.utils.celery_utils.sync_unprocessed_data",
-        "schedule": crontab(minute="*/15"),
+        "schedule": crontab(hour=0, minute=0),
     },
 }
