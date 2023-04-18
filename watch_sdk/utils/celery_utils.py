@@ -1,8 +1,11 @@
 import functools
+import logging
 from django.core.cache import cache
 from celery import shared_task
 from watch_sdk.models import UnprocessedData
 from watch_sdk.utils.webhook import send_data_to_webhook
+
+logger = logging.getLogger(__name__)
 
 
 def single_instance_task(timeout):
@@ -30,6 +33,7 @@ def single_instance_task(timeout):
 @shared_task
 @single_instance_task(timeout=60 * 60)
 def sync_unprocessed_data():
+    logger.info(f"[CRON] Syncing unprocessed data")
     for entry in list(UnprocessedData.objects.all()):
         if not entry.connection.app.webhook_url:
             continue
