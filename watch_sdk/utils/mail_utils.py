@@ -34,7 +34,7 @@ def send_email_on_webhook_error(
     subject = f"[HEKA BACKEND] Webhook error for {app.name}: Received {status_code} from {app.webhook_url}"
     to = [app.user.email, *access_users]
     body = f"""
-    Dear {app.user.name},
+    Dear {app.name} team,
 
     We have received an error from your webhook. Please check your webhook and make sure it is working correctly.
 
