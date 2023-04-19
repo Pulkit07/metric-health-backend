@@ -200,6 +200,7 @@ class GoogleFitConnection(object):
                 "Content-Type": "application/json",
             },
             params={"limit": 1000, "pageToken": nextPageToken},
+            timeout=10,
         )
 
         if response.status_code != 200:

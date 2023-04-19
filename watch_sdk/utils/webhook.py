@@ -52,6 +52,7 @@ def send_data_to_webhook(
                     "X-Heka-Signature": signature,
                 },
                 data=body,
+                timeout=10,
             )
             logger.info(f"response for chunk {cur_chunk}: {response}, {webhook_url}")
             cur_chunk += 1

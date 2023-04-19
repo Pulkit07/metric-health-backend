@@ -56,6 +56,7 @@ class FitbitAPIClient(object):
                 "grant_type": "refresh_token",
                 "refresh_token": self._refresh_token,
             },
+            timeout=10,
         )
 
         if response.status_code == 200:
@@ -77,6 +78,7 @@ class FitbitAPIClient(object):
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + self._get_access_token(),
             },
+            timeout=10,
         )
 
         if response.status_code == 200:

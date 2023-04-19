@@ -76,6 +76,7 @@ class StravaAPIClient(object):
                 "grant_type": "refresh_token",
                 "refresh_token": self.refresh_token,
             },
+            timeout=10,
         )
 
         if response.status_code == 200:
@@ -93,6 +94,7 @@ class StravaAPIClient(object):
         response = requests.get(
             f"https://www.strava.com/api/v3/activities/{activity_id}",
             headers={"Authorization": f"Bearer {access_token}"},
+            timeout=10,
         )
         if response.status_code == 200:
             # TODO: convert to our dataclass and then return
@@ -177,6 +179,7 @@ class StravaAPIClient(object):
             headers={
                 "Authorization": f"Bearer {access_token}",
             },
+            timeout=10,
         )
 
         if response.status_code == 200:
@@ -208,6 +211,7 @@ def create_strava_subscription(app):
             "callback_url": callback_url,
             "verify_token": enabled_platform.webhook_verify_token,
         },
+        timeout=10,
     )
 
     if response.status_code == 201:
@@ -231,6 +235,7 @@ def get_strava_subscriptions(app):
             "client_id": enabled_platform.platform_app_id,
             "client_secret": enabled_platform.platform_app_secret,
         },
+        timeout=10,
     )
 
     if response.status_code == 200:
