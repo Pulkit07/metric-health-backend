@@ -21,7 +21,10 @@ def single_instance_task(timeout):
                     ret_value = func(*args, **kwargs)
             finally:
                 if have_lock:
-                    lock.release()
+                    try:
+                        lock.release()
+                    except cache.LockNotOwnedError:
+                        logger.info(f"lock already released for {lock_id}")
 
             return ret_value
 
