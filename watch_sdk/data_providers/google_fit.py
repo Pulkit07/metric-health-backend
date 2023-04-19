@@ -88,7 +88,7 @@ class GoogleFitConnection(object):
                 "refresh_token": self.connection.refresh_token,
                 "grant_type": "refresh_token",
             },
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": "application/json; charset=utf-8"},
             timeout=10,
         )
         try:
