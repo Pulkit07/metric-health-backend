@@ -31,17 +31,19 @@ def send_email_on_webhook_error(
 ):
     app = UserApp.objects.get(id=app_id)
     access_users = app.access_users.all().values_list("email", flat=True)
-    subject = f"[HEKA BACKEND] Webhook error for {app.name}: Received {status_code} from {app.webhook_url}"
+    subject = f"[HEKA BACKEND] Error while sending data to webhook"
     to = [app.user.email, *access_users]
     body = f"""
     Dear {app.name} team,
 
-    We have received an error from your webhook. Please check your webhook and make sure it is working correctly.
+    We have received an error while sending data to your webhook. Please check your webhook and make sure it is working correctly.
 
     Platform: {platform}
     User UUID: {user_uuid}
     Response: {response}
     Ocurrence Time: {occurence_time}
+    Status Code: {status_code}
+    Webhook Url: {app.webhook_url}
 
     If you feel that the request was processed correctly, please make sure that you return a 200 status code.
     You can reach out to us at contact@hekahealth.co or reply to this email if you have any questions.
