@@ -27,7 +27,7 @@ Founder, Heka\n
 
 @shared_task
 def send_email_on_webhook_error(
-    app_id, platform, user_uuid, fitness_data, response, status_code
+    app_id, platform, user_uuid, response, status_code, occurence_time
 ):
     app = UserApp.objects.get(id=app_id)
     access_users = app.access_users.all().values_list("email", flat=True)
@@ -38,11 +38,10 @@ def send_email_on_webhook_error(
 
     We have received an error from your webhook. Please check your webhook and make sure it is working correctly.
 
-    <p>Webhook error for {app.name}:</p>
-    <p>Received {status_code} from {app.webhook_url}</p>
-    <p>Platform: {platform}</p>
-    <p>User UUID: {user_uuid}</p>
-    <p>Response: {response}</p>
+    Platform: {platform}
+    User UUID: {user_uuid}
+    Response: {response}
+    Ocurrence Time: {occurence_time}
 
     If you feel that the request was processed correctly, please make sure that you return a 200 status code.
     You can reach out to us at contact@hekahealth.co or reply to this email if you have any questions.
