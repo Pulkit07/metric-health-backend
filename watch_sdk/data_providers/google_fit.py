@@ -94,9 +94,10 @@ class GoogleFitConnection(object):
         try:
             self._access_token = response.json()["access_token"]
         except KeyError:
-            logger.debug(response.text)
             if response.status_code >= 400:
-                logger.error("Status code is more than 400")
+                logger.error(
+                    f"GFit: error getting access token: {response.text} {response.status_code}"
+                )
 
     def _perform_first_sync(self, streamName, dataStreamId, valType):
         """
