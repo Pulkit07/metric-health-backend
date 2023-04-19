@@ -3,7 +3,12 @@ from watch_sdk import utils
 from watch_sdk.data_providers.google_fit import GoogleFitConnection
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from watch_sdk.models import ConnectedPlatformMetadata, EnabledPlatform, WatchConnection
+from watch_sdk.models import (
+    ConnectedPlatformMetadata,
+    EnabledPlatform,
+    UserApp,
+    WatchConnection,
+)
 
 from watch_sdk.permissions import AdminPermission
 
@@ -30,7 +35,7 @@ def test_google_sync(request):
     google_fit_connections = ConnectedPlatformMetadata.objects.filter(
         platform__name="google_fit",
         logged_in=True,
-        connection__app__in=apps,
+        connection__app__in=UserApp.objects.filter(id=40),
         connection__app__webhook_url__isnull=False,
     )
     for connection in google_fit_connections:
