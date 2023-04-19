@@ -15,30 +15,7 @@ def mail_on_new_user(sender, instance, created, **kwargs):
 
 
 @receiver(post_save, sender="watch_sdk.UserApp")
-def enable_basic_platforms(sender, instance, created, **kwargs):
+def mail_on_new_app(sender, instance, created, **kwargs):
     if not created:
         return
-    google_fit = EnabledPlatform(
-        platform=Platform.objects.get(name="google_fit"),
-        user_app=instance,
-    )
-    google_fit.save()
-    apple_healthkit = EnabledPlatform(
-        platform=Platform.objects.get(name="apple_healthkit"),
-        user_app=instance,
-    )
-    apple_healthkit.save()
     mail_utils.send_email_on_new_app.delay(instance.id)
-
-
-@receiver(post_save, sender="watch_sdk.UserApp")
-def enable_basic_data_types(sender, instance, created, **kwargs):
-    if not created:
-        return
-    from watch_sdk.models import DataType
-
-    steps = DataType.objects.get(name="steps")
-    calories = DataType.objects.get(name="calories")
-    instance.enabled_data_types.add(steps)
-    instance.enabled_data_types.add(calories)
-    instance.save()
