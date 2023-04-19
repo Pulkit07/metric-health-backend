@@ -28,7 +28,8 @@ class FirebaseAuthPermission(permissions.BasePermission):
         auth_token = request.META.get("HTTP_AUTHORIZATION")
         if not auth_token:
             return False
-        return firebase_utils.verify_firebase_token(auth_token)
+        email = firebase_utils.verify_firebase_token(auth_token)
+        return True if email else False
 
 
 class AdminPermission(permissions.BasePermission):
