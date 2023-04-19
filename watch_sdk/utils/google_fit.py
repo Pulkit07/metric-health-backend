@@ -52,7 +52,10 @@ def _sync_connection(google_fit_connection_id: int):
     # reconnect trigger etc.
     # We need to make sure that only one sync happens at a time for a connection to prevent deduplication
     # Hence we use a redis distributed named lock
-    with cache.lock(f"google_fit_sync_{google_fit_connection_id}"):
+    #
+    # The timeout is set to 5 minutes, which is more than enough for a sync to complete
+    # We need a timeout because sometime stale locks can be left behind due to server restarts etc.
+    with cache.lock(f"google_fit_sync_{google_fit_connection_id}", timeout=60 * 5):
         # load the connection object after the lock has been acquired
         # to make sure we have the latest data
         google_fit_connection = ConnectedPlatformMetadata.objects.get(
