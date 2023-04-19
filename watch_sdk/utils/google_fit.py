@@ -21,6 +21,9 @@ def trigger_sync_on_connect(connected_platform: ConnectedPlatformMetadata):
         f"Triggering google_fit sync on connect for {connected_platform.connection.user_uuid} and app {connected_platform.connection.app}"
     )
     _sync_connection(connected_platform.id)
+    logger.info(
+        f"finished syncing google_fit on connect for {connected_platform.connection.user_uuid}"
+    )
 
 
 @shared_task
@@ -40,6 +43,8 @@ def google_fit_cron():
     )
     for connection in google_fit_connections:
         _sync_connection(connection.id)
+
+    logger.info("[CRON] Finished syncing google_fit")
 
 
 def _sync_connection(google_fit_connection_id: int):
