@@ -124,6 +124,9 @@ class WatchConnection(BaseModel):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
     user_uuid = models.CharField(max_length=200)
 
+    def __str__(self):
+        return f"{self.app.name} - {self.user_uuid}"
+
 
 class TestWebhookData(BaseModel):
     data = models.JSONField()
