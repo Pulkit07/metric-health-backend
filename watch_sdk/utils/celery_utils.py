@@ -37,6 +37,7 @@ def single_instance_task(timeout):
 @single_instance_task(timeout=60 * 60)
 def sync_unprocessed_data():
     logger.info(f"[CRON] Syncing unprocessed data")
+    synced = 0
     for entry in list(UnprocessedData.objects.all()):
         if not entry.connection.app.webhook_url:
             continue
@@ -49,4 +50,7 @@ def sync_unprocessed_data():
         )
 
         if success:
+            synced += 1
             entry.delete()
+
+    logger.info(f"[CRON] Finished syncing unprocessed data, synced {synced} entries")
