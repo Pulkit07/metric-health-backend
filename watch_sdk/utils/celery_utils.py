@@ -23,8 +23,8 @@ def single_instance_task(timeout):
                 if have_lock:
                     try:
                         lock.release()
-                    except cache.LockNotOwnedError:
-                        logger.info(f"lock already released for {lock_id}")
+                    except Exception as e:
+                        logger.info(f"error while releasing lock for {lock_id}: {e}")
 
             return ret_value
 
