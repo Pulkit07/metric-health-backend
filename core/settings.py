@@ -185,7 +185,7 @@ else:
             "logtail": {
                 "class": "logtail.LogtailHandler",
                 "source_token": "ikx13DWjtF8E9ny4wD6zmF5r",
-                "level": "DEBUG",
+                "level": "INFO",
             },
             "console": {
                 "level": "DEBUG",
