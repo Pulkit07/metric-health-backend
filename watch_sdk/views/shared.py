@@ -15,7 +15,7 @@ from rest_framework.decorators import api_view, permission_classes, APIView
 from rest_framework import viewsets, views, generics
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from watch_sdk.permissions import (
     AdminPermission,
@@ -461,25 +461,24 @@ class DebugWebhookLogsViewSet(viewsets.ModelViewSet):
 
 
 class WatchConnectionStatusView(APIView):
-    serializer_class = ConnectedPlatformMetadataSerializer
-
     def get(self, request):
-        platforms = ConnectedPlatformMetadata.objects.all()
+        platforms = ConnectedPlatformMetadata.objects.values("platform").annotate(
+            total_connected_watch_connections_by_platform=Count(
+                "id", filter=Q(logged_in=True)
+            ),
+            total_disconnected_watch_connections_by_platform=Count(
+                "id", filter=Q(logged_in=False)
+            ),
+        )
         platform_data = {}
         for enabled_platform in platforms:
-            total_connected_watch_connections_by_platform = (
-                ConnectedPlatformMetadata.objects.filter(
-                    platform=enabled_platform, logged_in=True
-                ).count()
-            )
-            total_disconnected_watch_connections_by_platform = (
-                ConnectedPlatformMetadata.objects.filter(
-                    platform=enabled_platform, logged_in=False
-                ).count()
-            )
-            platform_data[enabled_platform.platform] = {
-                "total_connected_watch_connections": total_connected_watch_connections_by_platform,
-                "total_disconnected_watch_connections": total_disconnected_watch_connections_by_platform,
+            platform_data[enabled_platform["platform"]] = {
+                "total_connected_watch_connections": enabled_platform[
+                    "total_connected_watch_connections_by_platform"
+                ],
+                "total_disconnected_watch_connections": enabled_platform[
+                    "total_disconnected_watch_connections_by_platform"
+                ],
             }
         return Response(platform_data)
 
