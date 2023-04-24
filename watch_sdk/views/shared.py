@@ -28,6 +28,7 @@ from watch_sdk.models import (
     DataType,
     DebugWebhookLogs,
     EnabledPlatform,
+    PendingUserInvitation,
     Platform,
     TestWebhookData,
     User,
@@ -37,6 +38,7 @@ from watch_sdk.models import (
 from watch_sdk.serializers import (
     DataTypeSerializer,
     DebugWebhookLogsSerializer,
+    PendingUserInvitationSerializer,
     PlatformBasedWatchConnection,
     PlatformSerializer,
     TestWebhookDataSerializer,
@@ -325,6 +327,13 @@ def check_or_create_user(request):
         app = get_user_app(user)
     except User.DoesNotExist:
         user = User.objects.create(name=name, email=email)
+        invitation = PendingUserInvitation.objects.filter(email=email)
+        if invitation.exists():
+            invitation = invitation.first()
+            app = invitation.app
+            app.access_users.add(user)
+            app.save()
+            invitation.delete()
 
     return Response(
         {
@@ -458,6 +467,13 @@ class DebugWebhookLogsViewSet(viewsets.ModelViewSet):
     serializer_class = DebugWebhookLogsSerializer
     permission_classes = [AdminPermission]
     filterset_fields = ["uuid", "app"]
+
+
+class PendingUserInvitationViewSet(viewsets.ModelViewSet):
+    queryset = PendingUserInvitation.objects.all()
+    serializer_class = PendingUserInvitationSerializer
+    permission_classes = [FirebaseAuthPermission | AdminPermission]
+    filterset_fields = ["app"]
 
 
 class DashboardView(views.APIView):

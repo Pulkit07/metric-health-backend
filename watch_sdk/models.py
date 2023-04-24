@@ -179,3 +179,10 @@ class UnprocessedData(BaseModel):
     data = models.JSONField()
     connection = models.ForeignKey(WatchConnection, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
+
+
+class PendingUserInvitation(BaseModel):
+    name = models.CharField(max_length=100)
+    email = models.CharField(max_length=100)
+    app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
+    invited_by = models.ForeignKey(User, on_delete=models.CASCADE)

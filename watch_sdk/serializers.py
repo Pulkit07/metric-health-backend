@@ -126,3 +126,9 @@ class DebugWebhookLogsSerializer(serializers.ModelSerializer):
     class Meta:
         model = DebugWebhookLogs
         fields = "__all__"
+
+
+class PendingUserInvitationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PendingUserInvitation
+        fields = "__all__"

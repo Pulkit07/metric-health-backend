@@ -1,7 +1,7 @@
 import os
 from azure.communication.email import EmailClient
 from celery import shared_task
-from watch_sdk.models import User, UserApp
+from watch_sdk.models import PendingUserInvitation, User, UserApp
 
 connection_string = os.getenv("AZURE_COMMUNICATION_SERVICES_CONNECTION_STRING")
 client = EmailClient.from_connection_string(connection_string)
@@ -107,3 +107,22 @@ def send_email(to, subject, body, cc=None, senderEmail=None):
 
     poller = client.begin_send(message)
     result = poller.result()
+
+
+@shared_task
+def send_email_on_new_invitation(invitation_id):
+    invitation = PendingUserInvitation.objects.get(id=invitation_id)
+    invitee_name = invitation.invited_by.name
+    send_email.delay(
+        to=(invitation.email,),
+        subject=f"Invitation to join {invitation.app.name}",
+        body=f"""
+Dear {invitation.name},
+
+You have been invited to join {invitation.app.name} by {invitee_name}.
+Please go to app.hekahealth.co and sign up to join.
+
+Regards,
+Heka Team
+        """,
+    )
