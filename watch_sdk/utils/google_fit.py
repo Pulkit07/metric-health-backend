@@ -76,10 +76,15 @@ def _perform_sync_connection(google_fit_connection: ConnectedPlatformMetadata):
     with GoogleFitConnection(user_app, google_fit_connection) as fit_connection:
         fitness_data = collections.defaultdict(list)
         if fit_connection._access_token is None:
-            logger.info(
-                "Unable to get access token for connection, marking it logged out"
-            )
-            google_fit_connection.mark_logout()
+            if not fit_connection._google_server_error:
+                logger.info(
+                    "Unable to get access token for connection, marking it logged out"
+                )
+                google_fit_connection.mark_logout()
+            else:
+                logger.info(
+                    "Unable to get access token for connection, got google server error"
+                )
             return
         try:
             for (

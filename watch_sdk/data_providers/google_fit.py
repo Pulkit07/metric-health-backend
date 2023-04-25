@@ -74,6 +74,9 @@ class GoogleFitConnection(object):
             user_app=user_app, platform__name="google_fit"
         )
         self._client_id = self._enabled_platform.platform_app_id
+        # whether the error was due to google server error
+        # used to decide whether to mark the connection as logged out
+        self._google_server_error = False
 
     @property
     def _data_sources(self):
@@ -121,6 +124,8 @@ class GoogleFitConnection(object):
                 logger.error(
                     f"GFit: error getting access token: {response.text} {response.status_code}"
                 )
+            if response.status_code >= 500:
+                self._google_server_error = True
 
     def _perform_first_sync(self, streamName, dataStreamId, valType):
         """
