@@ -475,6 +475,24 @@ class PendingUserInvitationViewSet(viewsets.ModelViewSet):
     permission_classes = [FirebaseAuthPermission | AdminPermission]
     filterset_fields = ["app"]
 
+    def create(self, request, *args, **kwargs):
+        # check if the user is already invited
+        if PendingUserInvitation.objects.filter(
+            app=request.data.get("app"), email=request.data.get("email")
+        ).exists():
+            return Response(
+                {"error": "User already invited"},
+                status=400,
+            )
+
+        # check if the user is already a member
+        if User.objects.filter(email=request.data.get("email")).exists():
+            return Response(
+                {"error": "User already a member"},
+                status=400,
+            )
+        return super().create(request, *args, **kwargs)
+
 
 class DashboardView(views.APIView):
     permission_classes = [FirebaseAuthPermission | AdminPermission]
