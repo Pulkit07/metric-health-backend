@@ -111,20 +111,24 @@ def send_data_to_webhook(
                 store_webhook_log.delay(user_app.id, user_uuid, chunk)
         else:
             # TODO: we should store the current and remaining chunks here
-            current_time_in_ist = (
-                datetime.datetime.now()
-                .astimezone(tz=ZoneInfo("Asia/Kolkata"))
-                .strftime("%Y-%m-%d %H:%M:%S")
-            )
 
-            send_email_on_webhook_error.delay(
-                user_app.id,
-                platform,
-                user_uuid,
-                failure_msg,
-                status_code,
-                current_time_in_ist,
-            )
+            # Commenting out since we are sending webhook disable emails after
+            # 5 consecutive failures. Also this was very noisy.
+            #
+            # current_time_in_ist = (
+            #     datetime.datetime.now()
+            #     .astimezone(tz=ZoneInfo("Asia/Kolkata"))
+            #     .strftime("%Y-%m-%d %H:%M:%S")
+            # )
+            #
+            # send_email_on_webhook_error.delay(
+            #     user_app.id,
+            #     platform,
+            #     user_uuid,
+            #     failure_msg,
+            #     status_code,
+            #     current_time_in_ist,
+            # )
             break
 
     return request_succeeded
