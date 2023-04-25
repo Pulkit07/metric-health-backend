@@ -49,11 +49,11 @@ def sync_unprocessed_data():
             entry.connection.app,
             entry.connection.user_uuid,
             entry.platform.name,
+            entry.connection,
         )
-
+        entry.delete()
         if success:
             synced += 1
-            entry.delete()
 
         # sleep for couple of seconds to avoid DDOSing the webhook
         time.sleep(2)

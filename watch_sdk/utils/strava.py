@@ -49,6 +49,7 @@ def on_strava_reconnect(connected_platform):
         connected_platform.connection.app,
         connected_platform.connection.user_uuid,
         "strava",
+        connected_platform.connection,
     )
 
 
@@ -173,4 +174,5 @@ def handle_strava_webhook(data, app_id):
         connected_platform.connection.app,
         connected_platform.connection.user_uuid,
         "strava",
+        connected_platform.connection,
     )

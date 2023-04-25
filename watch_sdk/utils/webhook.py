@@ -4,7 +4,7 @@ import requests
 import json
 from celery import shared_task
 
-from watch_sdk.models import DebugWebhookLogs
+from watch_sdk.models import DebugWebhookLogs, Platform, UnprocessedData
 from watch_sdk.utils.hash_utils import get_webhook_signature
 from watch_sdk.utils.mail_utils import (
     send_email_on_webhook_disabled,
@@ -56,80 +56,74 @@ def _update_failure_count_for_webhook(user_app, success):
                 cache.set(f"webhook_failure_count_{user_app.id}", count + 1)
 
 
+def _save_unprocessed_data(connection, fitness_data, platform_name):
+    """
+    Stores the data that was not processed by the webhook due to either of following:
+
+    * The webhook was down
+    * The webhook was not set up for the app
+    """
+    UnprocessedData.objects.create(
+        data=fitness_data,
+        connection=connection,
+        platform=Platform.objects.get(name=platform_name),
+    )
+
+
+def _post_chunk(webhook_url, chunk, user_uuid, key):
+    try:
+        body = json.dumps({"data": chunk, "uuid": user_uuid})
+        signature = get_webhook_signature(body, key)
+        response = requests.post(
+            webhook_url,
+            headers={
+                "Content-Type": "application/json",
+                "X-Heka-Signature": signature,
+            },
+            data=body,
+            timeout=10,
+        )
+        if response.status_code > 202 or response.status_code < 200:
+            logger.error("Error in response, status code: %s" % response.status_code)
+            return False
+    except Exception as e:
+        logger.error("Error while sending data to webhook: %s" % e)
+        return False
+
+    return True
+
+
 def send_data_to_webhook(
     fitness_data,
     user_app,
     user_uuid,
     platform,
+    watch_connection,
 ):
     webhook_url = user_app.webhook_url
     # TODO: we can add a check here to see if the webhook url is valid
     if not webhook_url:
-        logger.warn(
-            f"Webhook url is not set for app {user_app} and user {user_uuid} on platform {platform}"
-        )
+        logger.info(f"Webhook url not set for {user_app} storing offline")
+        _save_unprocessed_data(watch_connection, fitness_data, platform)
         return False
     chunks = _split_data_into_chunks(fitness_data)
-    logger.info(
-        f"got {len(chunks)} chunks to send to webhook for {user_uuid} and app {user_app} on platform {platform}"
-    )
-    cur_chunk = 0
+    logger.info(f"got {len(chunks)} chunks for {user_uuid}, app {user_app}, {platform}")
     request_succeeded = True
-    failure_msg = None
-    status_code = None
+    skip_sending_due_to_error = False
     for chunk in chunks:
-        try:
-            body = json.dumps({"data": chunk, "uuid": user_uuid})
-            signature = get_webhook_signature(body, user_app.key)
-            response = requests.post(
-                webhook_url,
-                headers={
-                    "Content-Type": "application/json",
-                    "X-Heka-Signature": signature,
-                },
-                data=body,
-                timeout=10,
-            )
-            logger.info(f"response for chunk {cur_chunk}: {response}, {webhook_url}")
-            cur_chunk += 1
-            if response.status_code > 202 or response.status_code < 200:
-                logger.error(
-                    "Error in response, status code: %s" % response.status_code
-                )
-                status_code = response.status_code
-                request_succeeded = False
-                failure_msg = str(response)
-        except Exception as e:
-            logger.error("Error while sending data to webhook: %s" % e)
-            request_succeeded = False
-            failure_msg = str(e)
-
-        _update_failure_count_for_webhook(user_app, request_succeeded)
-
-        if request_succeeded:
-            if user_app.debug_store_webhook_logs:
-                store_webhook_log.delay(user_app.id, user_uuid, chunk)
+        if skip_sending_due_to_error:
+            _save_unprocessed_data(watch_connection, chunk, platform)
         else:
-            # TODO: we should store the current and remaining chunks here
+            request_succeeded = _post_chunk(webhook_url, chunk, user_uuid, user_app.key)
+            _update_failure_count_for_webhook(user_app, request_succeeded)
 
-            # Commenting out since we are sending webhook disable emails after
-            # 5 consecutive failures. Also this was very noisy.
-            #
-            # current_time_in_ist = (
-            #     datetime.datetime.now()
-            #     .astimezone(tz=ZoneInfo("Asia/Kolkata"))
-            #     .strftime("%Y-%m-%d %H:%M:%S")
-            # )
-            #
-            # send_email_on_webhook_error.delay(
-            #     user_app.id,
-            #     platform,
-            #     user_uuid,
-            #     failure_msg,
-            #     status_code,
-            #     current_time_in_ist,
-            # )
-            break
+            if request_succeeded:
+                if user_app.debug_store_webhook_logs:
+                    store_webhook_log.delay(user_app.id, user_uuid, chunk)
+            else:
+                _save_unprocessed_data(watch_connection, chunk, platform)
+                # dont send future chunks if this one failed
+                skip_sending_due_to_error = True
 
     return request_succeeded
 

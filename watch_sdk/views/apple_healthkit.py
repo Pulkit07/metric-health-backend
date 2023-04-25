@@ -177,27 +177,16 @@ def upload_health_data_using_json_file(request):
 
             max_last_sync = max(max_last_sync, end_time)
 
-    logger.info(f"Total data points received: {total}")
-    unprocessed = False
-    if app.webhook_url:
-        if fitness_data:
-            logger.info(
-                f"sending {len(fitness_data)} data points to webhook from apple healthkit for {user_uuid}"
-            )
-            request_succeeded = webhook.send_data_to_webhook(
-                fitness_data, app, connection.user_uuid, "apple_healthkit"
-            )
-            if not request_succeeded:
-                unprocessed = True
-    else:
-        unprocessed = True
-        logger.warn("No webhook url found, skipping and storing data locally")
-
-    if unprocessed:
-        _store_unprocessed_data(
-            connection,
-            Platform.objects.get(name="apple_healthkit"),
+    if fitness_data:
+        logger.info(
+            f"sending {len(fitness_data)} points from apple healthkit for {user_uuid}"
+        )
+        webhook.send_data_to_webhook(
             fitness_data,
+            app,
+            connection.user_uuid,
+            "apple_healthkit",
+            connection,
         )
 
     # update last sync time on server

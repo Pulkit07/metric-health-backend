@@ -110,16 +110,13 @@ def _perform_sync_connection(google_fit_connection: ConnectedPlatformMetadata):
             logger.info(
                 f"Sending google_fit data for {connection.user_uuid} ({user_app.name})"
             )
-            request_succeeded = send_data_to_webhook(
+            send_data_to_webhook(
                 fitness_data,
                 user_app,
                 connection.user_uuid,
                 "google_fit",
+                connection,
             )
-
-            # The request to users webhook didn't succeed. We don't want to update the last sync time
-            if not request_succeeded:
-                fit_connection._update_last_sync = False
         except Exception as e:
             logger.error(
                 "Unable to sync data %s, got exception %s" % (connection.user_uuid, e),
