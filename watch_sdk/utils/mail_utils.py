@@ -1,7 +1,7 @@
 import os
 from azure.communication.email import EmailClient
 from celery import shared_task
-from watch_sdk.models import User, UserApp
+from watch_sdk.models import PendingUserInvitation, User, UserApp
 
 connection_string = os.getenv("AZURE_COMMUNICATION_SERVICES_CONNECTION_STRING")
 client = EmailClient.from_connection_string(connection_string)
@@ -27,22 +27,23 @@ Founder, Heka\n
 
 @shared_task
 def send_email_on_webhook_error(
-    app_id, platform, user_uuid, fitness_data, response, status_code
+    app_id, platform, user_uuid, response, status_code, occurence_time
 ):
     app = UserApp.objects.get(id=app_id)
-    subject = f"[HEKA BACKEND] Webhook error for {app.name}: Received {status_code} from {app.webhook_url}"
-    to = (app.user.email,)
+    access_users = app.access_users.all().values_list("email", flat=True)
+    subject = f"[HEKA BACKEND] Error while sending data to webhook"
+    to = [app.user.email, *access_users]
     body = f"""
-    Dear {app.user.name},
+    Dear {app.name} team,
 
-    We have received an error from your webhook. Please check your webhook and make sure it is working correctly.
+    We have received an error while sending data to your webhook. Please check your webhook and make sure it is working correctly.
 
-    <p>Webhook error for {app.name}:</p>
-    <p>Received {status_code} from {app.webhook_url}</p>
-    <p>Platform: {platform}</p>
-    <p>User UUID: {user_uuid}</p>
-    <p>Fitness data: {fitness_data}</p>
-    <p>Response: {response}</p>
+    Platform: {platform}
+    User UUID: {user_uuid}
+    Response: {response}
+    Ocurrence Time: {occurence_time}
+    Status Code: {status_code}
+    Webhook Url: {app.webhook_url}
 
     If you feel that the request was processed correctly, please make sure that you return a 200 status code.
     You can reach out to us at contact@hekahealth.co or reply to this email if you have any questions.
@@ -106,3 +107,22 @@ def send_email(to, subject, body, cc=None, senderEmail=None):
 
     poller = client.begin_send(message)
     result = poller.result()
+
+
+@shared_task
+def send_email_on_new_invitation(invitation_id):
+    invitation = PendingUserInvitation.objects.get(id=invitation_id)
+    invitee_name = invitation.invited_by.name
+    send_email.delay(
+        to=(invitation.email,),
+        subject=f"Invitation to join {invitation.app.name}",
+        body=f"""
+Dear {invitation.name},
+
+You have been invited to join {invitation.app.name} by {invitee_name}.
+Please go to app.hekahealth.co and sign up to join.
+
+Regards,
+Heka Team
+        """,
+    )

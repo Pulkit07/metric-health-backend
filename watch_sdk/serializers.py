@@ -34,6 +34,7 @@ class EnabledPlatformSerializer(serializers.ModelSerializer):
             "id",
             "platform_app_secret",
             "enabled_scopes",
+            "sync_manual_entries",
         ]
 
 
@@ -124,4 +125,10 @@ class FitbitNotificationLogSerializer(serializers.ModelSerializer):
 class DebugWebhookLogsSerializer(serializers.ModelSerializer):
     class Meta:
         model = DebugWebhookLogs
+        fields = "__all__"
+
+
+class PendingUserInvitationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PendingUserInvitation
         fields = "__all__"

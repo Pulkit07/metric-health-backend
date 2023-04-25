@@ -22,14 +22,14 @@ default_app = firebase_admin.initialize_app(cred)
 
 def verify_firebase_token(auth_token):
     if not auth_token:
-        return False
+        return None
     try:
         decoded_token = auth.verify_id_token(auth_token)
     except Exception:
-        return False
+        return None
 
     try:
         decoded_token["uid"]
-        return True
+        return decoded_token["email"]
     except Exception:
-        return False
+        return None

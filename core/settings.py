@@ -176,53 +176,51 @@ CACHES = {
 
 if DEBUG or sys.argv[1] == "runserver":
     DEBUG_PROPAGATE_EXCEPTIONS = True
-    pass
 else:
+    import logtail
+
     LOGGING = {
         "version": 1,
         "handlers": {
-            "SysLog": {
+            "logtail": {
+                "class": "logtail.LogtailHandler",
+                "source_token": "ikx13DWjtF8E9ny4wD6zmF5r",
                 "level": "INFO",
-                "class": "logging.handlers.SysLogHandler",
-                "formatter": "simple",
-                "address": ("logs.papertrailapp.com", 48889),
             },
             "console": {
                 "level": "DEBUG",
                 "class": "logging.StreamHandler",
-                "formatter": "simple",
             },
         },
         "formatters": {
             "simple": {
-                "format": "%(asctime)s %(name)s: %(message)s",
-                "datefmt": "%Y-%m-%dT%H:%M:%S",
+                "format": "%(name)s: %(message)s",
             },
         },
         "loggers": {
-            # This should be something else when not using gunicorn
             "celery": {
-                "handlers": ["SysLog", "console"],
+                "handlers": ["logtail", "console"],
                 "level": "DEBUG",
                 "propagate": True,
             },
+            # This should be something else when not using gunicorn
             "gunicorn": {
-                "handlers": ["SysLog", "console"],
+                "handlers": ["logtail", "console"],
                 "level": "DEBUG",
                 "propagate": True,
             },
             "uvicorn": {
-                "handlers": ["SysLog", "console"],
+                "handlers": ["logtail", "console"],
                 "level": "DEBUG",
                 "propagate": True,
             },
             "app-logger": {
-                "handlers": ["console", "SysLog"],
+                "handlers": ["logtail", "console"],
                 "level": "CRITICAL",
                 "propagate": True,
             },
             "watch_sdk": {
-                "handlers": ["console", "SysLog"],
+                "handlers": ["logtail", "console"],
                 "level": "DEBUG",
                 "propagate": True,
             },
@@ -240,5 +238,5 @@ else:
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for performance monitoring.
         # We recommend adjusting this value in production,
-        traces_sample_rate=1.0,
+        traces_sample_rate=0.001,
     )

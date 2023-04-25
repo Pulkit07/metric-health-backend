@@ -18,6 +18,29 @@ MANUALLY_ENTERED_SOURCES = set(["user_input"])
 
 logger = logging.getLogger(__name__)
 
+DATA_SOURCES_MAP = {
+    "com.google.height": {
+        "merge_height": "derived:com.google.height:com.google.android.gms:merge_height"
+    },
+    "com.google.active_minutes": {
+        "merge_active_minutes": "derived:com.google.active_minutes:com.google.android.gms:merge_active_minutes",
+        "user_input": "raw:com.google.active_minutes:com.google.android.apps.fitness:user_input",
+    },
+    "com.google.step_count.delta": {
+        "estimated_steps": "derived:com.google.step_count.delta:com.google.android.gms:estimated_steps",
+        "user_input": "raw:com.google.step_count.delta:com.google.android.apps.fitness:user_input",
+    },
+    "com.google.weight": {
+        "merge_weight": "derived:com.google.weight:com.google.android.gms:merge_weight"
+    },
+    "com.google.calories.expended": {
+        "merge_calories_expended": "derived:com.google.calories.expended:com.google.android.gms:merge_calories_expended"
+    },
+    "com.google.calories.bmr": {
+        "merged": "derived:com.google.calories.bmr:com.google.android.gms:merged"
+    },
+}
+
 
 @dataclass
 class GoogleFitPoint:
@@ -88,15 +111,16 @@ class GoogleFitConnection(object):
                 "refresh_token": self.connection.refresh_token,
                 "grant_type": "refresh_token",
             },
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": "application/json; charset=utf-8"},
             timeout=10,
         )
         try:
             self._access_token = response.json()["access_token"]
         except KeyError:
-            logger.debug(response.text)
             if response.status_code >= 400:
-                logger.error("Status code is more than 400")
+                logger.error(
+                    f"GFit: error getting access token: {response.text} {response.status_code}"
+                )
 
     def _perform_first_sync(self, streamName, dataStreamId, valType):
         """
@@ -128,6 +152,8 @@ class GoogleFitConnection(object):
         return points
 
     def _get_specific_data_sources(self, data_type_name, data_stream_names):
+        if data_type_name in DATA_SOURCES_MAP:
+            return DATA_SOURCES_MAP[data_type_name]
         dataStreams = {}
         for source in self._data_sources:
             if (
@@ -200,6 +226,7 @@ class GoogleFitConnection(object):
                 "Content-Type": "application/json",
             },
             params={"limit": 1000, "pageToken": nextPageToken},
+            timeout=10,
         )
 
         if response.status_code != 200:

@@ -10,10 +10,14 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     "google-fit-data-sync": {
         "task": "watch_sdk.utils.google_fit.google_fit_cron",
-        "schedule": crontab(minute="*/10"),
+        "schedule": crontab(minute="*/12"),
     },
     "webhook-logs-delete": {
         "task": "watch_sdk.utils.webhook.logs_delete",
         "schedule": crontab(hour=0, minute=0),
+    },
+    "sync-unprocessed-data": {
+        "task": "watch_sdk.utils.celery_utils.sync_unprocessed_data",
+        "schedule": crontab(hour="*/2"),
     },
 }

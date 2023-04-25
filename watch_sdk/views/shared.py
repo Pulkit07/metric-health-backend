@@ -4,6 +4,7 @@ import logging
 import uuid
 
 from celery import shared_task
+from watch_sdk.utils.app import get_user_app
 
 try:
     from zoneinfo import ZoneInfo
@@ -27,6 +28,7 @@ from watch_sdk.models import (
     DataType,
     DebugWebhookLogs,
     EnabledPlatform,
+    PendingUserInvitation,
     Platform,
     TestWebhookData,
     User,
@@ -37,6 +39,7 @@ from watch_sdk.serializers import (
     ConnectedPlatformMetadataSerializer,
     DataTypeSerializer,
     DebugWebhookLogsSerializer,
+    PendingUserInvitationSerializer,
     PlatformBasedWatchConnection,
     PlatformSerializer,
     TestWebhookDataSerializer,
@@ -322,9 +325,16 @@ def check_or_create_user(request):
     app = None
     try:
         user = User.objects.get(email=email)
-        app = UserApp.objects.filter(user=user).first()
+        app = get_user_app(user)
     except User.DoesNotExist:
         user = User.objects.create(name=name, email=email)
+        invitation = PendingUserInvitation.objects.filter(email=email)
+        if invitation.exists():
+            invitation = invitation.first()
+            app = invitation.app
+            app.access_users.add(user)
+            app.save()
+            invitation.delete()
 
     return Response(
         {
@@ -482,6 +492,12 @@ class WatchConnectionStatusView(APIView):
             }
         return Response(platform_data)
 
+class PendingUserInvitationViewSet(viewsets.ModelViewSet):
+    queryset = PendingUserInvitation.objects.all()
+    serializer_class = PendingUserInvitationSerializer
+    permission_classes = [FirebaseAuthPermission | AdminPermission]
+    filterset_fields = ["app"]
+
 
 class DashboardView(views.APIView):
     permission_classes = [FirebaseAuthPermission | AdminPermission]
@@ -493,7 +509,7 @@ class DashboardView(views.APIView):
             return Response({"error": "Invalid user id"}, status=400)
 
         # get the app for this user
-        app = UserApp.objects.filter(user=user).first()
+        app = get_user_app(user)
 
         if not app:
             return Response({"error": "App not found for this user"}, status=400)

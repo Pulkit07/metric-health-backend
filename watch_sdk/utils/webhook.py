@@ -8,11 +8,17 @@ from watch_sdk.models import DebugWebhookLogs
 from watch_sdk.utils.hash_utils import get_webhook_signature
 from watch_sdk.utils.mail_utils import send_email_on_webhook_error
 
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
+
+
 logger = logging.getLogger(__name__)
 
 
 def _split_data_into_chunks(fitness_data):
-    chunk_size = 1000
+    chunk_size = 2000
     data_chunks = []
     for data_type, data in fitness_data.items():
         for i in range(0, len(data), chunk_size):
@@ -40,7 +46,7 @@ def send_data_to_webhook(
     cur_chunk = 0
     request_succeeded = True
     failure_msg = None
-    response = None
+    status_code = None
     for chunk in chunks:
         try:
             body = json.dumps({"data": chunk, "uuid": user_uuid})
@@ -52,6 +58,7 @@ def send_data_to_webhook(
                     "X-Heka-Signature": signature,
                 },
                 data=body,
+                timeout=10,
             )
             logger.info(f"response for chunk {cur_chunk}: {response}, {webhook_url}")
             cur_chunk += 1
@@ -59,6 +66,7 @@ def send_data_to_webhook(
                 logger.error(
                     "Error in response, status code: %s" % response.status_code
                 )
+                status_code = response.status_code
                 request_succeeded = False
                 failure_msg = str(response)
         except Exception as e:
@@ -70,13 +78,19 @@ def send_data_to_webhook(
             if user_app.debug_store_webhook_logs:
                 store_webhook_log.delay(user_app.id, user_uuid, chunk)
         else:
+            current_time_in_ist = (
+                datetime.datetime.now()
+                .astimezone(tz=ZoneInfo("Asia/Kolkata"))
+                .strftime("%Y-%m-%d %H:%M:%S")
+            )
+
             send_email_on_webhook_error.delay(
                 user_app.id,
                 platform,
                 user_uuid,
-                fitness_data,
                 failure_msg,
-                response.status_code if response else None,
+                status_code,
+                current_time_in_ist,
             )
             break
 

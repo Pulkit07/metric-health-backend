@@ -124,6 +124,9 @@ class WatchConnection(BaseModel):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
     user_uuid = models.CharField(max_length=200)
 
+    def __str__(self):
+        return f"{self.app.name} - {self.user_uuid}"
+
 
 class TestWebhookData(BaseModel):
     data = models.JSONField()
@@ -170,3 +173,16 @@ class DebugWebhookLogs(BaseModel):
 class DebugIosData(BaseModel):
     data = models.JSONField()
     uuid = models.CharField(max_length=100, blank=True, null=True)
+
+
+class UnprocessedData(BaseModel):
+    data = models.JSONField()
+    connection = models.ForeignKey(WatchConnection, on_delete=models.CASCADE)
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
+
+
+class PendingUserInvitation(BaseModel):
+    name = models.CharField(max_length=100)
+    email = models.CharField(max_length=100)
+    app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
+    invited_by = models.ForeignKey(User, on_delete=models.CASCADE)

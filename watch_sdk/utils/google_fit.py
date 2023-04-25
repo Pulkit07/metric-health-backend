@@ -5,9 +5,8 @@ from watch_sdk.data_providers.google_fit import GoogleFitConnection
 from watch_sdk.models import (
     ConnectedPlatformMetadata,
     EnabledPlatform,
-    UserApp,
-    WatchConnection,
 )
+from watch_sdk.utils.celery_utils import single_instance_task
 from watch_sdk.utils.webhook import send_data_to_webhook
 from watch_sdk.constants import google_fit
 
@@ -22,9 +21,13 @@ def trigger_sync_on_connect(connected_platform: ConnectedPlatformMetadata):
         f"Triggering google_fit sync on connect for {connected_platform.connection.user_uuid} and app {connected_platform.connection.app}"
     )
     _sync_connection(connected_platform.id)
+    logger.info(
+        f"finished syncing google_fit on connect for {connected_platform.connection.user_uuid}"
+    )
 
 
 @shared_task
+@single_instance_task(timeout=60 * 10)
 def google_fit_cron():
     apps = EnabledPlatform.objects.filter(platform__name="google_fit").values_list(
         "user_app", flat=True
@@ -41,13 +44,18 @@ def google_fit_cron():
     for connection in google_fit_connections:
         _sync_connection(connection.id)
 
+    logger.info("[CRON] Finished syncing google_fit")
+
 
 def _sync_connection(google_fit_connection_id: int):
     # Multiple syncs can happen for a same connection at once because of cron job, on connect trigger
     # reconnect trigger etc.
     # We need to make sure that only one sync happens at a time for a connection to prevent deduplication
     # Hence we use a redis distributed named lock
-    with cache.lock(f"google_fit_sync_{google_fit_connection_id}"):
+    #
+    # The timeout is set to 5 minutes, which is more than enough for a sync to complete
+    # We need a timeout because sometime stale locks can be left behind due to server restarts etc.
+    with cache.lock(f"google_fit_sync_{google_fit_connection_id}", timeout=60 * 5):
         # load the connection object after the lock has been acquired
         # to make sure we have the latest data
         google_fit_connection = ConnectedPlatformMetadata.objects.get(
@@ -59,6 +67,12 @@ def _sync_connection(google_fit_connection_id: int):
 def _perform_sync_connection(google_fit_connection: ConnectedPlatformMetadata):
     connection = google_fit_connection.connection
     user_app = connection.app
+    # Double check that the webhook url is set
+    if user_app.webhook_url is None:
+        logger.info(
+            f"Webhook url is not set for app {user_app} and user {connection.user_uuid} on platform {google_fit_connection.platform}, skipping"
+        )
+        return
     with GoogleFitConnection(user_app, google_fit_connection) as fit_connection:
         fitness_data = collections.defaultdict(list)
         if fit_connection._access_token is None:
