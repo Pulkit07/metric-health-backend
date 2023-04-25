@@ -4,6 +4,7 @@ from django.core.cache import cache
 from celery import shared_task
 from watch_sdk.models import UnprocessedData
 from watch_sdk.utils.webhook import send_data_to_webhook
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -52,5 +53,8 @@ def sync_unprocessed_data():
         if success:
             synced += 1
             entry.delete()
+
+        # sleep for couple of seconds to avoid DDOSing the webhook
+        time.sleep(2)
 
     logger.info(f"[CRON] Finished syncing unprocessed data, synced {synced} entries")
