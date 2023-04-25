@@ -44,10 +44,10 @@ def _update_failure_count_for_webhook(user_app, success):
     disable the webhook for the app.
     """
     with cache.lock(f"webhook_failure_lock_{user_app.id}", timeout=10):
-        count = cache.get(f"webhook_failure_count_{user_app.id}", 0)
         if success:
             cache.set(f"webhook_failure_count_{user_app.id}", 0)
         else:
+            count = cache.get(f"webhook_failure_count_{user_app.id}", 0)
             if count == FAILURE_THRESHOLD:
                 _disable_webhook_for_app(user_app)
                 # Reset the count since we disabled the webhook
