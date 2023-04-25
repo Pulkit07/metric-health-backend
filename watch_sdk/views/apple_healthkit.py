@@ -102,7 +102,7 @@ def upload_health_data_using_json_file(request):
         )
         return Response({"error": "No connection exists for this user"}, status=400)
 
-    logger.info(f"Health data received for {user_uuid} using a json file of app {app}")
+    logger.info(f"Apple data received for {user_uuid} of {app}")
     fitness_data = collections.defaultdict(list)
     if "data" not in request.FILES:
         logger.error(
