@@ -47,7 +47,6 @@ def sync_unprocessed_data():
         success = send_data_to_webhook(
             entry.data,
             entry.connection.app,
-            entry.connection.user_uuid,
             entry.platform.name,
             entry.connection,
         )

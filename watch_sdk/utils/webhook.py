@@ -96,10 +96,10 @@ def _post_chunk(webhook_url, chunk, user_uuid, key):
 def send_data_to_webhook(
     fitness_data,
     user_app,
-    user_uuid,
     platform,
     watch_connection,
 ):
+    user_uuid = watch_connection.user_uuid
     webhook_url = user_app.webhook_url
     # TODO: we can add a check here to see if the webhook url is valid
     if not webhook_url:

@@ -184,7 +184,6 @@ def upload_health_data_using_json_file(request):
         webhook.send_data_to_webhook(
             fitness_data,
             app,
-            connection.user_uuid,
             "apple_healthkit",
             connection,
         )

@@ -47,7 +47,6 @@ def on_strava_reconnect(connected_platform):
     webhook.send_data_to_webhook(
         fitness_data,
         connected_platform.connection.app,
-        connected_platform.connection.user_uuid,
         "strava",
         connected_platform.connection,
     )
@@ -172,7 +171,6 @@ def handle_strava_webhook(data, app_id):
     webhook.send_data_to_webhook(
         fitness_data,
         connected_platform.connection.app,
-        connected_platform.connection.user_uuid,
         "strava",
         connected_platform.connection,
     )

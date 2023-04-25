@@ -113,7 +113,6 @@ def _perform_sync_connection(google_fit_connection: ConnectedPlatformMetadata):
             send_data_to_webhook(
                 fitness_data,
                 user_app,
-                connection.user_uuid,
                 "google_fit",
                 connection,
             )
