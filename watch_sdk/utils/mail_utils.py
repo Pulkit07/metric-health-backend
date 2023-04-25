@@ -126,3 +126,32 @@ Regards,
 Heka Team
         """,
     )
+
+
+@shared_task
+def send_email_on_webhook_disabled(app_id, webhook_url):
+    app = UserApp.objects.get(id=app_id)
+    access_users = app.access_users.all().values_list("email", flat=True)
+    subject = f"[HEKA BACKEND] Webhook disabled due to 5 consecutive errors"
+    to = [app.user.email, *access_users]
+    body = f"""
+Dear {app.name} team,
+
+We have disabled your webhook due to 5 consecutive errors. Please check your webhook and make sure it is working correctly.
+
+Webhook Url: {webhook_url}
+
+If you have fixed the issue, you can re-enable the webhook by going to app.hekahealth.co and updating the webhook url.
+
+If you feel that the webhook is working correctly, please make sure that you return a 200 status code.
+You can reach out to us at contact@hekahealth.co or reply to this email if you have any questions.
+
+Regards,
+Heka Team
+    """
+    send_email.delay(
+        to=to,
+        subject=subject,
+        body=body,
+        cc=(os.getenv("ADMIN_EMAIL_ADDRESS"),),
+    )

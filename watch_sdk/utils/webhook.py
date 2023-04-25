@@ -6,7 +6,11 @@ from celery import shared_task
 
 from watch_sdk.models import DebugWebhookLogs
 from watch_sdk.utils.hash_utils import get_webhook_signature
-from watch_sdk.utils.mail_utils import send_email_on_webhook_error
+from watch_sdk.utils.mail_utils import (
+    send_email_on_webhook_disabled,
+    send_email_on_webhook_error,
+)
+from django.core.cache import cache
 
 try:
     from zoneinfo import ZoneInfo
@@ -14,6 +18,7 @@ except ImportError:
     from backports.zoneinfo import ZoneInfo
 
 
+FAILURE_THRESHOLD = 5
 logger = logging.getLogger(__name__)
 
 
@@ -24,6 +29,31 @@ def _split_data_into_chunks(fitness_data):
         for i in range(0, len(data), chunk_size):
             data_chunks.append({data_type: data[i : i + chunk_size]})
     return data_chunks
+
+
+def _disable_webhook_for_app(user_app):
+    send_email_on_webhook_disabled(user_app.id, user_app.webhook_url)
+    user_app.webhook_url = None
+    user_app.save()
+
+
+def _update_failure_count_for_webhook(user_app, success):
+    """
+    Updates a global redis cache with lock to keep track of the number of times
+    a webhook has failed. If the number of failures exceeds a threshold, we
+    disable the webhook for the app.
+    """
+    with cache.lock(f"webhook_failure_lock_{user_app.id}", timeout=10):
+        count = cache.get(f"webhook_failure_count_{user_app.id}", 0)
+        if success:
+            cache.set(f"webhook_failure_count_{user_app.id}", 0)
+        else:
+            if count == FAILURE_THRESHOLD:
+                _disable_webhook_for_app(user_app)
+                # Reset the count since we disabled the webhook
+                cache.set(f"webhook_failure_count_{user_app.id}", 0)
+            else:
+                cache.set(f"webhook_failure_count_{user_app.id}", count + 1)
 
 
 def send_data_to_webhook(
@@ -74,10 +104,13 @@ def send_data_to_webhook(
             request_succeeded = False
             failure_msg = str(e)
 
+        _update_failure_count_for_webhook(user_app, request_succeeded)
+
         if request_succeeded:
             if user_app.debug_store_webhook_logs:
                 store_webhook_log.delay(user_app.id, user_uuid, chunk)
         else:
+            # TODO: we should store the current and remaining chunks here
             current_time_in_ist = (
                 datetime.datetime.now()
                 .astimezone(tz=ZoneInfo("Asia/Kolkata"))
