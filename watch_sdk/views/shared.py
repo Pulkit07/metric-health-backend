@@ -360,6 +360,47 @@ def set_webhook_url_for_app(request):
     return Response({"success": True, "data": UserAppSerializer(app).data}, status=200)
 
 
+@api_view(["GET"])
+@permission_classes([ValidKeyPermission | AdminPermission])
+def check_connection_and_get_user_app(request):
+    key = request.query_params.get("key")
+    if key is None:
+        return Response({"error": "key is required"}, status=400)
+    try:
+        # TODO: this should be cached
+        app = UserApp.objects.get(key=key)
+    except UserApp.DoesNotExist:
+        return Response({"error": "Invalid key"}, status=400)
+
+    user_uuid = request.query_params.get("user_uuid")
+    if not user_uuid:
+        return Response({"error": "user_uuid is required"}, status=400)
+
+    connection_data = None
+    connection_filter = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
+    if connection_filter.exists():
+        connection_data = PlatformBasedWatchConnection(connection_filter.first()).data
+    else:
+        connection_data = {
+            "user_uuid": user_uuid,
+            "connections": {
+                platform.name: None
+                for platform in EnabledPlatform.objects.filter(user_app=app)
+            },
+        }
+
+    return Response(
+        {
+            "success": True,
+            "data": {
+                "app": UserAppSerializer(app).data,
+                "connection": connection_data,
+            },
+        },
+        status=200,
+    )
+
+
 class UserAppFromKeyViewSet(generics.RetrieveAPIView):
     queryset = UserApp.objects.all()
     serializer_class = UserAppSerializer

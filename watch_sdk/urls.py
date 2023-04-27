@@ -39,6 +39,7 @@ urlpatterns = [
         "user_app_from_key",
         UserAppFromKeyViewSet.as_view(),
     ),
+    path("get_app_and_check_connection", check_connection_and_get_user_app),
     path(
         "user_app",
         UserAppViewSet.as_view({"get": "list", "post": "create"}),
