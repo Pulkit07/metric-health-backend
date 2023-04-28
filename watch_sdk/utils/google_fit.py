@@ -18,11 +18,11 @@ logger = logging.getLogger(__name__)
 
 def trigger_sync_on_connect(connected_platform: ConnectedPlatformMetadata):
     logger.info(
-        f"Triggering google_fit sync on connect for {connected_platform.connection.user_uuid} and app {connected_platform.connection.app}"
+        f"Google fit sync on connect for {connected_platform.connection.user_uuid} ({connected_platform.connection.app})"
     )
     _sync_connection(connected_platform.id)
     logger.info(
-        f"finished syncing google_fit on connect for {connected_platform.connection.user_uuid}"
+        f"finished google_fit on connect for {connected_platform.connection.user_uuid}"
     )
 
 
@@ -77,14 +77,10 @@ def _perform_sync_connection(google_fit_connection: ConnectedPlatformMetadata):
         fitness_data = collections.defaultdict(list)
         if fit_connection._access_token is None:
             if not fit_connection._google_server_error:
-                logger.info(
-                    "Unable to get access token for connection, marking it logged out"
-                )
+                logger.info("Marking logout, failed to get access token")
                 google_fit_connection.mark_logout()
             else:
-                logger.info(
-                    "Unable to get access token for connection, got google server error"
-                )
+                logger.info("Google server error, skipping sync")
             return
         try:
             for (

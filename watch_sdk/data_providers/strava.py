@@ -218,7 +218,7 @@ def create_strava_subscription(app):
         response_data = response.json()
         enabled_platform.webhook_id = response_data["id"]
         enabled_platform.save()
-        logger.info("Created subscription")
+        logger.info("Strava subscription created")
     else:
         logger.error(
             "Error creating subscription: ", response.status_code, response.json()
@@ -265,7 +265,7 @@ def delete_strava_subscription(app):
         enabled_platform.webhook_id = None
         enabled_platform.webhook_verify_token = None
         enabled_platform.save()
-        logger.info("Deleted subscription")
+        logger.info("Deleted strava subscription")
     else:
         logger.error(
             "Error deleting subscription: ", response.status_code, response.json()
