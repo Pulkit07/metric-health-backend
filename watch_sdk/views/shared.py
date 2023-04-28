@@ -103,8 +103,11 @@ def watch_connection_exists(request):
 def connect_platform_for_user(request):
     key = request.query_params.get("key")
     user_uuid = request.query_params.get("user_uuid")
-    reconnect = request.query_params.get("reconnect", False)
-    disconnect = request.query_params.get("disconnect", False)
+    # we should remove this from query param as 'false' in query param will be
+    # parsed as a string leading to it being treated as True
+    disconnect = request.query_params.get("disconnect", False) or request.data.get(
+        "disconnect", False
+    )
     device_id = request.data.get("device_id")
 
     try:
@@ -135,7 +138,7 @@ def connect_platform_for_user(request):
     #   - Create connection and connected platform metadata
     # 2. Connection exists, but connected platform metadata does not exist
     #   - Create connected platform metadata
-    # 3. Connection exists, connected platform metadata exists but reconnect is true
+    # 3. Connection exists, connected platform metadata exists but disconnect is false
     #   - Update connected platform metadata
     # 4. Connection exists, connected platform metadata exists but disconnect is true
     #   - Delete connected platform metadata
@@ -147,30 +150,16 @@ def connect_platform_for_user(request):
         )
         if connected_platform_metadata.exists():
             connected_platform_metadata = connected_platform_metadata.first()
-            if not (reconnect or disconnect) and not (
-                platform.name == "apple_healthkit"
-                and device_id not in connected_platform_metadata.connected_device_uuids
-            ):
-                return Response(
-                    {
-                        "error": f"A connection with this user for {platform.name} already exists"
-                    },
-                    status=400,
-                )
-            if reconnect:
-                connected_platform_metadata.refresh_token = request.data.get(
-                    "refresh_token"
-                )
-                connected_platform_metadata.email = request.data.get("email")
-                connected_platform_metadata.logged_in = True
-                connected_platform_metadata.connected_device_uuids = (
-                    connected_platform_metadata.connected_device_uuids or []
-                ) + ([device_id] if device_id else [])
-                connected_platform_metadata.save()
-                connection_utils.on_connection_reconnect.delay(
-                    connected_platform_metadata.id
-                )
-            elif disconnect:
+            if disconnect:
+                if (
+                    platform != "apple_healthkit"
+                    and connected_platform_metadata.logged_in == False
+                ):
+                    return Response(
+                        {"error": f"User is not logged in to {platform.name}"},
+                        status=400,
+                    )
+
                 connection_utils.on_connection_disconnect.delay(
                     connected_platform_metadata.id,
                     connected_platform_metadata.refresh_token,
@@ -184,6 +173,28 @@ def connect_platform_for_user(request):
                 ):
                     connected_platform_metadata.connected_device_uuids.remove(device_id)
                 connected_platform_metadata.save()
+            else:
+                if (
+                    connected_platform_metadata.logged_in == True
+                    and platform != "apple_healthkit"
+                ):
+                    return Response(
+                        {"error": f"User is already logged in to {platform.name}"},
+                        status=400,
+                    )
+                connected_platform_metadata.refresh_token = request.data.get(
+                    "refresh_token"
+                )
+                connected_platform_metadata.email = request.data.get("email")
+                connected_platform_metadata.logged_in = True
+                connected_platform_metadata.connected_device_uuids = (
+                    connected_platform_metadata.connected_device_uuids or []
+                ) + ([device_id] if device_id else [])
+                connected_platform_metadata.save()
+                connection_utils.on_connection_reconnect.delay(
+                    connected_platform_metadata.id
+                )
+
             return Response(
                 {
                     "success": True,
@@ -192,6 +203,8 @@ def connect_platform_for_user(request):
                 status=200,
             )
     else:
+        if disconnect:
+            return Response({"error": "No connection exists for this user"}, status=400)
         connection = WatchConnection.objects.create(
             app=app,
             user_uuid=user_uuid,
