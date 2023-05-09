@@ -17,6 +17,8 @@ from watch_sdk.constants import google_fit
 MANUALLY_ENTERED_SOURCES = set(["user_input"])
 
 logger = logging.getLogger(__name__)
+NO_OF_DAYS_OLD_DATA = 7
+
 
 DATA_SOURCES_MAP = {
     "com.google.height": {
@@ -147,7 +149,8 @@ class GoogleFitConnection(object):
 
         historical_points: List[GoogleFitPoint] = self._get_dataset_points(
             dataStreamId,
-            minimum_start_time - 120 * 24 * 60 * 60 * 1000 * 1000 * 1000,
+            minimum_start_time
+            - NO_OF_DAYS_OLD_DATA * 24 * 60 * 60 * 1000 * 1000 * 1000,
             minimum_start_time,
             valType=valType,
         )
