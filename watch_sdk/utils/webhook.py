@@ -84,10 +84,10 @@ def _post_chunk(webhook_url, chunk, user_uuid, key):
             timeout=10,
         )
         if response.status_code > 202 or response.status_code < 200:
-            logger.error("Error in response, status code: %s" % response.status_code)
+            logger.warning("[webhook fail] status code: %s" % response.status_code)
             return False
     except Exception as e:
-        logger.error("Error while sending data to webhook: %s" % e)
+        logger.warning("[webhook fail] error: %s" % e)
         return False
 
     return True
