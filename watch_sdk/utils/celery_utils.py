@@ -55,6 +55,6 @@ def sync_unprocessed_data():
             synced += 1
 
         # sleep for couple of seconds to avoid DDOSing the webhook
-        time.sleep(2)
+        time.sleep(1)
 
     logger.info(f"[CRON] Synced unprocessed, {synced}/{total}")
