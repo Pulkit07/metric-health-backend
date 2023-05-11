@@ -16,8 +16,8 @@ app.conf.beat_schedule = {
         "task": "watch_sdk.utils.webhook.logs_delete",
         "schedule": crontab(hour=0, minute=0),
     },
-    # "sync-unprocessed-data": {
-    #     "task": "watch_sdk.utils.celery_utils.sync_unprocessed_data",
-    #     "schedule": crontab(hour="*/2"),
-    # },
+    "sync-unprocessed-data": {
+        "task": "watch_sdk.utils.celery_utils.sync_unprocessed_data",
+        "schedule": crontab(minute=0, hour="*/2"),
+    },
 }
