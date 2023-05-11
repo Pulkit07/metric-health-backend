@@ -54,6 +54,10 @@ def sync_unprocessed_data():
         if success:
             synced += 1
 
+        if synced == 3000:
+            # sync only 3000 entries at a time
+            break
+
         # sleep for couple of seconds to avoid DDOSing the webhook
         time.sleep(1)
 
