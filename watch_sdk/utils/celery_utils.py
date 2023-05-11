@@ -40,8 +40,13 @@ def sync_unprocessed_data():
     logger.info(f"[CRON] Syncing unprocessed")
     synced = 0
     total = UnprocessedData.objects.count()
-    for entry in list(UnprocessedData.objects.all().order_by("created_at")[:3000]):
+    # We will sync the most recent entries first
+    for entry in list(UnprocessedData.objects.all().order_by("-created_at")):
         if not entry.connection.app.webhook_url:
+            continue
+
+        # skip the large data entries since they lead to 404 errors
+        if len(entry.data.get("steps", [])) > 1000:
             continue
 
         success = send_data_to_webhook(
@@ -54,11 +59,7 @@ def sync_unprocessed_data():
         if success:
             synced += 1
 
-        if synced == 3000:
-            # sync only 3000 entries at a time
-            break
-
         # sleep for couple of seconds to avoid DDOSing the webhook
-        time.sleep(0.1)
+        # time.sleep(0.1)
 
     logger.info(f"[CRON] Synced unprocessed, {synced}/{total}")
