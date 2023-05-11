@@ -45,10 +45,6 @@ def sync_unprocessed_data():
         if not entry.connection.app.webhook_url:
             continue
 
-        # skip the large data entries since they lead to 404 errors
-        if len(entry.data.get("steps", [])) > 1000:
-            continue
-
         success = send_data_to_webhook(
             entry.data,
             entry.connection.app,
