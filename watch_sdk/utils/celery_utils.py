@@ -40,7 +40,7 @@ def sync_unprocessed_data():
     logger.info(f"[CRON] Syncing unprocessed")
     synced = 0
     total = UnprocessedData.objects.count()
-    for entry in list(UnprocessedData.objects.all()):
+    for entry in list(UnprocessedData.objects.all().order_by("created_at")[:3000]):
         if not entry.connection.app.webhook_url:
             continue
 
@@ -59,6 +59,6 @@ def sync_unprocessed_data():
             break
 
         # sleep for couple of seconds to avoid DDOSing the webhook
-        time.sleep(1)
+        time.sleep(0.1)
 
     logger.info(f"[CRON] Synced unprocessed, {synced}/{total}")
