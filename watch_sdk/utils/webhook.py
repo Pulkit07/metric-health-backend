@@ -28,7 +28,7 @@ FAILURE_THRESHOLD = 5
 logger = logging.getLogger(__name__)
 
 
-def _store_data_sync_metric(user_app, chunk):
+def _store_data_sync_metric(user_app, chunk, platform_name):
     for data_type, data in chunk.items():
         total = 0
         for d in data:
@@ -38,6 +38,7 @@ def _store_data_sync_metric(user_app, chunk):
             app=user_app,
             value=total,
             data_type=DataType.objects.get(name=data_type),
+            platform=Platform.objects.get(name=platform_name),
         )
 
 
@@ -137,7 +138,7 @@ def send_data_to_webhook(
             _update_failure_count_for_webhook(user_app, request_succeeded)
 
             if request_succeeded:
-                _store_data_sync_metric(user_app, chunk)
+                _store_data_sync_metric(user_app, chunk, platform)
                 if user_app.debug_store_webhook_logs:
                     store_webhook_log.delay(user_app.id, user_uuid, chunk)
             else:

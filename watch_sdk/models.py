@@ -192,3 +192,4 @@ class DataSyncMetric(BaseModel):
     value = models.FloatField()
     data_type = models.ForeignKey(DataType, on_delete=models.CASCADE)
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
