@@ -4,7 +4,13 @@ import requests
 import json
 from celery import shared_task
 
-from watch_sdk.models import DebugWebhookLogs, Platform, UnprocessedData
+from watch_sdk.models import (
+    DataSyncMetric,
+    DataType,
+    DebugWebhookLogs,
+    Platform,
+    UnprocessedData,
+)
 from watch_sdk.utils.hash_utils import get_webhook_signature
 from watch_sdk.utils.mail_utils import (
     send_email_on_webhook_disabled,
@@ -20,6 +26,19 @@ except ImportError:
 
 FAILURE_THRESHOLD = 5
 logger = logging.getLogger(__name__)
+
+
+def _store_data_sync_metric(user_app, chunk):
+    for data_type, data in chunk.items():
+        total = 0
+        for d in data:
+            total += d.get("value", 0)
+
+        DataSyncMetric.objects.create(
+            app=user_app,
+            value=total,
+            data_type=DataType.objects.get(name=data_type),
+        )
 
 
 def _split_data_into_chunks(fitness_data):
@@ -118,6 +137,7 @@ def send_data_to_webhook(
             _update_failure_count_for_webhook(user_app, request_succeeded)
 
             if request_succeeded:
+                _store_data_sync_metric(user_app, chunk)
                 if user_app.debug_store_webhook_logs:
                     store_webhook_log.delay(user_app.id, user_uuid, chunk)
             else:

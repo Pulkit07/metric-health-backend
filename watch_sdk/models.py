@@ -186,3 +186,9 @@ class PendingUserInvitation(BaseModel):
     email = models.CharField(max_length=100)
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
     invited_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
+class DataSyncMetric(BaseModel):
+    value = models.FloatField()
+    data_type = models.ForeignKey(DataType, on_delete=models.CASCADE)
+    app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
