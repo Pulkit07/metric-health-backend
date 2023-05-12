@@ -112,7 +112,7 @@ def upload_health_data_using_json_file(request):
     # read over a json file passed with the request and build fitness_data
     data = request.FILES["data"].read()
     data = json.loads(data)
-    if app.id == 40:
+    if app.id == 40 or app.id == 101:
         DebugIosData.objects.create(
             uuid=user_uuid,
             data=data,
