@@ -41,30 +41,6 @@ def _get_sleep_type(d):
         return "rem"
 
 
-def _store_unprocessed_data(connection, platform, data):
-    """
-    Stores the data that was not processed by the webhook due to either of following:
-
-    * The webhook was down
-    * The webhook was not set up for the app
-    """
-    UnprocessedData.objects.create(
-        data=data,
-        connection=connection,
-        platform=platform,
-    )
-
-
-def _get_unprocessed_data(connection, platform):
-    """
-    Returns the unprocessed data for the given connection and platform
-    """
-    unprocessed_data = UnprocessedData.objects.filter(
-        connection=connection, platform=platform
-    )
-    return [x.data for x in unprocessed_data]
-
-
 @api_view(["POST"])
 @permission_classes([ValidKeyPermission])
 def upload_health_data_using_json_file(request):
