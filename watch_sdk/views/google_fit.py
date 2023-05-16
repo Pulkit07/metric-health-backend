@@ -13,19 +13,6 @@ from watch_sdk.models import (
 from watch_sdk.permissions import AdminPermission
 
 
-# To be called from firebase function for now, should be removed in future
-@api_view(["POST"])
-@permission_classes([AdminPermission])
-def sync_from_google_fit(request):
-    """
-    Helper function to sync data from google fit
-
-    The API will be hit by a cron job
-    """
-    utils.google_fit_cron()
-    return Response({"success": True}, status=200)
-
-
 @api_view(["GET"])
 @permission_classes([AdminPermission])
 def test_google_sync(request):
