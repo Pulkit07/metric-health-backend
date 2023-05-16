@@ -22,7 +22,7 @@ def test_google_sync(request):
     google_fit_connections = ConnectedPlatformMetadata.objects.filter(
         platform__name="google_fit",
         logged_in=True,
-        connection__app__in=UserApp.objects.filter(id=40),
+        connection__app__in=UserApp.objects.filter(id=101),
         connection__app__webhook_url__isnull=False,
     )
     for connection in google_fit_connections:
