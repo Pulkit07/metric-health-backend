@@ -206,12 +206,12 @@ else:
             # This should be something else when not using gunicorn
             "gunicorn": {
                 "handlers": ["logtail", "console"],
-                "level": "DEBUG",
+                "level": "WARNING",
                 "propagate": True,
             },
             "uvicorn": {
                 "handlers": ["logtail", "console"],
-                "level": "DEBUG",
+                "level": "WARNING",
                 "propagate": True,
             },
             "app-logger": {
