@@ -193,3 +193,13 @@ class DataSyncMetric(BaseModel):
     data_type = models.ForeignKey(DataType, on_delete=models.CASCADE)
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
+
+
+class UserActivityMetric(BaseModel):
+    """
+    This model is used to store the user activity metric. This is used to
+    calculate DAU, WAU, MAU, and other user stats.
+    """
+
+    connection = models.ForeignKey(WatchConnection, on_delete=models.CASCADE)
+    app = models.ForeignKey(UserApp, on_delete=models.CASCADE)

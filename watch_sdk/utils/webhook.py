@@ -10,6 +10,7 @@ from watch_sdk.models import (
     DebugWebhookLogs,
     Platform,
     UnprocessedData,
+    UserActivityMetric,
 )
 from watch_sdk.utils.hash_utils import get_webhook_signature
 from watch_sdk.utils.mail_utils import (
@@ -40,6 +41,21 @@ def _store_data_sync_metric(user_app, chunk, platform_name):
             data_type=DataType.objects.get(name=data_type),
             platform=Platform.objects.get(name=platform_name),
         )
+
+
+def _store_user_activity_metric(user_app, watch_connection):
+    UserActivityMetric.objects.create(
+        app=user_app,
+        connection=watch_connection,
+    )
+
+
+def _store_metrics(watch_connection, app, chunk, platform_name):
+    """
+    Stores the metrics for the data that was successfully sent to the webhook
+    """
+    _store_data_sync_metric(app, chunk, platform_name)
+    _store_user_activity_metric(app, watch_connection)
 
 
 def _split_data_into_chunks(fitness_data):
@@ -138,7 +154,7 @@ def send_data_to_webhook(
             _update_failure_count_for_webhook(user_app, request_succeeded)
 
             if request_succeeded:
-                _store_data_sync_metric(user_app, chunk, platform)
+                _store_metrics(watch_connection, user_app, chunk, platform)
                 if user_app.debug_store_webhook_logs:
                     store_webhook_log.delay(user_app.id, user_uuid, chunk)
             else:
