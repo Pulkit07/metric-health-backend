@@ -9,7 +9,7 @@ DB_DATA_TYPE_KEY_MAP = {
     "calories_bmr": "com.google.calories.bmr",
     "weight": "com.google.weight",
     "height": "com.google.height",
-    # "sleep": "com.google.sleep.segment",
+    "sleep": "com.google.sleep.segment",
 }
 
 RANGE_DATA_TYPES = {
@@ -20,7 +20,7 @@ RANGE_DATA_TYPES = {
     "com.google.calories.bmr": ("calories_bmr", CaloriesBMR),
     "com.google.weight": ("weight", Weight),
     "com.google.height": ("height", Height),
-    # "com.google.sleep.segment": ("sleep", None),
+    "com.google.sleep.segment": ("sleep", Sleep),
 }
 
 RANGE_DATA_TYPES_ATTRIBUTES: typing.Dict[str, typing.List[str]] = {
@@ -31,7 +31,7 @@ RANGE_DATA_TYPES_ATTRIBUTES: typing.Dict[str, typing.List[str]] = {
     "com.google.calories.bmr": ["merged"],
     "com.google.weight": ["merge_weight"],
     "com.google.height": ["merge_height"],
-    # "com.google.sleep.segment": ["merged"],
+    "com.google.sleep.segment": ["merged"],
 }
 
 RANGE_DATA_TYPES_UNTS: typing.Dict[str, str] = {
@@ -42,5 +42,5 @@ RANGE_DATA_TYPES_UNTS: typing.Dict[str, str] = {
     "com.google.calories.bmr": "fpVal",
     "com.google.weight": "fpVal",
     "com.google.height": "fpVal",
-    # "com.google.sleep.segment": "unknown",
+    "com.google.sleep.segment": "intVal",
 }

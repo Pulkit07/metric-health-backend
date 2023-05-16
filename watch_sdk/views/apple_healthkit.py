@@ -23,7 +23,7 @@ from watch_sdk.utils.hash_utils import get_hash
 
 logger = logging.getLogger(__name__)
 
-SYNC_SLEEP_TYPES = set(["awake", "core", "deep", "rem"])
+SYNC_SLEEP_TYPES = set(["awake", "light", "deep", "rem", "unspecified"])
 
 
 def _get_sleep_type(d):
@@ -34,11 +34,13 @@ def _get_sleep_type(d):
     if d["value"] == 2:
         return "awake"
     if d["value"] == 3:
-        return "core"
+        return "light"
     if d["value"] == 4:
         return "deep"
     if d["value"] == 5:
         return "rem"
+
+    return "unspecified"
 
 
 @api_view(["POST"])

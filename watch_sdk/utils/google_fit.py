@@ -16,6 +16,23 @@ from django.core.cache import cache
 logger = logging.getLogger(__name__)
 
 
+def _get_sleep_type(val):
+    if val == 1:
+        return "awake"
+    if val == 2:
+        return "sleep"
+    if val == 3:
+        return "out_of_bed"
+    if val == 4:
+        return "light"
+    if val == 5:
+        return "deep"
+    if val == 6:
+        return "rem"
+
+    return "unspecified"
+
+
 def trigger_sync_on_connect(connected_platform: ConnectedPlatformMetadata):
     logger.info(
         f"Google fit sync on connect for {connected_platform.connection.user_uuid} ({connected_platform.connection.app})"
@@ -89,16 +106,32 @@ def _perform_sync_connection(google_fit_connection: ConnectedPlatformMetadata):
             ) in fit_connection.get_data_since_last_sync().items():
                 data_key, dclass = google_fit.RANGE_DATA_TYPES[data_type]
                 for d in data:
-                    fitness_data[data_key].append(
-                        dclass(
-                            source="google_fit",
-                            start_time=int(d.start_time) / 10**6,
-                            end_time=int(d.end_time) / 10**6,
-                            manual_entry=d.manual_entry,
-                            source_device=None,
-                            value=d.value,
-                        ).to_dict()
-                    )
+                    if data_key == "sleep":
+                        sleep_type = _get_sleep_type(d.value)
+                        start_time = int(d.start_time) / 10**6
+                        end_time = int(d.end_time) / 10**6
+                        fitness_data[data_key].append(
+                            dclass(
+                                source="google_fit",
+                                start_time=start_time,
+                                end_time=end_time,
+                                manual_entry=d.manual_entry,
+                                source_device=None,
+                                value=end_time - start_time,
+                                sleep_type=sleep_type,
+                            ).to_dict()
+                        )
+                    else:
+                        fitness_data[data_key].append(
+                            dclass(
+                                source="google_fit",
+                                start_time=int(d.start_time) / 10**6,
+                                end_time=int(d.end_time) / 10**6,
+                                manual_entry=d.manual_entry,
+                                source_device=None,
+                                value=d.value,
+                            ).to_dict()
+                        )
 
             if not fitness_data:
                 return

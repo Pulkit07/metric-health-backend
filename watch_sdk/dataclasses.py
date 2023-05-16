@@ -74,7 +74,7 @@ class HeartRate(FitnessDatatype):
 @dataclass
 class Sleep(FitnessDatatype):
     # sleep_type can be one of the following:
-    # "awake", "core", "deep", "rem"
+    # "awake", "light", "deep", "rem"
     sleep_type: str
     # duration in milliseconds
     value: int
