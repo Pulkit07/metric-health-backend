@@ -1,5 +1,6 @@
 import datetime
 import logging
+import random
 import requests
 import json
 from celery import shared_task
@@ -79,6 +80,13 @@ def _update_failure_count_for_webhook(user_app, success):
     a webhook has failed. If the number of failures exceeds a threshold, we
     disable the webhook for the app.
     """
+    # Only update the count 30% of the time in case of failure and 10% of the
+    # time in case of success
+    # This is done to reduce the number of times we update the cache, reducing load on redis
+    if random.random() < 0.3 and not success:
+        return
+    if random.random() < 0.1 and success:
+        return
     with cache.lock(f"webhook_failure_lock_{user_app.id}", timeout=10):
         if success:
             cache.set(f"webhook_failure_count_{user_app.id}", 0)
