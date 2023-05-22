@@ -123,7 +123,7 @@ class GoogleFitConnection(object):
             self._access_token = response.json()["access_token"]
         except KeyError:
             if response.status_code >= 400:
-                logger.error(
+                logger.warn(
                     f"GFit: error getting access token: {response.text} {response.status_code}"
                 )
             if response.status_code >= 500:
