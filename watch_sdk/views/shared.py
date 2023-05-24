@@ -373,6 +373,20 @@ def set_webhook_url_for_app(request):
     return Response({"success": True, "data": UserAppSerializer(app).data}, status=200)
 
 
+@api_view(["POST"])
+@permission_classes([ValidKeyPermission])
+def update_webhook_for_app(request):
+    key = request.query_params.get("key")
+    try:
+        app = UserApp.objects.get(key=key)
+    except UserApp.DoesNotExist:
+        return Response({"error": "Invalid key"}, status=400)
+
+    app.webhook_url = request.data.get("webhook_url")
+    app.save()
+    return Response({"success": True}, status=200)
+
+
 @api_view(["GET"])
 @permission_classes([ValidKeyPermission | AdminPermission])
 def check_connection_and_get_user_app(request):
