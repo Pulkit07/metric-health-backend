@@ -20,4 +20,8 @@ app.conf.beat_schedule = {
         "task": "watch_sdk.utils.celery_utils.sync_unprocessed_data",
         "schedule": crontab(minute=0, hour="*/2"),
     },
+    "delete-ios-data-hash-logs": {
+        "task": "watch_sdk.utils.celery_utils.delete_ios_data_hash_logs",
+        "schedule": crontab(minute=0, hour=0),
+    },
 }

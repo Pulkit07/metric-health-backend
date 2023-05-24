@@ -1,8 +1,9 @@
+import datetime
 import functools
 import logging
 from django.core.cache import cache
 from celery import shared_task
-from watch_sdk.models import UnprocessedData
+from watch_sdk.models import IOSDataHashLog, UnprocessedData
 from watch_sdk.utils.webhook import send_data_to_webhook
 import time
 
@@ -59,3 +60,13 @@ def sync_unprocessed_data():
         # time.sleep(0.1)
 
     logger.info(f"[CRON] Synced unprocessed, {synced}/{total}")
+
+
+@shared_task
+def delete_ios_data_hash_logs():
+    """
+    Delete webhook logs older than 2 days
+    """
+    IOSDataHashLog.objects.filter(
+        created_at__lt=datetime.datetime.now() - datetime.timedelta(days=7)
+    ).delete()
