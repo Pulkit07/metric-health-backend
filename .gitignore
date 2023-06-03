@@ -42,6 +42,10 @@ venv.bak/
 !.vscode/extensions.json 
 .history
 
+# Intellij #
+.idea
+.idea/*
+
 # system related files
 .DS_Store
 
