@@ -38,9 +38,9 @@ class AppAuthPermission(FirebaseAuthPermission):
         Checking the app permission for logged in user(via token)
         Object permission get checked only after 'has_permission' so using the token's email from there.
         """
-        if self.email != obj.user.email:
-            return False
-        return True
+        if self.email == obj.user.email:
+            return True
+        return False
 
 
 class AdminPermission(permissions.BasePermission):
