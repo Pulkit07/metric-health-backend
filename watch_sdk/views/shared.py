@@ -452,7 +452,6 @@ class UserAppViewSet(viewsets.ModelViewSet):
         """
         Instantiates and returns the list of permissions that this view requires.
         """
-        print(self.action)
         if self.action in ['create', 'list']:
             permission_classes = [FirebaseAuthPermission | AdminPermission]
         else:
