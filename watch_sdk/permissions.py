@@ -28,8 +28,19 @@ class FirebaseAuthPermission(permissions.BasePermission):
         auth_token = request.META.get("HTTP_AUTHORIZATION")
         if not auth_token:
             return False
-        email = firebase_utils.verify_firebase_token(auth_token)
-        return True if email else False
+        self.email = firebase_utils.verify_firebase_token(auth_token)
+        return True if self.email else False
+
+
+class AppAuthPermission(FirebaseAuthPermission):
+    def has_object_permission(self, request, view, obj):
+        """
+        Checking the app permission for logged in user(via token)
+        Object permission get checked only after 'has_permission' so using the token's email from there.
+        """
+        if self.email != obj.user.email:
+            return False
+        return True
 
 
 class AdminPermission(permissions.BasePermission):

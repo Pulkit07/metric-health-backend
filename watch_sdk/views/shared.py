@@ -20,6 +20,7 @@ from django.db.models import Count
 
 from watch_sdk.permissions import (
     AdminPermission,
+    AppAuthPermission,
     FirebaseAuthPermission,
     ValidKeyPermission,
 )
@@ -446,7 +447,17 @@ class UserAppViewSet(viewsets.ModelViewSet):
     queryset = UserApp.objects.all()
     serializer_class = UserAppSerializer
     filterset_fields = ["user"]
-    permission_classes = [FirebaseAuthPermission | AdminPermission]
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        print(self.action)
+        if self.action in ['create', 'list']:
+            permission_classes = [FirebaseAuthPermission | AdminPermission]
+        else:
+            permission_classes = [AppAuthPermission | AdminPermission]
+        return [permission() for permission in permission_classes]
 
 
 class DataTypeViewSet(viewsets.ModelViewSet):
