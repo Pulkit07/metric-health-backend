@@ -152,7 +152,7 @@ def connect_platform_for_user(request):
             connected_platform_metadata = connected_platform_metadata.first()
             if disconnect:
                 if (
-                    platform != "apple_healthkit"
+                    platform.name != "apple_healthkit"
                     and connected_platform_metadata.logged_in == False
                 ):
                     return Response(
@@ -176,7 +176,7 @@ def connect_platform_for_user(request):
             else:
                 if (
                     connected_platform_metadata.logged_in == True
-                    and platform != "apple_healthkit"
+                    and platform.name != "apple_healthkit"
                 ):
                     return Response(
                         {"error": f"User is already logged in to {platform.name}"},
