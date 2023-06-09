@@ -1,8 +1,10 @@
 # permission classes for various views
+from django.core.exceptions import ObjectDoesNotExist
+
 from rest_framework import permissions
 from watch_sdk.utils import firebase as firebase_utils
 
-from watch_sdk.models import UserApp
+from watch_sdk.models import User, UserApp
 
 
 class ValidKeyPermission(permissions.BasePermission):
@@ -38,9 +40,13 @@ class AppAuthPermission(FirebaseAuthPermission):
         Checking the app permission for logged in user(via token)
         Object permission get checked only after 'has_permission' so using the token's email from there.
         """
-        if self.email == obj.user.email:
-            return True
-        return False
+        try:
+            user = User.objects.get(email=self.email)
+            if user == obj.user or user in obj.access_users.all():
+                return True
+            return False
+        except ObjectDoesNotExist:
+            return False
 
 
 class AdminPermission(permissions.BasePermission):
