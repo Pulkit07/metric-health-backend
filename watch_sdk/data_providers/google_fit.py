@@ -36,10 +36,12 @@ DATA_SOURCES_MAP = {
         "merge_weight": "derived:com.google.weight:com.google.android.gms:merge_weight"
     },
     "com.google.calories.expended": {
-        "merge_calories_expended": "derived:com.google.calories.expended:com.google.android.gms:merge_calories_expended"
+        "merge_calories_expended": "derived:com.google.calories.expended:com.google.android.gms:merge_calories_expended",
+        "user_input": "raw:com.google.calories.expended:com.google.android.apps.fitness:user_input",
     },
     "com.google.calories.bmr": {
-        "merged": "derived:com.google.calories.bmr:com.google.android.gms:merged"
+        "merged": "derived:com.google.calories.bmr:com.google.android.gms:merged",
+        "user_input": "raw:com.google.calories.bmr:com.google.android.apps.fitness:user_input",
     },
 }
 
