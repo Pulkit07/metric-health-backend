@@ -19,7 +19,9 @@ from django.utils.decorators import method_decorator
 from django.db.models import Count
 
 from watch_sdk.permissions import (
+    has_user_access_to_app,
     AdminPermission,
+    AppAuthPermission,
     FirebaseAuthPermission,
     ValidKeyPermission,
 )
@@ -49,6 +51,7 @@ from watch_sdk.serializers import (
 )
 
 from watch_sdk.utils import connection as connection_utils
+from watch_sdk.utils.app import get_user_from_token
 
 logger = logging.getLogger(__name__)
 
@@ -243,6 +246,11 @@ def enable_platform_for_app(request):
     except:
         return Response({"error": "Invalid app id"}, status=400)
 
+    # check user's permission for the app
+    user = get_user_from_token(request)
+    if not has_user_access_to_app(user, app):
+        return Response({"error": "Forbidden Error"}, status=403)
+
     for platform, data in request.data.items():
         try:
             platform = Platform.objects.get(name=platform)
@@ -293,6 +301,11 @@ def enable_datatype_for_app(request):
         app = UserApp.objects.get(id=request.query_params.get("app_id"))
     except:
         return Response({"error": "Invalid app id"}, status=400)
+
+    # check user's permission for the app
+    user = get_user_from_token(request)
+    if not has_user_access_to_app(user, app):
+        return Response({"error": "Forbidden Error"}, status=403)
 
     for enable in enable_list:
         try:
@@ -367,6 +380,12 @@ def set_webhook_url_for_app(request):
         app = UserApp.objects.get(id=request.query_params.get("app_id"))
     except:
         return Response({"error": "Invalid app id"}, status=400)
+
+    # check user's permission for the app
+    user = get_user_from_token(request)
+    if not has_user_access_to_app(user, app):
+        return Response({"error": "Forbidden Error"}, status=403)
+
     # TODO: validate webhook url
     app.webhook_url = request.data.get("webhook_url")
     app.save()
@@ -446,7 +465,16 @@ class UserAppViewSet(viewsets.ModelViewSet):
     queryset = UserApp.objects.all()
     serializer_class = UserAppSerializer
     filterset_fields = ["user"]
-    permission_classes = [FirebaseAuthPermission | AdminPermission]
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action in ['create', 'list']:
+            permission_classes = [FirebaseAuthPermission | AdminPermission]
+        else:
+            permission_classes = [AppAuthPermission | AdminPermission]
+        return [permission() for permission in permission_classes]
 
 
 class DataTypeViewSet(viewsets.ModelViewSet):
