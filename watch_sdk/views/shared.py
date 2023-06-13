@@ -238,7 +238,7 @@ class WatchConnectionListView(generics.ListAPIView):
 
 
 @api_view(["POST"])
-@permission_classes([AppAuthPermission | AdminPermission])
+@permission_classes([FirebaseAuthPermission | AdminPermission])
 def enable_platform_for_app(request):
     try:
         app = UserApp.objects.get(id=request.query_params.get("app_id"))
