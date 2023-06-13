@@ -19,6 +19,7 @@ from django.utils.decorators import method_decorator
 from django.db.models import Count
 
 from watch_sdk.permissions import (
+    has_user_access_to_app,
     AdminPermission,
     AppAuthPermission,
     FirebaseAuthPermission,
@@ -237,12 +238,16 @@ class WatchConnectionListView(generics.ListAPIView):
 
 
 @api_view(["POST"])
-@permission_classes([FirebaseAuthPermission | AdminPermission])
+@permission_classes([AppAuthPermission | AdminPermission])
 def enable_platform_for_app(request):
     try:
         app = UserApp.objects.get(id=request.query_params.get("app_id"))
     except:
         return Response({"error": "Invalid app id"}, status=400)
+
+    # check user's permission for the app
+    if not has_user_access_to_app(request.user, app):
+        return Response({"error": "Forbidden Error"}, status=403)
 
     for platform, data in request.data.items():
         try:
@@ -294,6 +299,10 @@ def enable_datatype_for_app(request):
         app = UserApp.objects.get(id=request.query_params.get("app_id"))
     except:
         return Response({"error": "Invalid app id"}, status=400)
+
+    # check user's permission for the app
+    if not has_user_access_to_app(request.user, app):
+        return Response({"error": "Forbidden Error"}, status=403)
 
     for enable in enable_list:
         try:
@@ -368,6 +377,11 @@ def set_webhook_url_for_app(request):
         app = UserApp.objects.get(id=request.query_params.get("app_id"))
     except:
         return Response({"error": "Invalid app id"}, status=400)
+
+    # check user's permission for the app
+    if not has_user_access_to_app(request.user, app):
+        return Response({"error": "Forbidden Error"}, status=403)
+
     # TODO: validate webhook url
     app.webhook_url = request.data.get("webhook_url")
     app.save()

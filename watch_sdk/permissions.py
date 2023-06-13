@@ -7,6 +7,11 @@ from watch_sdk.utils import firebase as firebase_utils
 from watch_sdk.models import User, UserApp
 
 
+def has_user_access_to_app(user, app):
+    if user == app.user or user in app.access_users.all():
+        return True
+    return False
+
 class ValidKeyPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         # TODO: remove the key from query params once all current users are migrated
@@ -42,9 +47,7 @@ class AppAuthPermission(FirebaseAuthPermission):
         """
         try:
             user = User.objects.get(email=self.email)
-            if user == obj.user or user in obj.access_users.all():
-                return True
-            return False
+            return has_user_access_to_app(user, app=obj)
         except ObjectDoesNotExist:
             return False
 
