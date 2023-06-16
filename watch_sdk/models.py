@@ -89,6 +89,9 @@ class ConnectedPlatformMetadata(BaseModel):
     refresh_token = models.CharField(max_length=200, blank=True, null=True)
     last_sync = models.DateTimeField(blank=True, null=True)
     email = models.CharField(max_length=400, blank=True, null=True)
+    # google fit access token and its exp
+    gfit_access = models.CharField(max_length=1000, blank=True, null=True)
+    gfit_access_exp = models.DateTimeField(blank=True, null=True)
     # to track whether the refresh token is valid or not
     logged_in = models.BooleanField(default=True)
     last_modified_for_data_types = models.JSONField(blank=True, null=True)
