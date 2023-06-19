@@ -1,5 +1,6 @@
 import collections
 from dataclasses import dataclass
+from django.utils import timezone
 import datetime
 import logging
 from typing import List, Optional
@@ -111,25 +112,31 @@ class GoogleFitConnection(object):
         """
         Get access token from google fit and update the class variable
         """
-        response = requests.post(
-            "https://www.googleapis.com/oauth2/v4/token",
-            params={
-                "client_id": self._client_id,
-                "refresh_token": self.connection.refresh_token,
-                "grant_type": "refresh_token",
-            },
-            headers={"Content-Type": "application/json; charset=utf-8"},
-            timeout=10,
-        )
-        try:
-            self._access_token = response.json()["access_token"]
-        except KeyError:
-            if response.status_code >= 400:
-                logger.warn(
-                    f"GFit: error getting access token: {response.text} {response.status_code}"
-                )
-            if response.status_code >= 500:
-                self._google_server_error = True
+        if isinstance(self.connection.gfit_access_exp, datetime.datetime) and self.connection.gfit_access_exp > timezone.now():
+            self._access_token = self.connection.gfit_access
+        else:
+            response = requests.post(
+                "https://www.googleapis.com/oauth2/v4/token",
+                params={
+                    "client_id": self._client_id,
+                    "refresh_token": self.connection.refresh_token,
+                    "grant_type": "refresh_token",
+                },
+                headers={"Content-Type": "application/json; charset=utf-8"},
+                timeout=10,
+            )
+            try:
+                self.connection.gfit_access = response.json()["access_token"]
+                self.connection.gfit_access_exp = timezone.now() + datetime.timedelta(seconds=response.json()['expires_in'])
+                self.connection.save(update_fields=['gfit_access', 'gfit_access_exp'])
+                self._access_token = self.connection.gfit_access
+            except KeyError:
+                if response.status_code >= 400:
+                    logger.warn(
+                        f"GFit: error getting access token: {response.text} {response.status_code}"
+                    )
+                if response.status_code >= 500:
+                    self._google_server_error = True
 
     def _perform_first_sync(self, streamName, dataStreamId, valType):
         """
