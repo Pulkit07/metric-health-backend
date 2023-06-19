@@ -110,9 +110,13 @@ class GoogleFitConnection(object):
 
     def _get_access_token(self):
         """
-        Get access token from google fit and update the class variable
+        Get the valid access token and update the class variable.
+        First check for the localized/stored access token and check its validity.
+        If it is invalid or None then get the new token from google fit.
         """
-        if isinstance(self.connection.gfit_access_exp, datetime.datetime) and self.connection.gfit_access_exp > timezone.now():
+        if self.connection.gfit_access is not None and \
+                self.connection.gfit_access_exp is not None and \
+                self.connection.gfit_access_exp > timezone.now():
             self._access_token = self.connection.gfit_access
         else:
             response = requests.post(
