@@ -13,6 +13,8 @@ from watch_sdk.constants import google_fit
 from celery import shared_task
 from django.core.cache import cache
 
+from .data_utils import save_user_data
+
 logger = logging.getLogger(__name__)
 
 
@@ -139,6 +141,7 @@ def _perform_sync_connection(google_fit_connection: ConnectedPlatformMetadata):
             logger.info(
                 f"Sending google_fit data for {connection.user_uuid} ({user_app.name})"
             )
+            save_user_data(google_fit_connection, fitness_data)
             send_data_to_webhook(
                 fitness_data,
                 user_app,
