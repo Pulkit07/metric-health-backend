@@ -208,36 +208,13 @@ class UserActivityMetric(BaseModel):
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
 
 
-class PlatformUserData(BaseModel):
+class UserData(BaseModel):
     connected_platform_metadata = models.ForeignKey(ConnectedPlatformMetadata, on_delete=models.CASCADE)
     data_type = models.ForeignKey(DataType, on_delete=models.DO_NOTHING)
     start_time = models.DateTimeField()
-    end_time  = models.DateTimeField()
+    end_time = models.DateTimeField()
     manual_entry = models.BooleanField(default=False)
     device = models.CharField(max_length=250, blank=True, null=True)
 
-    # method 1
-    data_type_value = models.DecimalField(decimal_places=2)
+    value = models.DecimalField(decimal_places=2, max_digits=20)
     extra_data = models.JSONField()
-
-    # method 2
-    steps = models.IntegerField(blank=True, null=True)
-    move_minutes = models.IntegerField(blank=True, null=True)
-    calories_burned = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    water_consumed = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    calories_bmr = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    weight = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    height = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    blood_oxygen = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    heart_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    # sleep specific fields
-    sleep_type = models.CharField(choices=(('awake', 'Awake'), ('light', 'light'), ('deep', 'deep'), ('rem', 'rem')),
-                                  max_length=10, blank=True, null=True)  # will define these choices as model constant after confirmation
-    sleep_duration = models.IntegerField(blank=True, null=True)
-    # strava specific activities fields
-    activity_id = models.IntegerField(blank=True, null=True)
-    distance = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    moving_time = models.IntegerField(blank=True, null=True)
-    max_speed = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    average_speed = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    total_elevation_gain = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
