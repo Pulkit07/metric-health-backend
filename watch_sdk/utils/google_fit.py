@@ -49,19 +49,27 @@ def google_fit_cron():
     apps = EnabledPlatform.objects.filter(platform__name="google_fit").values_list(
         "user_app", flat=True
     )
+    for app in apps:
+        # if webhook url is not set, we skip the app
+        if app.webhook_url is None:
+            continue
+        _sync_app.delay(app.id)
+
+
+@shared_task
+def _sync_app(app_id: int):
     google_fit_connections = ConnectedPlatformMetadata.objects.filter(
         platform__name="google_fit",
         logged_in=True,
-        connection__app__in=apps,
-        connection__app__webhook_url__isnull=False,
+        connection__app=app_id,
     )
     logger.info(
-        f"[CRON] Syncing google_fit for {len(google_fit_connections)} connections"
+        f"[CRON] Syncing google_fit for {len(google_fit_connections)} connections for app {app_id}"
     )
     for connection in google_fit_connections:
         _sync_connection(connection.id)
 
-    logger.info("[CRON] Finished syncing google_fit")
+    logger.info(f"[CRON] Finished syncing google_fit for app {app_id}")
 
 
 def _sync_connection(google_fit_connection_id: int):
