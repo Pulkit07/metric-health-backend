@@ -54,7 +54,7 @@ def google_fit_cron():
         # if webhook url is not set, we skip the app
         if UserApp.objects.get(id=app).webhook_url is None:
             continue
-        _sync_app.delay(app.id)
+        _sync_app.delay(app)
 
 
 @shared_task
