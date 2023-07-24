@@ -5,6 +5,7 @@ from watch_sdk.data_providers.google_fit import GoogleFitConnection
 from watch_sdk.models import (
     ConnectedPlatformMetadata,
     EnabledPlatform,
+    UserApp,
 )
 from watch_sdk.utils.celery_utils import single_instance_task
 from watch_sdk.utils.webhook import send_data_to_webhook
@@ -51,7 +52,7 @@ def google_fit_cron():
     )
     for app in apps:
         # if webhook url is not set, we skip the app
-        if app.webhook_url is None:
+        if UserApp.objects.get(id=app).webhook_url is None:
             continue
         _sync_app.delay(app.id)
 
