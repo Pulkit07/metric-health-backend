@@ -182,11 +182,6 @@ else:
     LOGGING = {
         "version": 1,
         "handlers": {
-            "logtail": {
-                "class": "logtail.LogtailHandler",
-                "source_token": "ikx13DWjtF8E9ny4wD6zmF5r",
-                "level": "INFO",
-            },
             "console": {
                 "level": "DEBUG",
                 "class": "logging.StreamHandler",
