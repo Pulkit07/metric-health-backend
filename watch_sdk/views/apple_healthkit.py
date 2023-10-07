@@ -4,7 +4,6 @@ import json
 import logging
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from watch_sdk.utils import connection as connection_utils, webhook
 from watch_sdk.models import (
     ConnectedPlatformMetadata,
     DebugIosData,
@@ -18,6 +17,7 @@ from watch_sdk.models import (
 
 from watch_sdk.permissions import ValidKeyPermission
 from watch_sdk.constants import apple_healthkit
+from watch_sdk.utils.data_process import process_health_data
 from watch_sdk.utils.hash_utils import get_hash
 
 
@@ -157,13 +157,13 @@ def upload_health_data_using_json_file(request):
 
     if fitness_data:
         logger.info(
-            f"sending {len(fitness_data)} points from apple healthkit for {user_uuid}"
+            f"processing {len(fitness_data)} points from apple healthkit for {user_uuid}"
         )
-        webhook.send_data_to_webhook(
+        process_health_data(
             fitness_data,
+            connection,
             app,
             "apple_healthkit",
-            connection,
         )
 
     # update last sync time on server

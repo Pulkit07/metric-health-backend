@@ -3,7 +3,6 @@ import logging
 from celery import shared_task
 from dateutil.parser import parse
 
-from watch_sdk.utils import webhook
 from watch_sdk.data_providers.strava import StravaAPIClient, SUPPORTED_TYPES
 from watch_sdk.models import (
     ConnectedPlatformMetadata,
@@ -11,6 +10,7 @@ from watch_sdk.models import (
     StravaWebhookLog,
     StravaWebhookSubscriptionLog,
 )
+from watch_sdk.utils.data_process import process_health_data
 from watch_sdk.utils.hash_utils import get_hash
 
 
@@ -42,13 +42,13 @@ def on_strava_reconnect(connected_platform):
     if not fitness_data:
         return
     logger.info(
-        f"sending strava data to webhook for {connected_platform.connection.user_uuid} and app {connected_platform.connection.app}"
+        f"processing strava data for {connected_platform.connection.user_uuid} and app {connected_platform.connection.app}"
     )
-    webhook.send_data_to_webhook(
+    process_health_data(
         fitness_data,
+        connected_platform.connection,
         connected_platform.connection.app,
         "strava",
-        connected_platform.connection,
     )
 
 
@@ -167,10 +167,11 @@ def handle_strava_webhook(data, app_id):
 
     if not fitness_data:
         return
-    # send fitness data over webhook
-    webhook.send_data_to_webhook(
+
+    # process fitness data
+    process_health_data(
         fitness_data,
+        connected_platform.connection,
         connected_platform.connection.app,
         "strava",
-        connected_platform.connection,
     )

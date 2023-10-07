@@ -8,7 +8,7 @@ from watch_sdk.models import (
     UserApp,
 )
 from watch_sdk.utils.celery_utils import single_instance_task
-from watch_sdk.utils.webhook import send_data_to_webhook
+from watch_sdk.utils.data_process import process_health_data
 from watch_sdk.constants import google_fit
 
 from celery import shared_task
@@ -148,11 +148,11 @@ def _perform_sync_connection(google_fit_connection: ConnectedPlatformMetadata):
             logger.info(
                 f"Sending google_fit data for {connection.user_uuid} ({user_app.name})"
             )
-            send_data_to_webhook(
+            process_health_data(
                 fitness_data,
+                connection,
                 user_app,
                 "google_fit",
-                connection,
             )
         except Exception as e:
             logger.error(
