@@ -37,7 +37,7 @@ def single_instance_task(timeout):
 
 @shared_task
 @single_instance_task(timeout=60 * 60 * 3)
-def sync_unprocessed_data():
+def sync_unprocessed_webhook_queue():
     logger.info(f"[CRON] Syncing unprocessed")
     synced = 0
     total = UnprocessedData.objects.count()
