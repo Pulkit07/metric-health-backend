@@ -216,3 +216,15 @@ class UserActivityMetric(BaseModel):
 
     connection = models.ForeignKey(WatchConnection, on_delete=models.CASCADE)
     app = models.ForeignKey(UserApp, on_delete=models.CASCADE)
+
+
+class HealthDataEntry(BaseModel):
+    user_connection = models.ForeignKey(WatchConnection, on_delete=models.CASCADE)
+    source_platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
+    data_type = models.ForeignKey(DataType, on_delete=models.CASCADE)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    manual_entry = models.BooleanField(default=False)
+    value = models.FloatField()
+    extra_data = models.JSONField(blank=True, null=True)
+    source_device = models.CharField(max_length=200, blank=True, null=True)
