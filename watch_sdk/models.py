@@ -79,6 +79,16 @@ class UserApp(BaseModel):
     tech_stack = ArrayField(models.CharField(max_length=200), blank=True, null=True)
     # list of users who have access to this app
     access_users = models.ManyToManyField(User, blank=True, related_name="access_users")
+    # whether to store fitness data on our servers or not
+    data_storage_option = models.CharField(
+        max_length=100,
+        choices=(
+            ("allow", "allow"),
+            ("deny", "deny"),
+            ("both", "both"),
+        ),
+        default="deny",
+    )
 
     def __str__(self) -> str:
         return f"{self.name} - {self.user.name} ({self.id})"
