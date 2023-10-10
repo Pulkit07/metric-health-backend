@@ -177,6 +177,8 @@ CACHES = {
 if DEBUG or sys.argv[1] == "runserver":
     DEBUG_PROPAGATE_EXCEPTIONS = True
 else:
+    import logtail
+
     LOGGING = {
         "version": 1,
         "handlers": {
@@ -197,28 +199,28 @@ else:
         },
         "loggers": {
             "celery": {
-                "handlers": ["console"],
+                "handlers": ["logtail", "console"],
                 "level": "DEBUG",
                 "propagate": True,
             },
             # This should be something else when not using gunicorn
             "gunicorn": {
-                "handlers": ["console"],
+                "handlers": ["logtail", "console"],
                 "level": "WARNING",
                 "propagate": True,
             },
             "uvicorn": {
-                "handlers": ["console"],
+                "handlers": ["logtail", "console"],
                 "level": "WARNING",
                 "propagate": True,
             },
             "app-logger": {
-                "handlers": ["console"],
+                "handlers": ["logtail", "console"],
                 "level": "CRITICAL",
                 "propagate": True,
             },
             "watch_sdk": {
-                "handlers": ["console"],
+                "handlers": ["logtail", "console"],
                 "level": "DEBUG",
                 "propagate": True,
             },
