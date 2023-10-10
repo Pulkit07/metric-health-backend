@@ -49,6 +49,10 @@ def upload_health_data_using_json_file(request):
     key = request.query_params.get("key")
     user_uuid = request.query_params.get("user_uuid")
     app = UserApp.objects.get(key=key)
+    if app.id == 6:
+        # For now, Fitelo is not using Apple healthkit, so we skip processing
+        # TODO: this should be removed in future
+        return Response({"success": True}, status=200)
 
     try:
         enabled_platform = EnabledPlatform.objects.get(
