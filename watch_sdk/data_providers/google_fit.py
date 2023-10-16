@@ -327,6 +327,12 @@ class GoogleFitConnection(object):
             },
             timeout=10,
         )
+
+        # Ocassionally Google Fit APIs are down and return 503: Service Unavailable
+        if response.status_code == 503:
+            self._update_last_sync = False
+            return []
+
         vals: List[GoogleFitPoint] = []
         for point in response.json()["point"]:
             vals.append(
