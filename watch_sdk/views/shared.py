@@ -15,6 +15,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import viewsets, views, generics
 from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
 from django.utils.decorators import method_decorator
 from django.db.models import Count
 
@@ -468,8 +469,12 @@ class UserAppFromKeyViewSet(generics.RetrieveAPIView):
     serializer_class = UserAppSerializer
     permission_classes = [ValidKeyPermission]
 
-    # TODO: once key is moved to headers, this should vary on header too
     @method_decorator(cache_page(60 * 60 * 24))
+    @method_decorator(
+        vary_on_headers(
+            "key",
+        )
+    )
     def get(self, request, format=None):
         key = (
             request.query_params.get("key")
