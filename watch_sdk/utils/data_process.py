@@ -45,6 +45,10 @@ def store_health_data(fitness_data, watch_connection, platform_name):
     for data_type, entries in fitness_data.items():
         data_type_obj = DataType.objects.get(name=data_type)
         for entry in entries:
+            if not entry:
+                # skip empty entries
+                # TODO: we shouldn't get them in the first place
+                continue
             entry.pop("source")
             to_create.append(
                 HealthDataEntry(
