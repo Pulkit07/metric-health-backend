@@ -333,7 +333,8 @@ class GoogleFitConnection(object):
         )
 
         # Ocassionally Google Fit APIs are down and return 503: Service Unavailable
-        if response.status_code == 503:
+        # or 443: Read timeout
+        if response.status_code == 503 or response.status_code == 443:
             self._update_last_sync = False
             return []
 
