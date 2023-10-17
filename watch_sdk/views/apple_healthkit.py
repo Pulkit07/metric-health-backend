@@ -46,7 +46,11 @@ def _get_sleep_type(d):
 @api_view(["POST"])
 @permission_classes([ValidKeyPermission])
 def upload_health_data_using_json_file(request):
-    key = request.query_params.get("key")
+    key = (
+        request.query_params.get("key")
+        if request.query_params.get("key")
+        else request.META.get("HTTP_KEY")
+    )
     user_uuid = request.query_params.get("user_uuid")
     app = UserApp.objects.get(key=key)
     if app.id == 6:

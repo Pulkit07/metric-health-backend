@@ -73,7 +73,11 @@ def generate_key(request):
 @api_view(["GET"])
 @permission_classes([ValidKeyPermission])
 def watch_connection_exists(request):
-    key = request.query_params.get("key")
+    key = (
+        request.query_params.get("key")
+        if request.query_params.get("key")
+        else request.META.get("HTTP_KEY")
+    )
     user_uuid = request.query_params.get("user_uuid")
     app = UserApp.objects.get(key=key)
     connection_filter = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
@@ -104,7 +108,11 @@ def watch_connection_exists(request):
 @api_view(["POST"])
 @permission_classes([ValidKeyPermission | AdminPermission])
 def connect_platform_for_user(request):
-    key = request.query_params.get("key")
+    key = (
+        request.query_params.get("key")
+        if request.query_params.get("key")
+        else request.META.get("HTTP_KEY")
+    )
     user_uuid = request.query_params.get("user_uuid")
     # we should remove this from query param as 'false' in query param will be
     # parsed as a string leading to it being treated as True
@@ -395,7 +403,11 @@ def set_webhook_url_for_app(request):
 @api_view(["POST"])
 @permission_classes([ValidKeyPermission])
 def update_webhook_for_app(request):
-    key = request.query_params.get("key")
+    key = (
+        request.query_params.get("key")
+        if request.query_params.get("key")
+        else request.META.get("HTTP_KEY")
+    )
     try:
         app = UserApp.objects.get(key=key)
     except UserApp.DoesNotExist:
@@ -409,7 +421,11 @@ def update_webhook_for_app(request):
 @api_view(["GET"])
 @permission_classes([ValidKeyPermission | AdminPermission])
 def check_connection_and_get_user_app(request):
-    key = request.query_params.get("key")
+    key = (
+        request.query_params.get("key")
+        if request.query_params.get("key")
+        else request.META.get("HTTP_KEY")
+    )
     if key is None:
         return Response({"error": "key is required"}, status=400)
     try:
@@ -455,7 +471,11 @@ class UserAppFromKeyViewSet(generics.RetrieveAPIView):
     # TODO: once key is moved to headers, this should vary on header too
     @method_decorator(cache_page(60 * 60 * 24))
     def get(self, request, format=None):
-        key = request.query_params.get("key")
+        key = (
+            request.query_params.get("key")
+            if request.query_params.get("key")
+            else request.META.get("HTTP_KEY")
+        )
         app = self.queryset.get(key=key)
         return Response({"success": True, "data": UserAppSerializer(app).data})
 
@@ -470,7 +490,7 @@ class UserAppViewSet(viewsets.ModelViewSet):
         """
         Instantiates and returns the list of permissions that this view requires.
         """
-        if self.action in ['create', 'list']:
+        if self.action in ["create", "list"]:
             permission_classes = [FirebaseAuthPermission | AdminPermission]
         else:
             permission_classes = [AppAuthPermission | AdminPermission]
