@@ -12,6 +12,7 @@ def has_user_access_to_app(user, app):
         return True
     return False
 
+
 class ValidKeyPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         # TODO: remove the key from query params once all current users are migrated
@@ -19,7 +20,7 @@ class ValidKeyPermission(permissions.BasePermission):
         key = (
             request.query_params.get("key")
             if request.query_params.get("key")
-            else request.META.get("key")
+            else request.META.get("HTTP_KEY")
         )
         if not key:
             return False
