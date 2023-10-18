@@ -53,10 +53,6 @@ def upload_health_data_using_json_file(request):
     )
     user_uuid = request.query_params.get("user_uuid")
     app = UserApp.objects.get(key=key)
-    if app.id == 6:
-        # For now, Fitelo is not using Apple healthkit, so we skip processing
-        # TODO: this should be removed in future
-        return Response({"success": True}, status=200)
 
     try:
         enabled_platform = EnabledPlatform.objects.get(
@@ -87,6 +83,10 @@ def upload_health_data_using_json_file(request):
             f"getting apple healthkit data for user {user_uuid} which is not connected to app {app}"
         )
         return Response({"error": "No connection exists for this user"}, status=400)
+
+    if connected_metadata.logged_in is False:
+        # we don't process data for a disconnected user
+        return Response({"error": "User not connected"}, status=400)
 
     logger.info(f"Apple data received for {user_uuid} of {app}")
     fitness_data = collections.defaultdict(list)
