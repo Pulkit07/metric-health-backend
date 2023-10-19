@@ -59,7 +59,7 @@ def store_health_data(fitness_data, watch_connection, platform_name):
                         entry.pop("start_time") / 10**3
                     ),
                     end_time=datetime.fromtimestamp(entry.pop("end_time") / 10**3),
-                    manual_entry=entry.pop("manual_entry", False),
+                    manual_entry=entry.pop("manual_entry", False) or False,
                     value=entry.pop("value"),
                     source_device=entry.pop("source_device", None),
                     extra_data=entry,
