@@ -1,6 +1,7 @@
 # APIs to return health data stored on our servers
 
 import datetime
+from zoneinfo import ZoneInfo
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.db.models import Sum
@@ -59,18 +60,45 @@ def aggregated_data_for_timerange(request):
         end_time__lte=end_time,
     ).aggregate(Sum("value"))
 
+    print_synced_uuids()
+    _show_date_wise_data(connection, platform, data_type)
+
     return Response({"total": total["value__sum"]})
 
 
-def test_function():
-    pass
-    # get the unique uuids which have a health data entry object stored
-    # unique_uuids = (
-    #     HealthDataEntry.objects.all()
-    #     .values_list("user_connection", flat=True)
-    #     .distinct()
-    # )
+def _show_date_wise_data(connection, platform, data_type):
+    fr = datetime.datetime.now() - datetime.timedelta(days=4)
+    to = datetime.datetime.now()
+    data = {}
 
-    # for u in unique_uuids:
-    #     wc = WatchConnection.objects.get(id=u)
-    #     print(wc.user_uuid, wc.app)
+    while fr <= to:
+        start = datetime.datetime(
+            fr.year, fr.month, fr.day, 0, 0, 0, tzinfo=ZoneInfo("Asia/Kolkata")
+        )
+        end = datetime.datetime(
+            fr.year, fr.month, fr.day, 23, 59, 59, tzinfo=ZoneInfo("Asia/Kolkata")
+        )
+        total = HealthDataEntry.objects.filter(
+            user_connection=connection,
+            source_platform__name=platform,
+            data_type__name=data_type,
+            start_time__gte=start,
+            end_time__lte=end,
+        ).aggregate(Sum("value"))
+        data[fr.isoformat()] = total["value__sum"]
+        fr += datetime.timedelta(days=1)
+
+    print(data)
+
+
+def print_synced_uuids():
+    # get the unique uuids which have a health data entry object stored
+    unique_uuids = (
+        HealthDataEntry.objects.all()
+        .values_list("user_connection", flat=True)
+        .distinct()
+    )
+
+    for u in unique_uuids:
+        wc = WatchConnection.objects.get(id=u)
+        print(wc.user_uuid, wc.app)
