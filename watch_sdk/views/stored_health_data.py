@@ -60,8 +60,8 @@ def aggregated_data_for_timerange(request):
         end_time__lte=end_time,
     ).aggregate(Sum("value"))
 
-    print_synced_uuids()
-    _show_date_wise_data(connection, platform, data_type)
+    # print_synced_uuids()
+    # _show_date_wise_data(connection, platform, data_type)
 
     return Response({"total": total["value__sum"]})
 
