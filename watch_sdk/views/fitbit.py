@@ -21,9 +21,11 @@ logger = logging.getLogger(__name__)
 
 class FitbitWebhook(generics.GenericAPIView):
     def get(self, request):
+        # TODO: this verification code should be stored on server
+        # instead of being hardcoded in code
         if (
             request.query_params.get("verify")
-            == "8120a0818957ced239318eb30cd2ac10e0ba12749b431972d7da036a0069ead9"
+            == "65d1c14f34150210b1b9c6edc4fec10c882f511dda41fc5e3de3e8e91cc132bc"
         ):
             return Response(status=204)
         return Response(status=404)
