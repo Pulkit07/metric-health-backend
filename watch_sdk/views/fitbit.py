@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class FitbitWebhook(generics.GenericAPIView):
-    def get(self, request):
+    def get(self, request, pk):
         # TODO: this verification code should be stored on server
         # instead of being hardcoded in code
         if (
