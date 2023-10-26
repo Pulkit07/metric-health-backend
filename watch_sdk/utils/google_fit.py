@@ -59,11 +59,13 @@ def google_fit_cron():
 
 @shared_task
 def _sync_app(app_id: int):
+    # We are ordering by last sync to make sure that the connection that has not been synced for the longest time
+    # is synced first. This is to make sure that we don't end up with connections that haven't synced for a long time
     google_fit_connections = ConnectedPlatformMetadata.objects.filter(
         platform__name="google_fit",
         logged_in=True,
         connection__app=app_id,
-    )
+    ).order_by("last_sync")
     logger.info(
         f"[CRON] Syncing google_fit for {len(google_fit_connections)} connections for app {app_id}"
     )
