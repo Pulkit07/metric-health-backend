@@ -59,20 +59,25 @@ def google_fit_cron():
 
 @shared_task
 def _sync_app(app_id: int):
-    # We are ordering by last sync to make sure that the connection that has not been synced for the longest time
-    # is synced first. This is to make sure that we don't end up with connections that haven't synced for a long time
     google_fit_connections = ConnectedPlatformMetadata.objects.filter(
         platform__name="google_fit",
         logged_in=True,
         connection__app=app_id,
-    ).order_by("last_sync")
-    logger.info(
-        f"[CRON] Syncing google_fit for {len(google_fit_connections)} connections for app {app_id}"
     )
-    for connection in google_fit_connections:
-        _sync_connection(connection.id)
+    connections_slices = []
+    # break the connections into slices and sync them in parallel
+    SLICE_LENGTH = 300
+    for i in range(0, len(google_fit_connections), SLICE_LENGTH):
+        connections_slices.append(google_fit_connections[i : i + SLICE_LENGTH])
 
-    logger.info(f"[CRON] Finished syncing google_fit for app {app_id}")
+    for connections_slice in connections_slices:
+        _sync_connections_slice.delay(connections_slice)
+
+
+@shared_task
+def _sync_connections_slice(connections: list):
+    for connection in connections:
+        _sync_connection(connection.id)
 
 
 def _sync_connection(google_fit_connection_id: int):
