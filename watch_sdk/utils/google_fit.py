@@ -71,13 +71,13 @@ def _sync_app(app_id: int):
         connections_slices.append(google_fit_connections[i : i + SLICE_LENGTH])
 
     for connections_slice in connections_slices:
-        _sync_connections_slice.delay(connections_slice)
+        _sync_connections_slice.delay(connections_slice.values_list("id", flat=True))
 
 
 @shared_task
 def _sync_connections_slice(connections: list):
-    for connection in connections:
-        _sync_connection(connection.id)
+    for connection_id in connections:
+        _sync_connection(connection_id)
 
 
 def _sync_connection(google_fit_connection_id: int):
