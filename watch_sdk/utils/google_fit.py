@@ -63,7 +63,7 @@ def _sync_app(app_id: int):
         platform__name="google_fit",
         logged_in=True,
         connection__app=app_id,
-    )
+    ).values_list("id", flat=True)
     connections_slices = []
     # break the connections into slices and sync them in parallel
     SLICE_LENGTH = 300
@@ -71,7 +71,7 @@ def _sync_app(app_id: int):
         connections_slices.append(google_fit_connections[i : i + SLICE_LENGTH])
 
     for connections_slice in connections_slices:
-        _sync_connections_slice.delay(connections_slice.values_list("id", flat=True))
+        _sync_connections_slice.delay(connections_slice)
 
 
 @shared_task
