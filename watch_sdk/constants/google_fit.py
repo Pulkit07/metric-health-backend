@@ -10,6 +10,8 @@ DB_DATA_TYPE_KEY_MAP = {
     "weight": "com.google.weight",
     "height": "com.google.height",
     "sleep": "com.google.sleep.segment",
+    "distance_moved": "com.google.distance.delta",
+    "blood_oxygen": "com.google.oxygen_saturation",
 }
 
 RANGE_DATA_TYPES = {
@@ -21,6 +23,8 @@ RANGE_DATA_TYPES = {
     "com.google.weight": ("weight", Weight),
     "com.google.height": ("height", Height),
     "com.google.sleep.segment": ("sleep", Sleep),
+    "com.google.distance.delta": ("distance_moved", DistanceMoved),
+    "com.google.oxygen_saturation": ("blood_oxygen", BloodOxygen),
 }
 
 RANGE_DATA_TYPES_ATTRIBUTES: typing.Dict[str, typing.List[str]] = {
@@ -32,6 +36,8 @@ RANGE_DATA_TYPES_ATTRIBUTES: typing.Dict[str, typing.List[str]] = {
     "com.google.weight": ["merge_weight"],
     "com.google.height": ["merge_height"],
     "com.google.sleep.segment": ["merged"],
+    "com.google.distance.delta": ["merge_distance_delta"],
+    "com.google.oxygen_saturation": ["merged"],
 }
 
 RANGE_DATA_TYPES_UNTS: typing.Dict[str, str] = {
@@ -43,4 +49,6 @@ RANGE_DATA_TYPES_UNTS: typing.Dict[str, str] = {
     "com.google.weight": "fpVal",
     "com.google.height": "fpVal",
     "com.google.sleep.segment": "intVal",
+    "com.google.distance.delta": "fpVal",
+    "com.google.oxygen_saturation": "fpVal",
 }

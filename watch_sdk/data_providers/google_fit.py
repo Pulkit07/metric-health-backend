@@ -44,6 +44,14 @@ DATA_SOURCES_MAP = {
         "merged": "derived:com.google.calories.bmr:com.google.android.gms:merged",
         "user_input": "raw:com.google.calories.bmr:com.google.android.apps.fitness:user_input",
     },
+    "com.google.distance.delta": {
+        "merge_distance_delta": "derived:com.google.distance.delta:com.google.android.gms:merge_distance_delta",
+        "user_input": "raw:com.google.distance.delta:com.google.android.apps.fitness:user_input",
+    },
+    "com.google.oxygen_saturation": {
+        "merged": "derived:com.google.oxygen_saturation:com.google.android.gms:merged",
+        "user_input": "raw:com.google.oxygen_saturation:com.google.android.apps.fitness:user_input",
+    },
 }
 
 

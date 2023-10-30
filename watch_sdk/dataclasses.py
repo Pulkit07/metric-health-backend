@@ -30,6 +30,12 @@ class MoveMinutes(FitnessDatatype):
 
 @dataclass_json
 @dataclass
+class DistanceMoved(FitnessDatatype):
+    value: float
+
+
+@dataclass_json
+@dataclass
 class CaloriesBurned(FitnessDatatype):
     value: float
 
