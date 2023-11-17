@@ -5,8 +5,14 @@ from zoneinfo import ZoneInfo
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.db.models import Sum
+from watch_sdk.data_providers.google_fit import GoogleFitConnection
 
-from watch_sdk.models import HealthDataEntry, UserApp, WatchConnection
+from watch_sdk.models import (
+    ConnectedPlatformMetadata,
+    HealthDataEntry,
+    UserApp,
+    WatchConnection,
+)
 from watch_sdk.permissions import ValidKeyPermission
 
 
@@ -37,6 +43,27 @@ def aggregated_data_for_timerange(request):
     data_type = request.data.get("data_type")
     start_time = request.data.get("start_time")
     end_time = request.data.get("end_time")
+
+    if platform == "google_fit":
+        # hit GFit APIs for now
+        cpm = ConnectedPlatformMetadata.objects.get(
+            connection=connection, platform__name="google_fit"
+        )
+        total = 0
+        with GoogleFitConnection(connection.app, cpm) as gfc:
+            total_vals = gfc.get_aggregated_data_for_timerange(
+                data_type,
+                start_time,
+                end_time,
+                bucket_size=None,
+            )
+            import pdb
+
+            pdb.set_trace()
+            if total_vals:
+                total = total_vals[0].value
+
+        return Response({"total": total})
 
     try:
         start_time = datetime.datetime.fromtimestamp(start_time / 10**3)
