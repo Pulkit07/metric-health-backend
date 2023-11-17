@@ -9,6 +9,7 @@ from watch_sdk.models import (
     UserApp,
     WatchConnection,
 )
+from datetime import datetime, timedelta
 
 from watch_sdk.permissions import AdminPermission
 
@@ -25,9 +26,16 @@ def test_google_sync(request):
         connection__app__in=UserApp.objects.filter(id=101),
         connection__app__webhook_url__isnull=False,
     )
+    data_type = "steps"
+    start_date_10_days_ago = datetime.now() - timedelta(days=10)
+    end_date = datetime.now()
     for connection in google_fit_connections:
         logging.info(f"\n\nSyncing for {connection.connection.user_uuid}")
         with GoogleFitConnection(connection.connection.app, connection) as gfc:
-            gfc.test_sync()
+            gfc.test_sync(
+                data_type,
+                int(start_date_10_days_ago.timestamp() * 1000),
+                int(end_date.timestamp() * 1000),
+            )
 
     return Response({"success": True}, status=200)

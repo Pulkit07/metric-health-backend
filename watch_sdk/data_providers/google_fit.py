@@ -1,5 +1,6 @@
 import collections
 from dataclasses import dataclass
+import json
 from django.utils import timezone
 import datetime
 import logging
@@ -362,24 +363,84 @@ class GoogleFitConnection(object):
 
         return vals
 
-    def test_sync(self):
+    def get_aggregated_data_for_timerange(
+        self,
+        data_type,
+        start_time,
+        end_time,
+        valType="intVal",
+        bucket_size=86400000,
+    ) -> List[GoogleFitPoint]:
+        """
+        Get the aggregated data for the given data type and time range
+        """
+        google_data_type = google_fit.DB_DATA_TYPE_KEY_MAP[data_type]
+        vals = []
+        request_body = {
+            "aggregateBy": [
+                {
+                    "dataTypeName": google_data_type,
+                }
+            ],
+            "startTimeMillis": start_time,
+            "endTimeMillis": end_time,
+        }
+
+        if bucket_size:
+            request_body["bucketByTime"] = {"durationMillis": bucket_size}
+        else:
+            request_body["bucketByTime"] = {"durationMillis": end_time - start_time}
+        response = requests.post(
+            f"https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
+            headers={
+                "Authorization": f"Bearer {self._access_token}",
+                "Content-Type": "application/json",
+            },
+            data=json.dumps(request_body),
+            timeout=10,
+        )
+
+        if response.status_code != 200:
+            logger.warn(
+                "Gfit: Error while fetching aggregated data, got status code %s"
+                % response.status_code
+            )
+            import pdb
+
+            pdb.set_trace()
+            return []
+
+        for bucket in response.json()["bucket"]:
+            for point in bucket["dataset"][0]["point"]:
+                vals.append(
+                    GoogleFitPoint(
+                        point["value"][0][valType],
+                        int(point["startTimeNanos"]),
+                        int(point["endTimeNanos"]),
+                        None,
+                    )
+                )
+
+        return vals
+
+    def test_sync(self, data_type, start_date, end_date):
         """
         Returns the number of steps since the last sync
         """
         # start time should be start of yesterday in Asia/Kolkata timezone in millis
         self._update_last_sync = False
         self._last_modified = {}
-        data = self.get_data_since_last_sync()
-        date_wise_map = collections.defaultdict(int)
-        for key, values in data.items():
-            for value in values:
-                start_date = datetime.datetime.fromtimestamp(
-                    int(value.start_time) / 10**9, tz=ZoneInfo("Asia/Kolkata")
-                ).date()
-                date_wise_map[start_date] += value.value
-                if value.manual_entry:
-                    print(f"manually entered {value}")
+        vals = self.get_aggregated_data(data_type, start_date, end_date)
+        # data = self.get_data_since_last_sync()
+        # date_wise_map = collections.defaultdict(int)
+        # for key, values in data.items():
+        #     for value in values:
+        #         start_date = datetime.datetime.fromtimestamp(
+        #             int(value.start_time) / 10**9, tz=ZoneInfo("Asia/Kolkata")
+        #         ).date()
+        #         date_wise_map[start_date] += value.value
+        #         if value.manual_entry:
+        #             print(f"manually entered {value}")
+        # import pdb
 
-        import pdb
-
-        pdb.set_trace()
+        # pdb.set_trace()
