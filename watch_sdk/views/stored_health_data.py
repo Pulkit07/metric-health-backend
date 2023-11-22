@@ -57,9 +57,7 @@ def aggregated_data_for_timerange(request):
                 end_time,
                 bucket_size=None,
             )
-            import pdb
 
-            pdb.set_trace()
             if total_vals:
                 total = total_vals[0].value
 
