@@ -368,13 +368,13 @@ class GoogleFitConnection(object):
         data_type,
         start_time,
         end_time,
-        valType="intVal",
         bucket_size=86400000,
     ) -> List[GoogleFitPoint]:
         """
         Get the aggregated data for the given data type and time range
         """
         google_data_type = google_fit.DB_DATA_TYPE_KEY_MAP[data_type]
+        val_type = google_fit.RANGE_DATA_TYPES_UNTS[google_data_type]
         vals = []
         request_body = {
             "aggregateBy": [
@@ -414,7 +414,7 @@ class GoogleFitConnection(object):
             for point in bucket["dataset"][0]["point"]:
                 vals.append(
                     GoogleFitPoint(
-                        point["value"][0][valType],
+                        point["value"][0][val_type],
                         int(point["startTimeNanos"]),
                         int(point["endTimeNanos"]),
                         None,
