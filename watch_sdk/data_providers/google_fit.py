@@ -405,9 +405,6 @@ class GoogleFitConnection(object):
                 "Gfit: Error while fetching aggregated data, got status code %s"
                 % response.status_code
             )
-            import pdb
-
-            pdb.set_trace()
             return []
 
         for bucket in response.json()["bucket"]:
