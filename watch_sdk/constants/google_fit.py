@@ -12,6 +12,7 @@ DB_DATA_TYPE_KEY_MAP = {
     "sleep": "com.google.sleep.segment",
     "distance_moved": "com.google.distance.delta",
     "blood_oxygen": "com.google.oxygen_saturation",
+    "menstruation": "com.google.menstruation",
 }
 
 RANGE_DATA_TYPES = {
@@ -51,4 +52,5 @@ RANGE_DATA_TYPES_UNTS: typing.Dict[str, str] = {
     "com.google.sleep.segment": "intVal",
     "com.google.distance.delta": "fpVal",
     "com.google.oxygen_saturation": "fpVal",
+    "com.google.menstruation": "intVal",
 }

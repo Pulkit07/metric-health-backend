@@ -91,6 +91,63 @@ def aggregated_data_for_timerange(request):
     return Response({"total": total["value__sum"]})
 
 
+@api_view(["GET"])
+@permission_classes([ValidKeyPermission])
+def get_menstruation_data(request):
+    """
+    Returns the menstrual data for a given time range
+
+    Request params:
+      - user_uuid: the uuid of the user for whom the data is to be fetched
+
+    Request body:
+      - platform: the name of the platform (eg. google_fit, apple_healthkit, etc.)
+      - start_time: the start time of the range (in milliseconds since epoch)
+      - end_time: the end time of the range (in milliseconds since epoch)
+    """
+    key = request.META.get("HTTP_KEY")
+    uuid = request.query_params.get("user_uuid")
+
+    try:
+        connection = WatchConnection.objects.get(app__key=key, user_uuid=uuid)
+    except WatchConnection.DoesNotExist:
+        return Response({"error": "Access denied"}, status=401)
+
+    platform = request.data.get("platform")
+    start_time = request.data.get("start_time")
+    end_time = request.data.get("end_time")
+
+    try:
+        start_time = datetime.datetime.fromtimestamp(start_time / 10**3)
+    except Exception:
+        return Response({"error": "Invalid start time"}, status=400)
+
+    try:
+        end_time = datetime.datetime.fromtimestamp(end_time / 10**3)
+    except Exception:
+        return Response({"error": "Invalid end time"}, status=400)
+
+    # check if any of the above is None and if yes, return error response
+    if not all([platform, start_time, end_time]):
+        return Response({"error": "Missing parameters"}, status=400)
+
+    if platform == "google_fit":
+        # hit GFit APIs for now
+        cpm = ConnectedPlatformMetadata.objects.get(
+            connection=connection, platform__name="google_fit"
+        )
+        entries = []
+        with GoogleFitConnection(connection.app, cpm) as gfc:
+            entries = gfc.get_menstruation_data(
+                start_time,
+                end_time,
+            )
+
+        return Response({"data": entries})
+    else:
+        return Response({"error": "Platform not supported"}, status=400)
+
+
 def _show_date_wise_data(connection, platform, data_type):
     fr = datetime.datetime.now() - datetime.timedelta(days=4)
     to = datetime.datetime.now()

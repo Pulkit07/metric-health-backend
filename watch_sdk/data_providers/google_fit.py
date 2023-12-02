@@ -420,6 +420,24 @@ class GoogleFitConnection(object):
 
         return vals
 
+    def get_menstruation_data(self, start_time, end_time):
+        # TODO: the flow type of menstrual data can be None
+        # we need to handle that case
+        vals = self.get_aggregated_data_for_timerange(
+            "menstruation",
+            start_time,
+            end_time,
+        )
+        res = []
+        for val in vals:
+            entry = {
+                "start_time": val.start_time,
+                "flow": val.value,
+            }
+            res.append(entry)
+
+        return res
+
     def test_sync(self, data_type, start_date, end_date):
         """
         Returns the number of steps since the last sync

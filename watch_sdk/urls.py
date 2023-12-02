@@ -19,7 +19,10 @@ from watch_sdk.views.shared import *
 from watch_sdk.views.apple_healthkit import upload_health_data_using_json_file
 from watch_sdk.views.fitbit import *
 from watch_sdk.views.google_fit import *
-from watch_sdk.views.stored_health_data import aggregated_data_for_timerange
+from watch_sdk.views.stored_health_data import (
+    aggregated_data_for_timerange,
+    get_menstruation_data,
+)
 from watch_sdk.views.strava import *
 
 app_name = "watch_sdk"
@@ -86,4 +89,5 @@ urlpatterns = [
     path("strava/<int:pk>/webhook", StravaWebhook.as_view()),
     # URLs for retrieving data stored on our server
     path("stored_health_data", aggregated_data_for_timerange),
+    path("get_menstruation_data", get_menstruation_data),
 ]
