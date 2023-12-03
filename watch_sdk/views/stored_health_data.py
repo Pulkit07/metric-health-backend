@@ -117,15 +117,15 @@ def get_menstruation_data(request):
     start_time = request.data.get("start_time")
     end_time = request.data.get("end_time")
 
-    try:
-        start_time = datetime.datetime.fromtimestamp(start_time / 10**3)
-    except Exception:
-        return Response({"error": "Invalid start time"}, status=400)
+    # try:
+    #     start_time = datetime.datetime.fromtimestamp(start_time / 10**3)
+    # except Exception:
+    #     return Response({"error": "Invalid start time"}, status=400)
 
-    try:
-        end_time = datetime.datetime.fromtimestamp(end_time / 10**3)
-    except Exception:
-        return Response({"error": "Invalid end time"}, status=400)
+    # try:
+    #     end_time = datetime.datetime.fromtimestamp(end_time / 10**3)
+    # except Exception:
+    #     return Response({"error": "Invalid end time"}, status=400)
 
     # check if any of the above is None and if yes, return error response
     if not all([platform, start_time, end_time]):
