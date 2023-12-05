@@ -6,6 +6,7 @@ import datetime
 import logging
 from typing import List, Optional
 import requests
+import pytz
 
 from watch_sdk.models import ConnectedPlatformMetadata, EnabledPlatform
 
@@ -52,6 +53,10 @@ DATA_SOURCES_MAP = {
     "com.google.oxygen_saturation": {
         "merged": "derived:com.google.oxygen_saturation:com.google.android.gms:merged",
         "user_input": "raw:com.google.oxygen_saturation:com.google.android.apps.fitness:user_input",
+    },
+    "com.google.activity.segment": {
+        "merged": "derived:com.google.activity.segment:com.google.android.gms:merged",
+        "user_input": "raw:com.google.activity.segment:com.google.android.apps.fitness:user_input",
     },
 }
 
@@ -369,6 +374,7 @@ class GoogleFitConnection(object):
         start_time,
         end_time,
         bucket_size=86400000,
+        bucket_by_session=False,
     ) -> List[GoogleFitPoint]:
         """
         Get the aggregated data for the given data type and time range
@@ -385,6 +391,8 @@ class GoogleFitConnection(object):
             "startTimeMillis": start_time,
             "endTimeMillis": end_time,
         }
+        if bucket_by_session:
+            request_body["bucketBySession"] = {"minDurationMillis": 0}
 
         if bucket_size:
             request_body["bucketByTime"] = {"durationMillis": bucket_size}
@@ -438,6 +446,83 @@ class GoogleFitConnection(object):
 
         return res
 
+    def get_activities(self, start_time, end_time):
+        # hit the session api to get the activities
+        response = requests.get(
+            "https://www.googleapis.com/fitness/v1/users/me/sessions",
+            headers={"Authorization": f"Bearer {self._access_token}"},
+            params={
+                "startTime": datetime.datetime.fromtimestamp(
+                    start_time / 1000.0, pytz.timezone("UTC")
+                ).isoformat("T"),
+                "endTime": datetime.datetime.fromtimestamp(
+                    end_time / 1000.0, pytz.timezone("UTC")
+                ).isoformat("T"),
+            },
+            timeout=10,
+        )
+
+        if response.status_code != 200:
+            logger.debug(
+                "Gfit: Error while fetching sessions, got status code %s"
+                % response.status_code
+            )
+            return []
+
+        sessions = []
+        for session in response.json()["session"]:
+            sessions.append(
+                {
+                    "id": session["id"],
+                    "name": session["name"],
+                    "description": session["description"],
+                    "activity_type": session["activityType"],
+                    "start_time": int(session["startTimeMillis"]),
+                    "end_time": int(session["endTimeMillis"]),
+                },
+            )
+
+        for session in sessions:
+            # get calories, steps, distance, duration for each session
+            calories_resp = self.get_aggregated_data_for_timerange(
+                "calories",
+                session["start_time"],
+                session["end_time"],
+                bucket_size=None,
+                bucket_by_session=True,
+            )
+            if calories_resp:
+                session["calories"] = calories_resp[0].value
+            move_minutes_resp = self.get_aggregated_data_for_timerange(
+                "move_minutes",
+                session["start_time"],
+                session["end_time"],
+                bucket_size=None,
+                bucket_by_session=True,
+            )
+            if move_minutes_resp:
+                session["move_minutes"] = move_minutes_resp[0].value
+            steps = self.get_aggregated_data_for_timerange(
+                "steps",
+                session["start_time"],
+                session["end_time"],
+                bucket_size=None,
+                bucket_by_session=True,
+            )
+            if steps:
+                session["steps"] = steps[0].value
+            distance = self.get_aggregated_data_for_timerange(
+                "distance_moved",
+                session["start_time"],
+                session["end_time"],
+                bucket_size=None,
+                bucket_by_session=True,
+            )
+            if distance:
+                session["distance_moved"] = distance[0].value
+
+        return sessions
+
     def test_sync(self, data_type, start_date, end_date):
         """
         Returns the number of steps since the last sync
@@ -445,7 +530,7 @@ class GoogleFitConnection(object):
         # start time should be start of yesterday in Asia/Kolkata timezone in millis
         self._update_last_sync = False
         self._last_modified = {}
-        vals = self.get_aggregated_data(data_type, start_date, end_date)
+        vals = self.get_activities(start_date, end_date)
         # data = self.get_data_since_last_sync()
         # date_wise_map = collections.defaultdict(int)
         # for key, values in data.items():

@@ -13,6 +13,7 @@ DB_DATA_TYPE_KEY_MAP = {
     "distance_moved": "com.google.distance.delta",
     "blood_oxygen": "com.google.oxygen_saturation",
     "menstruation": "com.google.menstruation",
+    "activities": "com.google.activity.segment",
 }
 
 RANGE_DATA_TYPES = {
@@ -53,4 +54,5 @@ RANGE_DATA_TYPES_UNTS: typing.Dict[str, str] = {
     "com.google.distance.delta": "fpVal",
     "com.google.oxygen_saturation": "fpVal",
     "com.google.menstruation": "intVal",
+    "com.google.activity.segment": "intVal",
 }
