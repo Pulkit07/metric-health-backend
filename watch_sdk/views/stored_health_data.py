@@ -85,10 +85,74 @@ def aggregated_data_for_timerange(request):
         end_time__lte=end_time,
     ).aggregate(Sum("value"))
 
-    # print_synced_uuids()
-    # _show_date_wise_data(connection, platform, data_type)
+    print_synced_uuids()
+    _show_date_wise_data(connection, platform, data_type)
 
     return Response({"total": total["value__sum"]})
+
+
+@api_view(["GET"])
+@permission_classes([ValidKeyPermission])
+def get_date_wise_data(request):
+    """
+    Returns a list of date wise data for a given time range
+
+    Response:
+
+    {
+        "data": [
+            {
+                # date in milliseconds since epoch
+                "start_time": 182347102000,
+                "end_time": 182347102000,
+                "value": 1000
+            },
+            ...
+        ],
+    }
+    """
+    key = request.META.get("HTTP_KEY")
+    uuid = request.query_params.get("user_uuid")
+
+    try:
+        connection = WatchConnection.objects.get(app__key=key, user_uuid=uuid)
+    except WatchConnection.DoesNotExist:
+        return Response({"error": "Access denied"}, status=401)
+
+    platform = request.data.get("platform")
+    data_type = request.data.get("data_type")
+    start_time = request.data.get("start_time")
+    end_time = request.data.get("end_time")
+
+    if not all([platform, data_type, start_time, end_time]):
+        return Response({"error": "Missing parameters"}, status=400)
+
+    if platform == "google_fit":
+        # hit GFit APIs for now
+        cpm = ConnectedPlatformMetadata.objects.get(
+            connection=connection, platform__name="google_fit"
+        )
+        entries = []
+        with GoogleFitConnection(connection.app, cpm) as gfc:
+            vals = gfc.get_aggregated_data_for_timerange(
+                data_type,
+                start_time,
+                end_time,
+            )
+
+            for v in vals:
+                entries.append(
+                    {
+                        "start_time": v.start_time / 10**3,
+                        "end_time": v.end_time / 10**3,
+                        "value": v.value,
+                    }
+                )
+
+        return Response({"data": entries})
+
+    else:
+        return Response({"error": "Platform not supported"}, status=400)
 
 
 @api_view(["GET"])

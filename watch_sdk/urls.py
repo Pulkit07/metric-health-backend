@@ -21,6 +21,7 @@ from watch_sdk.views.fitbit import *
 from watch_sdk.views.google_fit import *
 from watch_sdk.views.stored_health_data import (
     aggregated_data_for_timerange,
+    get_date_wise_data,
     get_menstruation_data,
 )
 from watch_sdk.views.strava import *
@@ -90,4 +91,5 @@ urlpatterns = [
     # URLs for retrieving data stored on our server
     path("stored_health_data", aggregated_data_for_timerange),
     path("get_menstruation_data", get_menstruation_data),
+    path("get_date_wise_data", get_date_wise_data),
 ]
