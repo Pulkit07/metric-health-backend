@@ -44,6 +44,10 @@ def aggregated_data_for_timerange(request):
     start_time = request.data.get("start_time")
     end_time = request.data.get("end_time")
 
+    # check if any of the above is None and if yes, return error response
+    if not all([platform, data_type, start_time, end_time]):
+        return Response({"error": "Missing parameters"}, status=400)
+
     if platform == "google_fit":
         # hit GFit APIs for now
         cpm = ConnectedPlatformMetadata.objects.get(
@@ -72,10 +76,6 @@ def aggregated_data_for_timerange(request):
         end_time = datetime.datetime.fromtimestamp(end_time / 10**3)
     except Exception:
         return Response({"error": "Invalid end time"}, status=400)
-
-    # check if any of the above is None and if yes, return error response
-    if not all([platform, data_type, start_time, end_time]):
-        return Response({"error": "Missing parameters"}, status=400)
 
     total = HealthDataEntry.objects.filter(
         user_connection=connection,
