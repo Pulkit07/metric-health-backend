@@ -23,6 +23,7 @@ from watch_sdk.views.stored_health_data import (
     aggregated_data_for_timerange,
     get_date_wise_data,
     get_menstruation_data,
+    get_workouts,
 )
 from watch_sdk.views.strava import *
 
@@ -92,4 +93,5 @@ urlpatterns = [
     path("stored_health_data", aggregated_data_for_timerange),
     path("get_menstruation_data", get_menstruation_data),
     path("get_date_wise_data", get_date_wise_data),
+    path("get_workouts", get_workouts),
 ]

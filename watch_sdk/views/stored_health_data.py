@@ -157,6 +157,41 @@ def get_date_wise_data(request):
 
 @api_view(["GET"])
 @permission_classes([ValidKeyPermission])
+def get_workouts(request):
+    key = request.META.get("HTTP_KEY")
+    uuid = request.query_params.get("user_uuid")
+
+    try:
+        connection = WatchConnection.objects.get(app__key=key, user_uuid=uuid)
+    except WatchConnection.DoesNotExist:
+        return Response({"error": "Access denied"}, status=401)
+
+    platform = request.data.get("platform")
+    start_time = request.data.get("start_time")
+    end_time = request.data.get("end_time")
+
+    if not all([platform, start_time, end_time]):
+        return Response({"error": "Missing parameters"}, status=400)
+
+    if platform == "google_fit":
+        cpm = ConnectedPlatformMetadata.objects.get(
+            connection=connection, platform__name="google_fit"
+        )
+        entries = []
+        with GoogleFitConnection(connection.app, cpm) as gfc:
+            activities = gfc.get_activities(
+                start_time,
+                end_time,
+            )
+
+            return Response({"data": activities})
+
+    else:
+        return Response({"error": "Platform not supported"}, status=400)
+
+
+@api_view(["GET"])
+@permission_classes([ValidKeyPermission])
 def get_menstruation_data(request):
     """
     Returns the menstrual data for a given time range
