@@ -51,8 +51,11 @@ def google_fit_cron():
         "user_app", flat=True
     )
     for app in apps:
+        app_object = UserApp.objects.get(id=app)
         # if webhook url is not set, we skip the app
-        if UserApp.objects.get(id=app).webhook_url is None:
+        # if data storage option is allow, we skip this syncing
+        # TODO: implement new syncing logic for allow
+        if app_object.webhook_url is None or app_object.data_storage_option == "allow":
             continue
         _sync_app.delay(app)
 
