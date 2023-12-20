@@ -35,6 +35,10 @@ def _get_sleep_type(val):
 
 
 def trigger_sync_on_connect(connected_platform: ConnectedPlatformMetadata):
+    if not connected_platform.connection.app.data_storage_option in set(
+        ["deny", "both"]
+    ):
+        return
     logger.info(
         f"Google fit sync on connect for {connected_platform.connection.user_uuid} ({connected_platform.connection.app})"
     )
