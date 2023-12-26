@@ -12,7 +12,7 @@ def track_connect(connected_platform: ConnectedPlatformMetadata):
         "Connect",
         {
             "platform": connected_platform.platform.name,
-            "app": connected_platform.app.id,
+            "app": connected_platform.connection.app.id,
         },
     )
     mp.people_set(
@@ -20,7 +20,7 @@ def track_connect(connected_platform: ConnectedPlatformMetadata):
         {
             "connected": True,
             "platform": connected_platform.platform.name,
-            "app": connected_platform.app.id,
+            "app": connected_platform.connection.app.id,
             "connection_exists": True,
         },
     )
@@ -32,6 +32,7 @@ def track_disconnect(connected_platform: ConnectedPlatformMetadata):
         "Disconnect",
         {
             "platform": connected_platform.platform.name,
+            "app": connected_platform.connection.app.id,
         },
     )
     mp.people_set(
