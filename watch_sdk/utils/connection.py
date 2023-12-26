@@ -7,6 +7,7 @@ from watch_sdk.data_providers.strava import (
 from watch_sdk.models import ConnectedPlatformMetadata, EnabledPlatform, UserApp
 from watch_sdk.utils.fitbit import on_fitbit_connect, on_fitbit_disconnect
 from watch_sdk.utils import google_fit as google_fit_utils
+from watch_sdk.utils import mixpanel as mp
 from watch_sdk.utils.strava import (
     on_strava_connect,
     on_strava_disconnect,
@@ -26,6 +27,8 @@ def on_connection_create(connected_platform_id):
     elif connected_platform.platform.name == "strava":
         on_strava_connect(connected_platform)
 
+    mp.track_connect(connected_platform)
+
 
 @shared_task
 def on_connection_disconnect(connected_platform_id, refresh_token):
@@ -38,6 +41,8 @@ def on_connection_disconnect(connected_platform_id, refresh_token):
     elif connected_platform.platform.name == "strava":
         on_strava_disconnect(connected_platform, refresh_token)
 
+    mp.track_disconnect(connected_platform)
+
 
 @shared_task
 def on_connection_reconnect(connected_platform_id):
@@ -48,6 +53,8 @@ def on_connection_reconnect(connected_platform_id):
         google_fit_utils.trigger_sync_on_connect(connected_platform)
     elif connected_platform.platform.name == "strava":
         on_strava_reconnect(connected_platform)
+
+    mp.track_connect(connected_platform)
 
 
 @shared_task

@@ -19,6 +19,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.utils.decorators import method_decorator
 from django.db.models import Count
 
+import watch_sdk.utils.mixpanel as mp
 from watch_sdk.permissions import (
     has_user_access_to_app,
     AdminPermission,
@@ -82,7 +83,9 @@ def watch_connection_exists(request):
     user_uuid = request.query_params.get("user_uuid")
     app = UserApp.objects.get(key=key)
     connection_filter = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
-    if connection_filter.exists():
+    connection_exists = connection_filter.exists()
+    mp.track_load_connection(user_uuid, app.id, connection_exists)
+    if connection_exists:
         return Response(
             {
                 "success": True,
@@ -154,6 +157,10 @@ def connect_platform_for_user(request):
     #   - Update connected platform metadata
     # 4. Connection exists, connected platform metadata exists but disconnect is true
     #   - Delete connected platform metadata
+    #
+    # (TODO: pulkit 26/12/23): this code is bit complex, we should refactor it based
+    # on intent instead of connection exists and not
+    #
     connections = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
     if connections.exists():
         connection: WatchConnection = connections.first()
@@ -441,7 +448,9 @@ def check_connection_and_get_user_app(request):
 
     connection_data = None
     connection_filter = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
-    if connection_filter.exists():
+    connection_exists = connection_filter.exists()
+    mp.track_load_connection(user_uuid, app.id, connection_exists)
+    if connection_exists:
         connection_data = PlatformBasedWatchConnection(connection_filter.first()).data
     else:
         connection_data = {
