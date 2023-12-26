@@ -8,16 +8,16 @@ client = EmailClient.from_connection_string(connection_string)
 
 welcome_user_email_body = """
 Dear {name},
-\n
+
 Thank you for signing up for Metric! I am excited to have you on board and look forward to supporting your journey toward better health and fitness.
-\n
+
 Our admin panel is under development and you might face issues while using it. Feel free to react out to me with any support or feature requests. Also, I will love to understand your use case and make sure we deliver what's required.
-\n
+
 How about we jump on a call to discuss your use case and how we can help you? You can schedule a call with me here: https://calendly.com/metric-health/intro
-\n
-Best regards,\n
-Pulkit Goyal\n
-Founder, Metric Health\n
+
+Best regards,
+Pulkit Goyal
+Founder, Metric Health
 """
 
 
@@ -27,25 +27,25 @@ def send_email_on_webhook_error(
 ):
     app = UserApp.objects.get(id=app_id)
     access_users = app.access_users.all().values_list("email", flat=True)
-    subject = f"[HEKA BACKEND] Error while sending data to webhook"
+    subject = f"[Metric Backend] Error while sending data to webhook"
     to = [app.user.email, *access_users]
     body = f"""
-    Dear {app.name} team,
+Dear {app.name} team,
 
-    We have received an error while sending data to your webhook. Please check your webhook and make sure it is working correctly.
+We have received an error while sending data to your webhook. Please check your webhook and make sure it is working correctly.
 
-    Platform: {platform}
-    User UUID: {user_uuid}
-    Response: {response}
-    Ocurrence Time: {occurence_time}
-    Status Code: {status_code}
-    Webhook Url: {app.webhook_url}
+Platform: {platform}
+User UUID: {user_uuid}
+Response: {response}
+Ocurrence Time: {occurence_time}
+Status Code: {status_code}
+Webhook Url: {app.webhook_url}
 
-    If you feel that the request was processed correctly, please make sure that you return a 200 status code.
-    You can reach out to us at contact@metric.health or reply to this email if you have any questions.
+If you feel that the request was processed correctly, please make sure that you return a 200 status code.
+You can reach out to us at contact@metric.health or reply to this email if you have any questions.
 
-    Regards,
-    Heka Team
+Regards,
+Metric Health Team
     """
     send_email.delay(
         to=to,
@@ -119,8 +119,7 @@ You have been invited to join {invitation.app.name} by {invitee_name}.
 Please go to app.metric.health and sign up to join.
 
 Regards,
-Heka Team
-        """,
+Metric Health Team""",
     )
 
 
@@ -143,8 +142,7 @@ If you feel that the webhook is working correctly, please make sure that you ret
 You can reach out to us at contact@metric.health or reply to this email if you have any questions.
 
 Regards,
-Heka Team
-    """
+Metric Health Team"""
     send_email.delay(
         to=to,
         subject=subject,
