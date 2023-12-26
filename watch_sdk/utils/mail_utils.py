@@ -9,19 +9,15 @@ client = EmailClient.from_connection_string(connection_string)
 welcome_user_email_body = """
 Dear {name},
 \n
-Thank you for signing up for Heka! We are excited to have you on board and look forward to supporting your journey toward better health and fitness.
+Thank you for signing up for Metric! I am excited to have you on board and look forward to supporting your journey toward better health and fitness.
 \n
-Our platform offers a powerful SDK that can be integrated with any available health and fitness data source, including Google Fit, Apple HealthKit, Strava, and Fitbit. With our SDK, you can easily collect and analyze your health data in one place, allowing you to make informed decisions about your health and fitness goals.
+Our admin panel is under development and you might face issues while using it. Feel free to react out to me with any support or feature requests. Also, I will love to understand your use case and make sure we deliver what's required.
 \n
-Our team is committed to providing you with the best possible experience and support as you use our platform. Whether you are an individual looking to improve your health and wellness, or a healthcare provider seeking to leverage the power of data to improve patient outcomes, we are here to help.
-\n
-If you have any questions or need assistance getting started, I will be happy to help.
-\n
-Once again, thank you for joining our community. We look forward to helping you and your users achieve their health and fitness goals!
+How about we jump on a call to discuss your use case and how we can help you? You can schedule a call with me here: https://calendly.com/metric-health/intro
 \n
 Best regards,\n
 Pulkit Goyal\n
-Founder, Heka\n
+Founder, Metric Health\n
 """
 
 
@@ -46,7 +42,7 @@ def send_email_on_webhook_error(
     Webhook Url: {app.webhook_url}
 
     If you feel that the request was processed correctly, please make sure that you return a 200 status code.
-    You can reach out to us at contact@hekahealth.co or reply to this email if you have any questions.
+    You can reach out to us at contact@metric.health or reply to this email if you have any questions.
 
     Regards,
     Heka Team
@@ -64,14 +60,14 @@ def send_email_on_new_user(user_id):
     user = User.objects.get(id=user_id)
     send_email.delay(
         to=(os.getenv("ADMIN_EMAIL_ADDRESS"),),
-        subject="[HEKA BACKEND] New user has joined the platform",
+        subject="[Metric Backend] New user has joined the platform",
         body=f"New user has been created: {user.email} {user.email} {user.company_name} {user.country}",
     )
 
     send_email.apply_async(
         kwargs={
             "to": (user.email,),
-            "subject": "Welcome to Heka!",
+            "subject": "Let's build a healthier world together!",
             "body": welcome_user_email_body.format(name=user.name),
             "senderEmail": os.getenv("AZURE_COMMUNICATION_SERVICES_ADMIN_SENDER_EMAIL"),
         },
@@ -84,7 +80,7 @@ def send_email_on_new_app(user_app_id):
     app = UserApp.objects.get(id=user_app_id)
     send_email.delay(
         to=(os.getenv("ADMIN_EMAIL_ADDRESS"),),
-        subject="[HEKA BACKEND] New app has been created",
+        subject="[Metric Backend] New app has been created",
         body=f"New app {app.name} has been created by {app.user.email}",
     )
 
@@ -120,7 +116,7 @@ def send_email_on_new_invitation(invitation_id):
 Dear {invitation.name},
 
 You have been invited to join {invitation.app.name} by {invitee_name}.
-Please go to app.hekahealth.co and sign up to join.
+Please go to app.metric.health and sign up to join.
 
 Regards,
 Heka Team
@@ -132,7 +128,7 @@ Heka Team
 def send_email_on_webhook_disabled(app_id, webhook_url):
     app = UserApp.objects.get(id=app_id)
     access_users = app.access_users.all().values_list("email", flat=True)
-    subject = f"[HEKA BACKEND] Webhook disabled due to 5 consecutive errors"
+    subject = f"[Metric Backend] Webhook disabled due to 5 consecutive errors"
     to = [app.user.email, *access_users]
     body = f"""
 Dear {app.name} team,
@@ -141,10 +137,10 @@ We have disabled your webhook due to 5 consecutive errors. Please check your web
 
 Webhook Url: {webhook_url}
 
-If you have fixed the issue, you can re-enable the webhook by going to app.hekahealth.co and updating the webhook url.
+If you have fixed the issue, you can re-enable the webhook by going to app.metric.health and updating the webhook url.
 
 If you feel that the webhook is working correctly, please make sure that you return a 200 status code.
-You can reach out to us at contact@hekahealth.co or reply to this email if you have any questions.
+You can reach out to us at contact@metric.health or reply to this email if you have any questions.
 
 Regards,
 Heka Team
