@@ -84,7 +84,7 @@ def watch_connection_exists(request):
     app = UserApp.objects.get(key=key)
     connection_filter = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
     connection_exists = connection_filter.exists()
-    mp.track_load_connection(user_uuid, app.id, connection_exists)
+    mp.track_load_connection.delay(user_uuid, app.id, connection_exists)
     if connection_exists:
         return Response(
             {
@@ -449,7 +449,7 @@ def check_connection_and_get_user_app(request):
     connection_data = None
     connection_filter = WatchConnection.objects.filter(app=app, user_uuid=user_uuid)
     connection_exists = connection_filter.exists()
-    mp.track_load_connection(user_uuid, app.id, connection_exists)
+    mp.track_load_connection.delay(user_uuid, app.id, connection_exists)
     if connection_exists:
         connection_data = PlatformBasedWatchConnection(connection_filter.first()).data
     else:
