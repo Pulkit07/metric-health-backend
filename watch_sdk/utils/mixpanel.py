@@ -51,10 +51,3 @@ def track_load_connection(user_uuid: str, app_id: int, connection_exists: bool):
         user_uuid,
         {"app": app_id, "connection_exists": connection_exists},
     )
-    mp.track(
-        user_uuid,
-        "Load Connection",
-        {
-            "app": app_id,
-        },
-    )
