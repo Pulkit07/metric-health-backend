@@ -231,7 +231,7 @@ else:
     from sentry_sdk.integrations.django import DjangoIntegration
 
     sentry_sdk.init(
-        dsn="https://971ec680d8e542588af557b090d117ae@o4504701505175552.ingest.sentry.io/4504701524049920",
+        dsn="PUT YOUR OWN",
         integrations=[
             DjangoIntegration(),
         ],
